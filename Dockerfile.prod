@@ -1,0 +1,83 @@
+# ============================================================
+# Stage 1: フロントエンドビルド
+# ============================================================
+FROM node:20-alpine AS frontend
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --no-audit --prefer-offline
+
+COPY resources/ ./resources/
+COPY vite.config.js ./
+COPY public/ ./public/
+
+# production ビルド
+RUN npm run build
+
+# ============================================================
+# Stage 2: PHP 依存インストール
+# ============================================================
+FROM composer:2 AS composer
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --optimize-autoloader \
+    --no-scripts
+
+# ============================================================
+# Stage 3: 本番ランタイム（Nginx + PHP-FPM）
+# ============================================================
+FROM php:8.3-fpm-alpine
+
+# システム依存
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    postgresql-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql pgsql zip gd bcmath pcntl \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && rm -rf /tmp/*
+
+# PHP 設定
+RUN printf 'upload_max_filesize = 20M\npost_max_size = 25M\nmemory_limit = 256M\n' \
+    > /usr/local/etc/php/conf.d/uploads.ini
+
+WORKDIR /var/www/html
+
+# アプリコードをコピー
+COPY . .
+
+# ビルド済みアセット & vendor を注入
+COPY --from=frontend /app/public/build ./public/build
+COPY --from=composer /app/vendor ./vendor
+
+# ストレージ・キャッシュディレクトリの権限設定
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
+        storage/framework/views storage/app/public bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Nginx 設定
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
+# Supervisor 設定（PHP-FPM + Nginx + Queue worker + Scheduler）
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# 本番用エントリポイント
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 80
+
+CMD ["entrypoint.sh"]

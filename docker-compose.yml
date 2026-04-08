@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atally-app
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - .env
+    networks:
+      - atally
+
+  db:
+    image: postgres:16-alpine
+    container_name: atally-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-atally}
+      POSTGRES_USER: ${DB_USERNAME:-atally}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atally"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - atally
+
+  redis:
+    image: redis:7-alpine
+    container_name: atally-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - atally
+
+volumes:
+  pgdata:
+
+networks:
+  atally:
+    driver: bridge
