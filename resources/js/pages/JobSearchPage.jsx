@@ -37,16 +37,16 @@ const AREAS = ['東京都', '大阪府', '愛知県', '神奈川県', '福岡県
 
 const APPLICATION_TYPES = [
     { value: '', label: 'すべて' },
-    { value: '一般応募', label: '一般応募' },
-    { value: 'エージェント紹介', label: 'エージェント紹介' },
-    { value: '両方', label: '両方' },
+    { value: '中途', label: '中途採用' },
+    { value: '新卒', label: '新卒採用' },
+    { value: '中途・新卒', label: '中途・新卒' },
 ];
 
 const REMOTE_OPTIONS = [
     { value: '', label: 'すべて' },
-    { value: 'full_remote', label: 'フルリモート' },
-    { value: 'partial_remote', label: '一部リモート' },
-    { value: 'no_remote', label: 'オフィス勤務' },
+    { value: 'フルリモート', label: 'フルリモート' },
+    { value: 'ハイブリッド', label: 'ハイブリッド' },
+    { value: '出社', label: '原則出社' },
 ];
 
 const FEATURE_TAG_OPTIONS = [
@@ -266,7 +266,7 @@ export default function JobSearchPage() {
             const res = await api.get('/jobs', { params, signal: controller.signal });
             const data = res.data.data || [];
             setJobs(data);
-            setMeta(res.data.meta || null);
+            setMeta(res.data);
             // 最初の求人を自動選択（PC時）
             if (data.length > 0 && !isMobile) {
                 setSelectedJobId(data[0].id);
@@ -779,13 +779,20 @@ export default function JobSearchPage() {
                 <div style={{
                     display: 'flex',
                     gap: 'var(--space-lg)',
-                    alignItems: 'flex-start',
+                    height: isMobile ? 'auto' : 'calc(100vh - 320px)',
+                    minHeight: isMobile ? 'auto' : 400,
+                    overflow: isMobile ? 'visible' : 'hidden',
                 }}>
 
                     {/* 左パネル: 求人リスト */}
-                    <div ref={listRef} style={{
+                    <div style={{
                         flex: isMobile ? '1 1 100%' : '0 0 420px',
-                        maxHeight: isMobile ? 'none' : 'calc(100vh - 200px)',
+                        height: isMobile ? 'auto' : '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}>
+                    <div ref={listRef} style={{
+                        flex: 1,
                         overflowY: isMobile ? 'visible' : 'auto',
                         paddingRight: isMobile ? 0 : 'var(--space-sm)',
                     }}>
@@ -861,41 +868,40 @@ export default function JobSearchPage() {
                                 ))}
                             </div>
                         )}
+                    </div>
 
-                        {/* ページネーション */}
-                        {meta && meta.last_page > 1 && (
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-xs)', marginTop: 'var(--space-xl)', flexWrap: 'wrap' }}>
-                                <button className="btn btn-secondary" disabled={page === 1} style={{ fontSize: 'var(--font-size-xs)' }}
-                                    onClick={() => { setPage(p => p - 1); if (listRef.current) listRef.current.scrollTop = 0; }}>←</button>
-                                {Array.from({ length: Math.min(meta.last_page, 7) }, (_, i) => {
-                                    const p = meta.last_page <= 7 ? i + 1
-                                        : page <= 4 ? i + 1
-                                        : page >= meta.last_page - 3 ? meta.last_page - 6 + i
-                                        : page - 3 + i;
-                                    return (
-                                        <button key={p} className={`btn ${p === page ? 'btn-primary' : 'btn-secondary'}`}
-                                            onClick={() => { setPage(p); if (listRef.current) listRef.current.scrollTop = 0; }}
-                                            style={{ minWidth: 32, fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}>{p}</button>
-                                    );
-                                })}
-                                <button className="btn btn-secondary" disabled={page === meta.last_page} style={{ fontSize: 'var(--font-size-xs)' }}
-                                    onClick={() => { setPage(p => p + 1); if (listRef.current) listRef.current.scrollTop = 0; }}>→</button>
-                            </div>
-                        )}
-                        {meta && (
-                            <p style={{ textAlign: 'center', marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', paddingBottom: 'var(--space-md)' }}>
-                                {meta.total}件中 {meta.from}〜{meta.to}件を表示
-                            </p>
-                        )}
+                    {/* ページネーション（常時表示） */}
+                    {meta && meta.last_page > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)', flexWrap: 'wrap', flexShrink: 0 }}>
+                            <button className="btn btn-secondary" disabled={page === 1} style={{ fontSize: 'var(--font-size-xs)' }}
+                                onClick={() => { setPage(p => p - 1); if (listRef.current) listRef.current.scrollTop = 0; }}>←</button>
+                            {Array.from({ length: Math.min(meta.last_page, 7) }, (_, i) => {
+                                const p = meta.last_page <= 7 ? i + 1
+                                    : page <= 4 ? i + 1
+                                    : page >= meta.last_page - 3 ? meta.last_page - 6 + i
+                                    : page - 3 + i;
+                                return (
+                                    <button key={p} className={`btn ${p === page ? 'btn-primary' : 'btn-secondary'}`}
+                                        onClick={() => { setPage(p); if (listRef.current) listRef.current.scrollTop = 0; }}
+                                        style={{ minWidth: 32, fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}>{p}</button>
+                                );
+                            })}
+                            <button className="btn btn-secondary" disabled={page === meta.last_page} style={{ fontSize: 'var(--font-size-xs)' }}
+                                onClick={() => { setPage(p => p + 1); if (listRef.current) listRef.current.scrollTop = 0; }}>→</button>
+                        </div>
+                    )}
+                    {meta && (
+                        <p style={{ textAlign: 'center', marginTop: 'var(--space-xs)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', flexShrink: 0 }}>
+                            {meta.total}件中 {meta.from}〜{meta.to}件を表示
+                        </p>
+                    )}
                     </div>
 
                     {/* 右パネル: 求人詳細（PCのみ） */}
                     {!isMobile && (
                         <div style={{
                             flex: '1 1 0',
-                            position: 'sticky',
-                            top: 140,
-                            maxHeight: 'calc(100vh - 200px)',
+                            height: '100%',
                             overflowY: 'auto',
                         }}>
                             {detailLoading ? (

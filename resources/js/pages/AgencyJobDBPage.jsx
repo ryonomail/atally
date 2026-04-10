@@ -349,12 +349,23 @@ export default function AgencyJobDBPage() {
                 </div>
 
                 {/* Split-pane レイアウト */}
-                <div style={{ display: 'flex', gap: 'var(--space-lg)', alignItems: 'flex-start' }}>
+                <div style={{
+                    display: 'flex',
+                    gap: 'var(--space-lg)',
+                    height: isMobile ? 'auto' : 'calc(100vh - 300px)',
+                    minHeight: isMobile ? 'auto' : 400,
+                    overflow: isMobile ? 'visible' : 'hidden',
+                }}>
 
                     {/* 左パネル: 求人リスト */}
-                    <div ref={listRef} style={{
+                    <div style={{
                         flex: isMobile ? '1 1 100%' : '0 0 420px',
-                        maxHeight: isMobile ? 'none' : 'calc(100vh - 200px)',
+                        height: isMobile ? 'auto' : '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}>
+                    <div ref={listRef} style={{
+                        flex: 1,
                         overflowY: isMobile ? 'visible' : 'auto',
                         paddingRight: isMobile ? 0 : 'var(--space-sm)',
                     }}>
@@ -383,36 +394,35 @@ export default function AgencyJobDBPage() {
                                 ))}
                             </div>
                         )}
+                    </div>
 
-                        {/* ページネーション */}
-                        {lastPage > 1 && (
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-xs)', marginTop: 'var(--space-xl)', flexWrap: 'wrap' }}>
-                                <button className="btn btn-secondary" disabled={page === 1} style={{ fontSize: 'var(--font-size-xs)' }}
-                                    onClick={() => { setPage(p => p - 1); if (listRef.current) listRef.current.scrollTop = 0; }}>←</button>
-                                {Array.from({ length: Math.min(lastPage, 7) }, (_, i) => {
-                                    const p = lastPage <= 7 ? i + 1
-                                        : page <= 4 ? i + 1
-                                        : page >= lastPage - 3 ? lastPage - 6 + i
-                                        : page - 3 + i;
-                                    return (
-                                        <button key={p} className={`btn ${p === page ? 'btn-primary' : 'btn-secondary'}`}
-                                            onClick={() => { setPage(p); if (listRef.current) listRef.current.scrollTop = 0; }}
-                                            style={{ minWidth: 32, fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}>{p}</button>
-                                    );
-                                })}
-                                <button className="btn btn-secondary" disabled={page === lastPage} style={{ fontSize: 'var(--font-size-xs)' }}
-                                    onClick={() => { setPage(p => p + 1); if (listRef.current) listRef.current.scrollTop = 0; }}>→</button>
-                            </div>
-                        )}
+                    {/* ページネーション（常時表示） */}
+                    {lastPage > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)', flexWrap: 'wrap', flexShrink: 0 }}>
+                            <button className="btn btn-secondary" disabled={page === 1} style={{ fontSize: 'var(--font-size-xs)' }}
+                                onClick={() => { setPage(p => p - 1); if (listRef.current) listRef.current.scrollTop = 0; }}>←</button>
+                            {Array.from({ length: Math.min(lastPage, 7) }, (_, i) => {
+                                const p = lastPage <= 7 ? i + 1
+                                    : page <= 4 ? i + 1
+                                    : page >= lastPage - 3 ? lastPage - 6 + i
+                                    : page - 3 + i;
+                                return (
+                                    <button key={p} className={`btn ${p === page ? 'btn-primary' : 'btn-secondary'}`}
+                                        onClick={() => { setPage(p); if (listRef.current) listRef.current.scrollTop = 0; }}
+                                        style={{ minWidth: 32, fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}>{p}</button>
+                                );
+                            })}
+                            <button className="btn btn-secondary" disabled={page === lastPage} style={{ fontSize: 'var(--font-size-xs)' }}
+                                onClick={() => { setPage(p => p + 1); if (listRef.current) listRef.current.scrollTop = 0; }}>→</button>
+                        </div>
+                    )}
                     </div>
 
                     {/* 右パネル: 求人詳細（PCのみ） */}
                     {!isMobile && (
                         <div style={{
                             flex: '1 1 0',
-                            position: 'sticky',
-                            top: 180,
-                            maxHeight: 'calc(100vh - 220px)',
+                            height: '100%',
                             overflowY: 'auto',
                         }}>
                             {detailLoading ? (

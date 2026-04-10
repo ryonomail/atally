@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Company;
+use App\Models\Job;
 use App\Models\Application;
 use App\Models\JobView;
 use App\Models\InAppNotification;
@@ -62,6 +63,96 @@ class DemoSeeder extends Seeder
             $agencyUser->update(['company_id' => $agencyCompany->id, 'company_role' => 'owner']);
         } else {
             $agencyUser->company->update(['company_type' => 'recruitment_agency']);
+        }
+
+        // ========================================
+        // テスト用求人データ
+        // ========================================
+        $directCompany = $companyUser->fresh()->company;
+        $agencyCompany2 = $agencyUser->fresh()->company;
+
+        $jobsData = [
+            [
+                'company_id' => $directCompany->id,
+                'title' => 'Webエンジニア（フロントエンド）',
+                'description' => 'React/TypeScriptを使ったWebアプリケーション開発をお任せします。チームで協力しながら、ユーザー体験の向上に取り組んでいただきます。',
+                'status' => 'active',
+                'employment_type' => '正社員',
+                'location' => '東京都渋谷区',
+                'salary_min' => 4500000,
+                'salary_max' => 7000000,
+                'industry' => 'IT・通信',
+                'job_category_major' => 'エンジニア・技術職',
+                'job_category_minor' => 'フロントエンドエンジニア',
+                'remote_policy' => 'フルリモート',
+                'allow_referral' => true,
+            ],
+            [
+                'company_id' => $directCompany->id,
+                'title' => 'バックエンドエンジニア（Laravel）',
+                'description' => 'LaravelベースのAPIサーバー開発・保守をお任せします。PostgreSQL、Redisを使用したシステム設計も担当いただきます。',
+                'status' => 'active',
+                'employment_type' => '正社員',
+                'location' => '東京都新宿区',
+                'salary_min' => 5000000,
+                'salary_max' => 8000000,
+                'industry' => 'IT・通信',
+                'job_category_major' => 'エンジニア・技術職',
+                'job_category_minor' => 'バックエンドエンジニア',
+                'remote_policy' => 'ハイブリッド',
+                'allow_referral' => true,
+            ],
+            [
+                'company_id' => $directCompany->id,
+                'title' => '営業マネージャー（SaaS）',
+                'description' => 'SaaS製品の法人営業をリードするポジションです。チームのマネジメントから大手顧客の新規開拓まで幅広くお任せします。',
+                'status' => 'active',
+                'employment_type' => '正社員',
+                'location' => '大阪府大阪市',
+                'salary_min' => 5500000,
+                'salary_max' => 9000000,
+                'industry' => 'IT・通信',
+                'job_category_major' => '営業職',
+                'job_category_minor' => '法人営業',
+                'remote_policy' => '出社必須',
+                'allow_referral' => true,
+            ],
+            [
+                'company_id' => $agencyCompany2->id,
+                'title' => 'プロジェクトマネージャー（金融系SI）',
+                'description' => '大手金融機関向けシステム開発のプロジェクトマネジメントをお任せします。要件定義から運用まで一貫して担当いただきます。',
+                'status' => 'active',
+                'employment_type' => '正社員',
+                'location' => '東京都千代田区',
+                'salary_min' => 7000000,
+                'salary_max' => 11000000,
+                'industry' => '金融・保険',
+                'job_category_major' => 'エンジニア・技術職',
+                'job_category_minor' => 'プロジェクトマネージャー',
+                'remote_policy' => 'ハイブリッド',
+                'allow_referral' => true,
+            ],
+            [
+                'company_id' => $agencyCompany2->id,
+                'title' => '人事・採用担当',
+                'description' => '中途採用を中心とした採用業務全般をお任せします。母集団形成から内定フォローまで幅広く担当いただきます。',
+                'status' => 'active',
+                'employment_type' => '正社員',
+                'location' => '東京都港区',
+                'salary_min' => 4000000,
+                'salary_max' => 6000000,
+                'industry' => '人材・教育',
+                'job_category_major' => '人事・総務・法務',
+                'job_category_minor' => '採用・人材開発',
+                'remote_policy' => 'ハイブリッド',
+                'allow_referral' => true,
+            ],
+        ];
+
+        foreach ($jobsData as $jobData) {
+            if (Job::where('title', $jobData['title'])->where('company_id', $jobData['company_id'])->doesntExist()) {
+                Job::create($jobData);
+            }
         }
 
         // ========================================
