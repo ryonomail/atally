@@ -18,8 +18,10 @@ php artisan key:generate --force 2>/dev/null || true
 # Run migrations
 php artisan migrate --force 2>/dev/null || true
 
-# Start Vite dev server in background
-npm run dev -- --host 0.0.0.0 &
+# Build frontend assets (macOS DockerではHMRのファイル変更検知が不安定なためビルドモードを使用)
+npm run build 2>/dev/null || true
+# hotファイルが残っていれば削除（ビルドモード使用のため）
+rm -f public/hot
 
 # Start Laravel dev server
 php artisan serve --host=0.0.0.0 --port=8000

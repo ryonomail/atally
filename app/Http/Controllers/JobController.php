@@ -23,7 +23,11 @@ class JobController extends Controller
     // パブリック: 求人検索
     public function index(Request $request)
     {
-        $query = Job::with(['company', 'persona'])->whereIn('jobs.status', ['active', 'suspended']);
+        // 求職者向け公開検索: 直接採用企業の求人のみ表示
+        // 人材紹介会社の求人は /api/agency-jobs (AgencyJobDBPage) で管理
+        $query = Job::with(['company', 'persona'])
+            ->whereIn('jobs.status', ['active', 'suspended'])
+            ->whereHas('company', fn($q) => $q->where('company_type', 'direct_employer'));
 
         if ($request->filled('keyword')) {
             $terms = preg_split('/[・\/\s　]+/u', $request->keyword);

@@ -103,14 +103,15 @@ export default function GuestProfileBanner({ onProfileChange }) {
                     <span style={{ fontSize: 15, opacity: 0.6 }}>&#9432;</span>
                     {hasProfile ? (
                         <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                            あなたの情報で最適化中
+                            おすすめ順を最適化中
                             {profile.age && <span style={tagStyle}>{profile.age}歳</span>}
                             {profile.experience_years && <span style={tagStyle}>経験{profile.experience_years}年</span>}
                             {profile.skills?.length > 0 && <span style={tagStyle}>{profile.skills.length}スキル</span>}
+                            <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--color-text-muted)' }}>※件数は変わりません</span>
                         </span>
                     ) : (
                         <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                            年齢やスキルを入力すると、あなたに合った順で表示されます
+                            スキルを入力すると、関連度の高い求人が上位に並びます（絞り込みは「絞り込み」ボタンを使用）
                         </span>
                     )}
                 </div>
@@ -153,9 +154,14 @@ export default function GuestProfileBanner({ onProfileChange }) {
             padding: 'var(--space-md)',
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0 }}>
-                    あなたに合った求人を表示
-                </h4>
+                <div>
+                    <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0 }}>
+                        おすすめ順のカスタマイズ
+                    </h4>
+                    <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+                        入力した情報をもとに関連度の高い求人を上位に表示します。件数の絞り込みには「絞り込み」ボタンを使用してください。
+                    </p>
+                </div>
                 <button
                     onClick={() => setIsExpanded(false)}
                     style={{
