@@ -261,7 +261,10 @@ export default function JobSearchPage() {
             if (!user && currentGuestProfile) {
                 if (currentGuestProfile.age) params.guest_age = currentGuestProfile.age;
                 if (currentGuestProfile.experience_years) params.guest_experience_years = currentGuestProfile.experience_years;
-                if (currentGuestProfile.skills?.length > 0) params.guest_skills = currentGuestProfile.skills.join(',');
+            }
+            // スキルフィルター（ログイン/未ログイン共通 - 件数絞り込みに使用）
+            if (currentGuestProfile?.skills?.length > 0) {
+                params.guest_skills = currentGuestProfile.skills.join(',');
             }
             const res = await api.get('/jobs', { params, signal: controller.signal });
             const data = res.data.data || [];

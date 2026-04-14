@@ -74,6 +74,26 @@ class JobController extends Controller
             $query->where('jobs.remote_policy', $request->remote_policy);
         }
 
+        // スキルフィルター: バナーで入力したスキルのいずれかにマッチする求人のみ表示
+        if ($request->filled('guest_skills')) {
+            $skills = is_array($request->guest_skills)
+                ? $request->guest_skills
+                : explode(',', $request->guest_skills);
+            $skills = array_values(array_filter(array_map('trim', $skills), fn($s) => mb_strlen($s) > 0));
+
+            if (count($skills) > 0) {
+                $query->where(function ($q) use ($skills) {
+                    foreach ($skills as $skill) {
+                        $q->orWhere(function ($sub) use ($skill) {
+                            $sub->where('jobs.title', 'like', "%{$skill}%")
+                                ->orWhere('jobs.description', 'like', "%{$skill}%")
+                                ->orWhere('jobs.requirements', 'like', "%{$skill}%");
+                        });
+                    }
+                });
+            }
+        }
+
         $query->join('companies', 'jobs.company_id', '=', 'companies.id')
             ->leftJoin('job_personas', 'jobs.id', '=', 'job_personas.job_id')
             ->select('jobs.*');
