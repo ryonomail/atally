@@ -98,6 +98,7 @@ services:
     region: singapore
     plan: starter  # $10/月
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  # Render内部からのみアクセス可（パブリックアクセス不可）
 
 databases:
   # ============================================================
