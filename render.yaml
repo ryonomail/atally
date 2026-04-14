@@ -1,0 +1,110 @@
+services:
+  # ============================================================
+  # Web Service (Laravel + Nginx + PHP-FPM)
+  # ============================================================
+  - type: web
+    name: atally-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile.prod
+    dockerContext: .
+    region: singapore  # 日本から最も近いリージョン
+    plan: starter      # $7/月（スリープなし）
+    healthCheckPath: /api/stats
+
+    envVars:
+      - key: APP_NAME
+        value: Atally
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false  # Renderダッシュボードで設定
+      - key: APP_URL
+        sync: false  # 例: https://atally-app.onrender.com
+
+      # Database (Render PostgreSQL から自動注入)
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: atally-db
+          property: connectionString
+
+      # Redis (Render Redis から自動注入)
+      - key: REDIS_URL
+        fromService:
+          name: atally-redis
+          type: redis
+          property: connectionString
+
+      - key: CACHE_DRIVER
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: SESSION_DRIVER
+        value: redis
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      - key: FILESYSTEM_DISK
+        value: local
+
+      # Stripe (ダッシュボードで設定)
+      - key: STRIPE_KEY
+        sync: false
+      - key: STRIPE_SECRET
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # Google OAuth (ダッシュボードで設定)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false  # 例: https://atally-app.onrender.com/auth/google/callback
+
+      # Mail (ダッシュボードで設定)
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@atally.jp
+      - key: MAIL_FROM_NAME
+        value: Atally
+
+      - key: SANCTUM_TOKEN_EXPIRATION
+        value: "43200"
+
+  # ============================================================
+  # Redis
+  # ============================================================
+  - type: redis
+    name: atally-redis
+    region: singapore
+    plan: starter  # $10/月
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  # ============================================================
+  # PostgreSQL
+  # ============================================================
+  - name: atally-db
+    region: singapore
+    plan: starter  # $7/月
+    databaseName: atally
+    user: atally

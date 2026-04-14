@@ -13,6 +13,13 @@ php artisan view:cache
 # マイグレーション（--force は本番環境での確認プロンプトをスキップ）
 php artisan migrate --force
 
+# 初回デプロイ時のみシード実行（SEED_ON_BOOT=true の場合）
+if [ "${SEED_ON_BOOT}" = "true" ]; then
+    echo "=== Running seeders ==="
+    php artisan db:seed --class=DemoSeeder --force 2>/dev/null || true
+    php artisan db:seed --class=LargeDataSeeder --force 2>/dev/null || true
+fi
+
 # ストレージリンク
 php artisan storage:link 2>/dev/null || true
 
