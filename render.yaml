@@ -106,6 +106,6 @@ databases:
   # ============================================================
   - name: atally-db
     region: singapore
-    plan: starter  # $7/月
+    plan: basic-256mb  # $7/月（新プラン名）
     databaseName: atally
     user: atally
