@@ -73,6 +73,7 @@ RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 
 # Supervisor 設定（PHP-FPM + Nginx + Queue worker + Scheduler）
+RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # 本番用エントリポイント
