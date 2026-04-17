@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+node_modules
+vendor
+bootstrap/cache/*.php
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+public/hot
+docker-compose*.yml
+Dockerfile
+*.md
+tests/
