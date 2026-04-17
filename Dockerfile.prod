@@ -34,21 +34,20 @@ RUN composer install \
 # ============================================================
 FROM php:8.3-fpm-alpine
 
-# システム依存
+# php-extension-installer（PHPエクステンションを確実にインストールするツール）
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
+# システム依存 + PHPエクステンション
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    postgresql-dev \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_pgsql pgsql zip gd bcmath pcntl \
-    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && pecl install --no-cache redis \
-    && docker-php-ext-enable redis \
-    && apk del .build-deps \
+    && install-php-extensions \
+        pdo_pgsql \
+        gd \
+        zip \
+        bcmath \
+        pcntl \
+        redis \
     && rm -rf /tmp/* /var/cache/apk/*
 
 # PHP 設定
