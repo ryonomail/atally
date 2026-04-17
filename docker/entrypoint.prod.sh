@@ -8,6 +8,11 @@ echo "=== Atally Production Startup ==="
 # ログディレクトリ作成
 mkdir -p /var/log/supervisor /var/log/nginx
 
+# Renderの$PORTに合わせてnginxのポートを設定（デフォルト10000）
+APP_PORT=${PORT:-10000}
+echo "--- Using port: $APP_PORT ---"
+sed -i "s/listen 80;/listen ${APP_PORT};/" /etc/nginx/nginx.conf
+
 # config:cache
 echo "--- config:cache ---"
 php artisan config:cache
