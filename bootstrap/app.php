@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -40,6 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null; // Web: デフォルトのLaravelハンドリング
             }
 
+            if ($e instanceof ValidationException) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
             if ($e instanceof NotFoundHttpException) {
                 return response()->json(['message' => 'リソースが見つかりません。'], 404);
             }
@@ -51,17 +59,12 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // 本番: 詳細を隠す / 開発: 詳細を表示
-            if (config('app.debug')) {
+            if (app()->isProduction()) {
                 return response()->json([
-                    'message' => $e->getMessage(),
-                    'exception' => get_class($e),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
+                    'message' => 'サーバーエラーが発生しました。しばらくしてから再度お試しください。',
                 ], 500);
             }
 
-            return response()->json([
-                'message' => 'サーバーエラーが発生しました。しばらくしてから再度お試しください。',
-            ], 500);
+            return null;
         });
     })->create();
