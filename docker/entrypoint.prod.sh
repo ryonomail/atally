@@ -52,6 +52,10 @@ if [ "${SEED_ON_BOOT}" = "true" ]; then
     php artisan db:seed --class=LargeDataSeeder --force || echo "LargeDataSeeder failed (skipped)"
 fi
 
+# サイトマップ生成
+echo "--- sitemap:generate ---"
+php artisan sitemap:generate || true
+
 # ストレージリンク
 php artisan storage:link 2>/dev/null || true
 
