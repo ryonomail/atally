@@ -1,7 +1,7 @@
 # Atally - Crawler Control
 # 求人検索ページはインデックス許可、APIとダッシュボードはブロック
 
-Sitemap: https://atally.jp/sitemap.xml
+Sitemap: https://atally.io/sitemap.xml
 
 User-agent: *
 Allow: /
@@ -10,16 +10,6 @@ Disallow: /dashboard/
 Disallow: /admin/
 Disallow: /company/
 Disallow: /agency/
-
-# 主要クローラーのクロール頻度を制限
-User-agent: Googlebot
-Crawl-delay: 5
-
-User-agent: Bingbot
-Crawl-delay: 10
-
-User-agent: Yandex
-Crawl-delay: 10
 
 # 悪質なクローラーを完全ブロック
 User-agent: AhrefsBot
