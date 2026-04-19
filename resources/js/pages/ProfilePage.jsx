@@ -24,7 +24,6 @@ export default function ProfilePage() {
     const { isDirty, confirmNavigation } = useUnsavedChanges(savedForm, form);
 
     const errorStyle = { color: '#ef4444', fontSize: 'var(--font-size-xs)', marginTop: 2 };
-    const requiredMark = <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>;
 
     const validatePhone = (value) => {
         if (!value) return '';
@@ -356,7 +355,7 @@ export default function ProfilePage() {
                     <h3 style={{ marginBottom: 'var(--space-md)' }}>基本情報</h3>
                     <div className="grid grid-2">
                         <div className="form-group">
-                            <label className="form-label">氏名{requiredMark}</label>
+                            <label className="form-label">氏名</label>
                             <input className="form-input" value={form.full_name}
                                 onChange={e => setForm({...form, full_name: e.target.value})}
                                 onBlur={() => handleBlur('full_name')}
@@ -365,7 +364,7 @@ export default function ProfilePage() {
                             {fieldErrors.full_name && <div style={errorStyle}>{fieldErrors.full_name}</div>}
                         </div>
                         <div className="form-group">
-                            <label className="form-label">フリガナ{requiredMark}</label>
+                            <label className="form-label">フリガナ</label>
                             <input className="form-input" value={form.full_name_kana}
                                 onChange={e => setForm({...form, full_name_kana: e.target.value})}
                                 onBlur={() => handleBlur('full_name_kana')}
@@ -374,7 +373,7 @@ export default function ProfilePage() {
                             {fieldErrors.full_name_kana && <div style={errorStyle}>{fieldErrors.full_name_kana}</div>}
                         </div>
                         <div className="form-group">
-                            <label className="form-label">生年月日{requiredMark}</label>
+                            <label className="form-label">生年月日</label>
                             <input type="date" className="form-input" value={form.birth_date}
                                 onChange={e => setForm({...form, birth_date: e.target.value})}
                                 onBlur={() => handleBlur('birth_date')}
@@ -391,7 +390,7 @@ export default function ProfilePage() {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">電話番号{requiredMark}</label>
+                            <label className="form-label">電話番号</label>
                             <input className="form-input" value={form.phone}
                                 onChange={e => setForm({...form, phone: formatPhone(e.target.value)})}
                                 onBlur={() => handleBlur('phone')}
