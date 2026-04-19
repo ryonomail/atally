@@ -51,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // 本番: 詳細を隠す / 開発: 詳細を表示
-            if (app()->isProduction()) {
+            if (app()->isProduction() && !config('app.debug')) {
                 return response()->json([
                     'message' => 'サーバーエラーが発生しました。しばらくしてから再度お試しください。',
                 ], 500);
