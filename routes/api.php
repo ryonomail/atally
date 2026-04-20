@@ -25,14 +25,19 @@ use App\Http\Controllers\InAppNotificationController;
 use Illuminate\Support\Facades\Route;
 
 /* |-------------------------------------------------------------------------- | 認証（パブリック・レート制限付き） |-------------------------------------------------------------------------- */
+// 登録・ログイン（10回/分）
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/register', [AuthController::class , 'register']);
     Route::post('/login', [AuthController::class , 'login']);
+    Route::post('/auth/exchange-code', [\App\Http\Controllers\SocialAuthController::class , 'exchangeAuthCode']);
+});
+
+// パスワードリセット・メール認証（3回/分）ブルートフォース対策
+Route::middleware('throttle:3,1')->group(function () {
     Route::post('/forgot-password', [PasswordResetController::class , 'forgotPassword']);
     Route::post('/reset-password', [PasswordResetController::class , 'resetPassword']);
     Route::post('/verify-email', [AuthController::class , 'verifyEmail']);
     Route::post('/resend-verification', [AuthController::class , 'resendVerification']);
-    Route::post('/auth/exchange-code', [\App\Http\Controllers\SocialAuthController::class , 'exchangeAuthCode']);
 });
 
 // Stripe Webhook（認証不要）
