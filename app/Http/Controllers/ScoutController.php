@@ -115,6 +115,9 @@ class ScoutController extends Controller
             ->pluck('user_id')
             ->toArray();
 
+        // N+1防止: ループ前にユーザーを一括取得
+        $targetUsers = \App\Models\User::whereIn('id', $request->user_ids)->get()->keyBy('id');
+
         DB::beginTransaction();
         try {
             foreach ($request->user_ids as $userId) {
@@ -140,7 +143,7 @@ class ScoutController extends Controller
                 ]);
 
                 // 求職者にスカウト通知メール + アプリ内通知
-                $targetUser = \App\Models\User::find($userId);
+                $targetUser = $targetUsers->get($userId);
                 if ($targetUser) {
                     $targetUser->notify(new \App\Notifications\ScoutReceivedNotification($application));
                     InAppNotification::notify(

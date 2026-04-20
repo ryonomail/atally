@@ -34,6 +34,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google_id',        // OAuth識別子は外部に漏洩させない
+        'suspension_reason', // 停止理由は管理者のみ参照（APIレスポンスから除外）
     ];
 
     protected function casts(): array

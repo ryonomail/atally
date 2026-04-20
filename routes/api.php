@@ -56,7 +56,7 @@ Route::middleware(['block.bots', 'throttle:30,1'])->get('/stats', [JobController
 Route::middleware(['block.bots', 'throttle:60,1'])->get('/companies/{company}/profile', [CompanyController::class , 'publicProfile']);
 
 /* |-------------------------------------------------------------------------- | 認証済みユーザー |-------------------------------------------------------------------------- */
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
     // 認証
     Route::post('/logout', [AuthController::class , 'logout']);
     Route::get('/me', [AuthController::class , 'me']);

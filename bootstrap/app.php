@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified.company' => \App\Http\Middleware\EnsureCompanyVerified::class,
             'active.company' => \App\Http\Middleware\EnsureCompanyActive::class,
             'block.bots' => \App\Http\Middleware\BlockSuspiciousRequests::class,
+            'check.suspended' => \App\Http\Middleware\CheckSuspended::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

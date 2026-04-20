@@ -11,6 +11,12 @@ class Company extends Model
 {
     use HasFactory;
 
+    protected $hidden = [
+        'stripe_customer_id',
+        'stripe_subscription_id',
+        'license_document_path',
+    ];
+
     protected $fillable = [
         'user_id',
         'company_name',
