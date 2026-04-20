@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\TeamInvitationMail;
 use App\Models\User;
 use App\Models\CompanyInvitation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 
@@ -121,10 +124,20 @@ class TeamController extends Controller
 
         $invitation->delete();
 
+        // 仮パスワードをメールで送信（APIレスポンスには含めない）
+        try {
+            Mail::to($newUser->email)->send(new TeamInvitationMail(
+                companyName: $company->company_name,
+                temporaryPassword: $tempPassword,
+                loginUrl: config('app.url') . '/login',
+            ));
+        } catch (\Exception $e) {
+            Log::error('TeamInvitationMail send error', ['error' => $e->getMessage()]);
+        }
+
         return response()->json([
-            'message' => 'チームメンバーを追加しました。',
+            'message' => 'チームメンバーを追加しました。ログイン情報をメールで送信しました。',
             'member' => $newUser->only(['id', 'name', 'email', 'company_role', 'created_at']),
-            'temporary_password' => $tempPassword,
             'added_directly' => true,
         ], 201);
     }
