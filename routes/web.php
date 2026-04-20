@@ -99,6 +99,68 @@ Route::get('/companies/{id}', function ($id) {
     return view('app', compact('seo'));
 })->where('id', '[0-9]+');
 
+// 動的サイトマップ（静的ファイルの代わりに常に最新データを返す）
+Route::get('/sitemap.xml', function () {
+    $baseUrl = config('app.url');
+
+    $staticUrls = [
+        ['loc' => $baseUrl . '/',                 'changefreq' => 'daily',   'priority' => '1.0'],
+        ['loc' => $baseUrl . '/jobs',             'changefreq' => 'hourly',  'priority' => '0.9'],
+        ['loc' => $baseUrl . '/register',         'changefreq' => 'monthly', 'priority' => '0.6'],
+        ['loc' => $baseUrl . '/login',            'changefreq' => 'monthly', 'priority' => '0.5'],
+        ['loc' => $baseUrl . '/resumes/guest',    'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => $baseUrl . '/terms',            'changefreq' => 'yearly',  'priority' => '0.3'],
+        ['loc' => $baseUrl . '/privacy',          'changefreq' => 'yearly',  'priority' => '0.3'],
+    ];
+
+    $jobs = \App\Models\Job::where('status', 'active')
+        ->select('id', 'updated_at')
+        ->orderByDesc('updated_at')
+        ->limit(1000)
+        ->get();
+
+    $companies = \App\Models\Company::where('verification_status', 'approved')
+        ->select('id', 'updated_at')
+        ->orderByDesc('updated_at')
+        ->limit(200)
+        ->get();
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+    foreach ($staticUrls as $url) {
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>{$url['loc']}</loc>\n";
+        $xml .= "    <changefreq>{$url['changefreq']}</changefreq>\n";
+        $xml .= "    <priority>{$url['priority']}</priority>\n";
+        $xml .= "  </url>\n";
+    }
+
+    foreach ($jobs as $job) {
+        $lastmod = $job->updated_at?->toAtomString();
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>{$baseUrl}/jobs/{$job->id}</loc>\n";
+        if ($lastmod) $xml .= "    <lastmod>{$lastmod}</lastmod>\n";
+        $xml .= "    <changefreq>daily</changefreq>\n";
+        $xml .= "    <priority>0.8</priority>\n";
+        $xml .= "  </url>\n";
+    }
+
+    foreach ($companies as $company) {
+        $lastmod = $company->updated_at?->toAtomString();
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>{$baseUrl}/companies/{$company->id}</loc>\n";
+        if ($lastmod) $xml .= "    <lastmod>{$lastmod}</lastmod>\n";
+        $xml .= "    <changefreq>weekly</changefreq>\n";
+        $xml .= "    <priority>0.6</priority>\n";
+        $xml .= "  </url>\n";
+    }
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
+});
+
 // SPA catch-all (must be last)
 Route::get('/{any?}', function () {
     return view('app');
