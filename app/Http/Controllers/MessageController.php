@@ -171,7 +171,16 @@ class MessageController extends Controller
             abort(404, '添付ファイルがありません。');
         }
 
-        return Storage::disk('public')->download(
+        // パストラバーサル対策: 添付ファイルが許可ディレクトリ内にあることを確認
+        $disk = Storage::disk('public');
+        $allowedBase = realpath($disk->path('message_attachments'));
+        $filePath    = realpath($disk->path($message->attachment_path));
+
+        if (!$filePath || !$allowedBase || !str_starts_with($filePath, $allowedBase . DIRECTORY_SEPARATOR)) {
+            abort(403, '不正なファイルパスです。');
+        }
+
+        return $disk->download(
             $message->attachment_path,
             $message->attachment_name
         );

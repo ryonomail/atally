@@ -61,15 +61,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class , 'logout']);
     Route::get('/me', [AuthController::class , 'me']);
 
-    // 通報（全ユーザー共通）
-    Route::post('/reports', [ReportController::class , 'store']);
+    // 通報（スパム防止: 5回/分）
+    Route::middleware('throttle:5,1')->post('/reports', [ReportController::class , 'store']);
 
     // 設定（全認証ユーザー共通）
     Route::put('/settings/password', [SettingsController::class , 'updatePassword']);
     Route::get('/settings/notifications', [SettingsController::class , 'getNotifications']);
     Route::put('/settings/notifications', [SettingsController::class , 'updateNotifications']);
-    Route::get('/settings/export-data', [SettingsController::class , 'exportData']);
-    Route::post('/settings/deactivate', [SettingsController::class , 'deactivate']);
+    // 個人データエクスポート（1時間に2回まで）
+    Route::middleware('throttle:2,60')->get('/settings/export-data', [SettingsController::class , 'exportData']);
+    // 退会（5分に1回まで）
+    Route::middleware('throttle:3,5')->post('/settings/deactivate', [SettingsController::class , 'deactivate']);
 
     // アプリ内通知（一括既読はレート制限付き）
     Route::get('/notifications', [InAppNotificationController::class, 'index']);
@@ -193,14 +195,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
                     // 求人複製・エクスポート
                     Route::post('/jobs/{job}/duplicate', [JobController::class , 'duplicate']);
-                    Route::get('/jobs-export-csv', [JobController::class , 'exportCsv']);
+                    // CSVエクスポート（個人情報含む: 1時間に10回まで）
+                    Route::middleware('throttle:10,60')->get('/jobs-export-csv', [JobController::class , 'exportCsv']);
 
                     // 求人削除
                     Route::delete('/jobs/{job}', [JobController::class , 'destroy']);
 
                     // 応募管理
                     Route::get('/jobs/{job}/applications', [ApplicationController::class , 'jobApplications']);
-                    Route::get('/jobs/{job}/applications-csv', [ApplicationController::class , 'exportApplicationsCsv']);
+                    // 応募者CSV（個人情報含む: 1時間に10回まで）
+                    Route::middleware('throttle:10,60')->get('/jobs/{job}/applications-csv', [ApplicationController::class , 'exportApplicationsCsv']);
 
                     // エージェント機能
                     Route::post('/agency/license', [AgencyController::class , 'uploadLicense']);

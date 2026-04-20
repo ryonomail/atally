@@ -416,7 +416,22 @@ class AgencyController extends Controller
         ]);
 
         $file = $request->file('file');
-        $rows = array_map('str_getcsv', file($file->getRealPath()));
+
+        // file() はファイル全体をメモリに読み込むため fgetcsv() ストリームで代替
+        $handle = fopen($file->getRealPath(), 'r');
+        if ($handle === false) {
+            return response()->json(['message' => 'CSVファイルの読み込みに失敗しました。'], 422);
+        }
+
+        $rows = [];
+        while (($row = fgetcsv($handle)) !== false) {
+            $rows[] = $row;
+            if (count($rows) > 102) { // ヘッダー + 100件 + 余裕分
+                fclose($handle);
+                return response()->json(['message' => '一括アップロードは100件までです'], 422);
+            }
+        }
+        fclose($handle);
 
         if (count($rows) < 2) {
             return response()->json(['message' => 'CSVにデータ行がありません'], 422);

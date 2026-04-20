@@ -81,6 +81,14 @@ class SettingsController extends Controller
     public function exportData(Request $request)
     {
         $user = $request->user();
+
+        // 個人データ取得操作を監査ログに記録
+        \App\Models\AdminAuditLog::logSystem(
+            'user_data_export',
+            'User',
+            $user->id,
+            "Personal data exported by user #{$user->id} ({$user->email})"
+        );
         $profile = $user->profile;
 
         $data = [
@@ -143,17 +151,36 @@ class SettingsController extends Controller
 
     /**
      * アカウント退会（ソフト退会：データは残す）
+     * パスワード設定済みユーザーは現在のパスワードによる再認証が必要
      */
     public function deactivate(Request $request)
     {
-        $request->validate([
-            'reason' => ['nullable', 'string', 'max:500'],
-        ]);
-
         $user = $request->user();
 
         if ($user->role === 'admin') {
             return response()->json(['message' => '管理者アカウントは退会できません。'], 422);
+        }
+
+        // パスワード設定済みユーザーは再認証を要求
+        // Google認証専用ユーザー（passwordがnull）は確認不要
+        if ($user->password !== null) {
+            $request->validate([
+                'password' => ['required', 'string'],
+                'reason' => ['nullable', 'string', 'max:500'],
+            ], [
+                'password.required' => 'パスワードを入力してください。',
+            ]);
+
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'message' => 'パスワードが正しくありません。',
+                    'errors' => ['password' => ['パスワードが正しくありません。']],
+                ], 422);
+            }
+        } else {
+            $request->validate([
+                'reason' => ['nullable', 'string', 'max:500'],
+            ]);
         }
 
         $user->update(['deactivated_at' => now()]);
