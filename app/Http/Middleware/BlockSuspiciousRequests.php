@@ -86,13 +86,7 @@ class BlockSuspiciousRequests
             ], 429);
         }
 
-        $response = $next($request);
-
-        // セキュリティヘッダー追加
-        $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-
-        return $response;
+        return $next($request);
     }
 
     private function isBlockedUserAgent(string $userAgent): bool

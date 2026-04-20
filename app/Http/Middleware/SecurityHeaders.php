@@ -23,11 +23,11 @@ class SecurityHeaders
         // Stripe Elements は js.stripe.com から iframe を読み込むため frame-src に許可
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' https://js.stripe.com",
-            "style-src 'self' 'unsafe-inline'",
+            "script-src 'self' https://js.stripe.com https://client.crisp.chat",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: https:",
-            "font-src 'self' data:",
-            "connect-src 'self' https://api.stripe.com https://stripe.com",
+            "font-src 'self' data: https://fonts.gstatic.com",
+            "connect-src 'self' https://api.stripe.com https://stripe.com wss://client.relay.crisp.chat",
             "frame-src 'self' https://js.stripe.com",
             "base-uri 'self'",
             "form-action 'self'",
