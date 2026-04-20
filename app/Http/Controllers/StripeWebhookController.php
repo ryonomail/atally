@@ -9,6 +9,7 @@ use App\Models\Job;
 use App\Services\PaymentPenaltyService;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -50,10 +51,19 @@ class StripeWebhookController extends Controller
             return response()->json(['error' => 'Invalid payload'], 400);
         }
 
+        // 冪等性チェック: 同一イベントの二重処理を防ぐ
+        $eventId = $event->id;
+        $cacheKey = "stripe_webhook_processed:{$eventId}";
+        if (Cache::has($cacheKey)) {
+            Log::info("Stripe webhook already processed (skipped): {$eventId}");
+            return response()->json(['status' => 'already_processed']);
+        }
+        Cache::put($cacheKey, true, now()->addHours(24));
+
         $type = $event->type;
 
         Log::info("Stripe webhook received: {$type}", [
-            'event_id' => $event->id,
+            'event_id' => $eventId,
         ]);
 
         switch ($type) {
