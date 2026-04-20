@@ -177,7 +177,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
 
                     // スカウト（候補者全検索は制限付き、一括送信は厳格に制限）
                     Route::middleware('throttle:30,1')->get('/scout/search', [ScoutController::class , 'search']);
-                    Route::post('/scout', [ApplicationController::class , 'scout']);
+                    Route::middleware('throttle:20,1')->post('/scout', [ApplicationController::class , 'scout']);
                     Route::middleware('throttle:5,1')->post('/scout/bulk', [ScoutController::class , 'bulkScout']);
 
                     // 順位シミュレーター

@@ -170,6 +170,14 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'スカウトを送るには、対象の求人がアクティブ（掲載中）である必要があります。'], 403);
         }
 
+        // スカウト受信を許可していない求職者への送信を禁止（プライバシー保護）
+        $scoutEnabled = \App\Models\UserProfile::where('user_id', $request->user_id)
+            ->whereHas('resumes', fn($q) => $q->where('scout_enabled', true))
+            ->exists();
+        if (!$scoutEnabled) {
+            return response()->json(['message' => 'このユーザーはスカウト受信を無効にしています。'], 422);
+        }
+
         // 初期段階ではスナップショットは空、受諾後に埋める
         $application = Application::create([
             'job_id' => $job->id,

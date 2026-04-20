@@ -96,7 +96,7 @@ class AuthController extends Controller
 
         if ($user->suspended_at) {
             return response()->json([
-                'message' => 'このアカウントは停止されています。理由: ' . ($user->suspension_reason ?? '不明'),
+                'message' => 'このアカウントは停止されています。詳細はサポートまでお問い合わせください。',
             ], 403);
         }
 

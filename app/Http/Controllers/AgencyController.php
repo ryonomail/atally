@@ -505,9 +505,29 @@ class AgencyController extends Controller
                 continue;
             }
 
-            // 数値・型変換
-            if (isset($filtered['salary_min'])) $filtered['salary_min'] = (int) $filtered['salary_min'] ?: null;
-            if (isset($filtered['salary_max'])) $filtered['salary_max'] = (int) $filtered['salary_max'] ?: null;
+            // 数値・型変換（負の給与や非現実的な値を拒否）
+            if (isset($filtered['salary_min'])) {
+                $val = (int) $filtered['salary_min'];
+                if ($filtered['salary_min'] !== '' && ($val < 0 || $val > 999999999)) {
+                    $errors[] = "行{$lineNum}: salary_min は 0〜999,999,999 の範囲で入力してください";
+                    continue;
+                }
+                $filtered['salary_min'] = $val ?: null;
+            }
+            if (isset($filtered['salary_max'])) {
+                $val = (int) $filtered['salary_max'];
+                if ($filtered['salary_max'] !== '' && ($val < 0 || $val > 999999999)) {
+                    $errors[] = "行{$lineNum}: salary_max は 0〜999,999,999 の範囲で入力してください";
+                    continue;
+                }
+                $filtered['salary_max'] = $val ?: null;
+            }
+            if (isset($filtered['salary_min'], $filtered['salary_max'])
+                && $filtered['salary_min'] && $filtered['salary_max']
+                && $filtered['salary_min'] > $filtered['salary_max']) {
+                $errors[] = "行{$lineNum}: salary_min は salary_max 以下にしてください";
+                continue;
+            }
             if (isset($filtered['referral_fee'])) $filtered['referral_fee'] = (float) $filtered['referral_fee'] ?: null;
             if (isset($filtered['allow_referral'])) $filtered['allow_referral'] = in_array(strtolower(trim($filtered['allow_referral'])), ['1', 'true', 'yes', 'はい', 'o']);
 
