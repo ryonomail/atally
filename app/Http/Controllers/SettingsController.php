@@ -33,8 +33,12 @@ class SettingsController extends Controller
             'password' => Hash::make($validated['new_password']),
         ]);
 
+        // セキュリティ: パスワード変更時は全トークンを無効化（窃取済みトークンを無力化）
+        // 現在のリクエストのトークンも含めて全削除し、再ログインを要求
+        $user->tokens()->delete();
+
         return response()->json([
-            'message' => 'パスワードを変更しました。',
+            'message' => 'パスワードを変更しました。再度ログインしてください。',
         ]);
     }
 
