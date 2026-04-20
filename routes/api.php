@@ -71,12 +71,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/settings/export-data', [SettingsController::class , 'exportData']);
     Route::post('/settings/deactivate', [SettingsController::class , 'deactivate']);
 
-    // アプリ内通知
+    // アプリ内通知（一括既読はレート制限付き）
     Route::get('/notifications', [InAppNotificationController::class, 'index']);
     Route::get('/notifications/unread-count', [InAppNotificationController::class, 'unreadCount']);
     Route::get('/notifications/recent', [InAppNotificationController::class, 'recent']);
-    Route::put('/notifications/{notification}/read', [InAppNotificationController::class, 'markAsRead']);
-    Route::put('/notifications/read-all', [InAppNotificationController::class, 'markAllAsRead']);
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::put('/notifications/{notification}/read', [InAppNotificationController::class, 'markAsRead']);
+        Route::put('/notifications/read-all', [InAppNotificationController::class, 'markAllAsRead']);
+    });
 
     // メッセージ
     Route::get('/messages/unread-count', [MessageController::class , 'unreadCount']);

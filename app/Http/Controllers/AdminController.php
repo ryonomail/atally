@@ -17,6 +17,14 @@ use Illuminate\Support\Facades\DB;
 class AdminController extends Controller
 {
     /**
+     * 防御的 middleware 宣言（ルート設定ミス時のフォールバック）
+     */
+    public function __construct()
+    {
+        $this->middleware(['auth:sanctum', 'role:admin']);
+    }
+
+    /**
      * ダッシュボード統計
      */
     public function dashboard()
@@ -300,20 +308,23 @@ class AdminController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
+        // ログインジェクション対策: 改行文字を除去
+        $reason = str_replace(["\r\n", "\r", "\n"], ' ', $request->reason);
+
         $user->update([
             'suspended_at' => now(),
-            'suspension_reason' => $request->reason,
+            'suspension_reason' => $reason,
         ]);
 
         InAppNotification::notify(
             $user->id,
             'system',
             'アカウントが停止されました',
-            $request->reason,
+            $reason,
             null
         );
 
-        AdminAuditLog::log(auth()->id(), 'user.suspend', 'user', $user->id, $request->reason);
+        AdminAuditLog::log(auth()->id(), 'user.suspend', 'user', $user->id, $reason);
 
         return response()->json(['message' => 'ユーザーを停止しました。', 'user' => $user->fresh()]);
     }
@@ -421,19 +432,29 @@ class AdminController extends Controller
             ->orderByDesc('created_at');
 
         if ($request->filled('action')) {
-            $query->where('action', 'like', $request->action . '%');
+            // ホワイトリストによるフィルター（SQLインジェクション・情報漏洩対策）
+            $allowedPrefixes = ['user.', 'company.', 'job.', 'report.', 'license.', 'settings.', 'stripe_', 'payment_'];
+            $action = $request->action;
+            $isAllowed = collect($allowedPrefixes)->contains(fn($p) => str_starts_with($action, $p));
+            if ($isAllowed) {
+                $query->where('action', 'like', $action . '%');
+            }
         }
 
         $result = $query->paginate(50);
 
         // Resolve target names for display
         $result->getCollection()->transform(function ($log) {
-            $log->target_name = match ($log->target_type) {
+            $raw = match ($log->target_type) {
                 'company' => \App\Models\Company::find($log->target_id)?->company_name,
                 'job' => \App\Models\Job::find($log->target_id)?->title,
                 'user' => User::find($log->target_id)?->name,
                 default => null,
             };
+            // XSS対策: HTMLエスケープしてからセット
+            $log->target_name = $raw !== null
+                ? htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                : null;
             return $log;
         });
 
@@ -479,19 +500,34 @@ class AdminController extends Controller
      */
     public function updateSettings(Request $request)
     {
+        // 更新可能なキーのホワイトリスト（任意キーの書き込みを防止）
+        $allowedKeys = [
+            'site_name',
+            'maintenance_mode',
+            'max_jobs_per_company',
+            'auto_approve_companies',
+            'default_job_expiry_days',
+            'support_email',
+        ];
+
         $validated = $request->validate([
             'settings' => 'required|array',
             'settings.*' => 'string|max:1000',
         ]);
 
+        $updated = [];
         foreach ($validated['settings'] as $key => $value) {
+            if (!in_array($key, $allowedKeys, true)) {
+                return response()->json(['message' => "設定キー '{$key}' は変更できません。"], 422);
+            }
             DB::table('settings')->updateOrInsert(
                 ['key' => $key],
                 ['value' => $value, 'updated_at' => now()]
             );
+            $updated[] = $key;
         }
 
-        AdminAuditLog::log(auth()->id(), 'settings.update', null, null, json_encode(array_keys($validated['settings'])));
+        AdminAuditLog::log(auth()->id(), 'settings.update', null, null, json_encode($updated));
 
         return response()->json(['message' => '設定を保存しました。']);
     }

@@ -28,7 +28,7 @@ class CompanyController extends Controller
             'website' => ['sometimes', 'url', 'max:255'],
             'phone' => ['sometimes', 'string', 'max:20'],
             'address' => ['sometimes', 'string', 'max:500'],
-            'permit_number' => ['required_if:company_type,recruitment_agency', 'string', 'max:50'],
+            'permit_number' => ['required_if:company_type,recruitment_agency', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
         ]);
 
         $company = Company::create(array_merge($validated, [
@@ -82,7 +82,7 @@ class CompanyController extends Controller
             'website' => ['sometimes', 'url', 'max:255'],
             'phone' => ['sometimes', 'string', 'max:20'],
             'address' => ['sometimes', 'string', 'max:500'],
-            'permit_number' => ['sometimes', 'string', 'max:50'],
+            'permit_number' => ['sometimes', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
             'industry' => ['sometimes', 'nullable', 'string', 'max:100'],
             'number_of_employees' => ['sometimes', 'nullable', 'string', 'max:50'],
             'founded_year' => ['sometimes', 'nullable', 'string', 'max:20'],
