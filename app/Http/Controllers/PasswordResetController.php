@@ -18,28 +18,30 @@ class PasswordResetController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
-        ], [
-            'email.exists' => 'このメールアドレスは登録されていません。',
+            'email' => ['required', 'email'],
         ]);
 
-        // 6桁のランダムコードを生成
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // メールアドレスの存在有無に関わらず同じレスポンスを返す（列挙攻撃対策）
+        $user = User::where('email', $request->email)->first();
 
-        // password_reset_tokensテーブルに保存（既存レコードは上書き）
-        DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $request->email],
-            [
-                'token' => Hash::make($code),
-                'created_at' => Carbon::now(),
-            ]
-        );
+        if ($user) {
+            // 6桁のランダムコードを生成
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // メール送信
-        Mail::to($request->email)->queue(new PasswordResetCode($code));
+            // password_reset_tokensテーブルに保存（既存レコードは上書き）
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $request->email],
+                [
+                    'token' => Hash::make($code),
+                    'created_at' => Carbon::now(),
+                ]
+            );
+
+            Mail::to($request->email)->queue(new PasswordResetCode($code));
+        }
 
         return response()->json([
-            'message' => 'パスワードリセットコードを送信しました。メールをご確認ください。',
+            'message' => '登録済みのメールアドレスの場合、リセットコードを送信しました。',
         ]);
     }
 
@@ -49,24 +51,23 @@ class PasswordResetController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email'],
             'code' => ['required', 'string', 'size:6'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
-            'email.exists' => 'このメールアドレスは登録されていません。',
             'code.size' => 'コードは6桁で入力してください。',
             'password.min' => 'パスワードは8文字以上で入力してください。',
             'password.confirmed' => 'パスワードが一致しません。',
         ]);
 
-        // トークンを検索
+        // トークンを検索（メールアドレスの存在有無を明かさない汎用メッセージを返す）
         $record = DB::table('password_reset_tokens')
             ->where('email', $request->email)
             ->first();
 
         if (!$record) {
             return response()->json([
-                'message' => 'パスワードリセットコードが見つかりません。再度コードを送信してください。',
+                'message' => 'コードが正しくないか、有効期限が切れています。再度コードを送信してください。',
             ], 422);
         }
 
