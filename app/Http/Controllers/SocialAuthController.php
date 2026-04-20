@@ -15,11 +15,17 @@ class SocialAuthController extends Controller
     /**
      * Google認証ページへリダイレクト
      * ?role=jobseeker or ?role=company を受け取りstateに埋め込む
+     * CSRF対策: ランダムnonceをRedisに保存し、stateに含める
      */
     public function redirectToGoogle(Request $request)
     {
         $role = in_array($request->query('role'), ['jobseeker', 'company']) ? $request->query('role') : 'jobseeker';
-        return Socialite::driver('google')->stateless()->with(['state' => $role])->redirect();
+
+        // ランダムnonceを生成してRedisに保存（10分有効・使い捨て）
+        $nonce = Str::random(40);
+        Cache::put("oauth_state:{$nonce}", $role, 600);
+
+        return Socialite::driver('google')->stateless()->with(['state' => $nonce])->redirect();
     }
 
     /**
@@ -28,15 +34,19 @@ class SocialAuthController extends Controller
      */
     public function handleGoogleCallback()
     {
+        // CSRF対策: stateに含まれるnonceをRedisで検証（取得と同時に削除）
+        $nonce = request()->query('state', '');
+        $role = Cache::pull("oauth_state:{$nonce}");
+
+        if (!$role) {
+            return redirect('/?auth_error=' . urlencode('認証セッションが無効です。もう一度お試しください。'));
+        }
+
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
             return redirect('/?auth_error=' . urlencode('Google認証に失敗しました。'));
         }
-
-        // stateからroleを取得（新規登録時のみ使用）
-        $role = request()->query('state');
-        $role = in_array($role, ['jobseeker', 'company']) ? $role : 'jobseeker';
 
         // 既存ユーザーをgoogle_idまたはメールで検索
         $user = User::where('google_id', $googleUser->getId())->first();
