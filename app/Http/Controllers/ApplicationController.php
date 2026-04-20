@@ -245,9 +245,23 @@ class ApplicationController extends Controller
 
         $request->validate($rules);
 
-        // 企業・求職者のどちらが操作しているのか簡易チェック
+        // 企業・求職者のどちらが操作しているのか + 所有権チェック
         $user = Auth::user();
-        if ($user->role === 'jobseeker' && !in_array($request->status, ['withdrawn', 'accepted'])) {
+
+        if ($user->role->value === 'jobseeker') {
+            // 求職者: 自分の応募のみ、かつ辞退・承諾のみ許可
+            if ($application->user_id !== $user->id) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+            if (!in_array($request->status, ['withdrawn', 'accepted'])) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        } elseif ($user->role->value === 'company') {
+            // 企業: 自社の求人に紐づく応募のみ
+            if ($application->job->company_id !== $user->company_id) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        } elseif ($user->role->value !== 'admin') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
