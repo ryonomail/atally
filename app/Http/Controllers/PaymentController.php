@@ -97,6 +97,11 @@ class PaymentController extends Controller
      */
     public function getPaymentMethod(Request $request)
     {
+        // カード情報はオーナーのみ参照可能
+        if ($request->user()->company_role !== 'owner') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $company = $request->user()->company;
 
         if (!$company || !$company->stripe_customer_id) {
@@ -148,6 +153,11 @@ class PaymentController extends Controller
      */
     public function deletePaymentMethod(Request $request)
     {
+        // カード削除はオーナーのみ可能
+        if ($request->user()->company_role !== 'owner') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $company = $request->user()->company;
 
         if (!$company || !$company->stripe_customer_id) {
