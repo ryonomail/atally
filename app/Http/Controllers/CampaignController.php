@@ -164,6 +164,9 @@ class CampaignController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
+        // lockForUpdate はトランザクション内でのみ有効
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $campaign, $company) {
+
         $request->validate([
             'name' => 'sometimes|required|string|max:100',
             'daily_budget' => 'sometimes|required|numeric|min:500|max:9999999',
@@ -173,6 +176,16 @@ class CampaignController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
+
+        // 二重課金防止: 悲観ロックで再取得し最新ステータスを確認
+        $campaign = \App\Models\Campaign::where('id', $campaign->id)
+            ->where('company_id', $company->id)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$campaign) {
+            return response()->json(['message' => 'キャンペーンが見つかりません。'], 404);
+        }
 
         $oldBudget = (float) $campaign->daily_budget;
 
@@ -228,6 +241,8 @@ class CampaignController extends Controller
         $campaign->actual_daily_spend = $campaign->activeJobs()->sum('daily_budget');
 
         return response()->json($campaign);
+
+        }); // end DB::transaction
     }
 
     // 予算グループ削除

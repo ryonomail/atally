@@ -40,8 +40,8 @@ Route::middleware('throttle:3,1')->group(function () {
     Route::post('/resend-verification', [AuthController::class , 'resendVerification']);
 });
 
-// Stripe Webhook（認証不要）
-Route::post('/webhook/stripe', [StripeWebhookController::class , 'handle']);
+// Stripe Webhook（認証不要・署名検証で保護・レート制限でDDoS対策）
+Route::middleware('throttle:120,1')->post('/webhook/stripe', [StripeWebhookController::class , 'handle']);
 
 /* |-------------------------------------------------------------------------- | 求人検索（パブリック・レート制限+ボット対策付き） |-------------------------------------------------------------------------- */
 Route::middleware(['block.bots', 'throttle:60,1'])->group(function () {
@@ -175,10 +175,10 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::delete('/campaigns/{campaign}/jobs', [CampaignController::class , 'removeJobs']);
                     Route::post('/campaigns/{campaign}/redistribute', [CampaignController::class , 'redistribute']);
 
-                    // スカウト
-                    Route::get('/scout/search', [ScoutController::class , 'search']);
+                    // スカウト（候補者全検索は制限付き、一括送信は厳格に制限）
+                    Route::middleware('throttle:30,1')->get('/scout/search', [ScoutController::class , 'search']);
                     Route::post('/scout', [ApplicationController::class , 'scout']);
-                    Route::post('/scout/bulk', [ScoutController::class , 'bulkScout']);
+                    Route::middleware('throttle:5,1')->post('/scout/bulk', [ScoutController::class , 'bulkScout']);
 
                     // 順位シミュレーター
                     Route::post('/ranking/simulate', [JobController::class , 'simulateRanking']);

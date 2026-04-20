@@ -57,7 +57,7 @@ class MessageController extends Controller
         $data = [
             'application_id' => $application->id,
             'sender_id' => $request->user()->id,
-            'body' => $validated['body'],
+            'body' => strip_tags($validated['body']),
         ];
 
         if ($request->hasFile('attachment')) {

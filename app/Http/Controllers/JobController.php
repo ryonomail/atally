@@ -27,8 +27,10 @@ class JobController extends Controller
             ->whereIn('jobs.status', ['active', 'suspended']);
 
         if ($request->filled('keyword')) {
-            $terms = preg_split('/[・\/\s　]+/u', $request->keyword);
-            $terms = array_filter($terms, fn($t) => mb_strlen($t) > 0);
+            // ReDoS対策: キーワード長と分割数を制限
+            $keyword = mb_substr($request->keyword, 0, 200);
+            $terms = preg_split('/[・\/\s　]+/u', $keyword, 51, PREG_SPLIT_NO_EMPTY);
+            $terms = array_slice(array_filter($terms, fn($t) => mb_strlen($t) > 0), 0, 50);
 
             if (count($terms) > 0) {
                 $query->where(function ($q) use ($terms) {
@@ -1169,6 +1171,13 @@ class JobController extends Controller
         $company = Auth::user()->company;
         if ($job->company_id !== $company->id) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // 公開中の求人は削除不可（課金逃れ防止）
+        if ($job->status->value === 'active') {
+            return response()->json([
+                'message' => '公開中の求人は削除できません。先に「停止」または「終了」にしてから削除してください。',
+            ], 422);
         }
 
         // 課金保護: 削除前の予算を記録

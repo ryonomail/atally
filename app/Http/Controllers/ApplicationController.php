@@ -99,6 +99,15 @@ class ApplicationController extends Controller
 
         $user = Auth::user();
 
+        // 重複応募チェック（DBユニーク制約に到達する前に明示的なエラーを返す）
+        $alreadyApplied = Application::where('job_id', $job->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($alreadyApplied) {
+            return response()->json(['message' => 'この求人にはすでに応募済みです。'], 422);
+        }
+
         // 履歴書情報の凍結
         $resume = Resume::where('id', $request->resume_id)
             ->where('user_id', $user->id)
