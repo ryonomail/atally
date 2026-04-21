@@ -111,6 +111,8 @@ class Job extends Model
         'ng_targets',
         'selection_details_agent',
         'last_company_action_at',
+        'source',
+        'hellowork_id',
     ];
 
     protected function casts(): array

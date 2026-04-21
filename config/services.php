@@ -16,4 +16,10 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_CALLBACK_URL', '/auth/google/callback'),
     ],
+
+    'hellowork' => [
+        'base_url' => env('HELLOWORK_BASE_URL', ''),
+        'id'       => env('HELLOWORK_ID', ''),
+        'pass'     => env('HELLOWORK_PASS', ''),
+    ],
 ];

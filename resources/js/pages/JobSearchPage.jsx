@@ -956,6 +956,7 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                     {isApplied && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 'var(--radius-full)', background: 'rgba(16,185,129,0.15)', color: '#059669', fontWeight: 700, border: '1px solid rgba(16,185,129,0.3)' }}>応募済み</span>}
+                    {job.source === 'hellowork' && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 'var(--radius-full)', background: 'rgba(0,112,185,0.08)', color: '#0070b9', fontWeight: 600, border: '1px solid rgba(0,112,185,0.25)' }}>ハローワーク</span>}
                     {job.is_agency_job && <span className="badge badge-warning" style={{ fontSize: 10, padding: '1px 6px' }}>人材紹介</span>}
                     {job.employment_type && <span className="badge badge-info" style={{ fontSize: 10, padding: '1px 6px' }}>{job.employment_type}</span>}
                     <button onClick={e => { e.stopPropagation(); onToggleSave(); }}
@@ -1091,9 +1092,11 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
 
                 {/* バッジ */}
                 <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginTop: 'var(--space-md)' }}>
-                    {job.is_agency_job
-                        ? <span className="badge" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)' }}>🤝 エージェント求人</span>
-                        : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-primary)', border: '1px solid rgba(18,28,52,0.2)' }}>🏢 直接採用</span>
+                    {job.source === 'hellowork'
+                        ? <span className="badge" style={{ background: 'rgba(0,112,185,0.08)', color: '#0070b9', border: '1px solid rgba(0,112,185,0.25)' }}>🏢 ハローワーク掲載</span>
+                        : job.is_agency_job
+                            ? <span className="badge" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)' }}>🤝 エージェント求人</span>
+                            : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-primary)', border: '1px solid rgba(18,28,52,0.2)' }}>🏢 直接採用</span>
                     }
                     {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
                     {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}

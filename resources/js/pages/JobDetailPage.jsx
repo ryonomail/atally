@@ -514,7 +514,21 @@ export default function JobDetailPage() {
                                 ⚖️ 職業安定法準拠
                             </span>
                         </div>
-                        {user?.role === 'jobseeker' ? (
+                        {job.source === 'hellowork' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                                    padding: '6px 14px', borderRadius: 'var(--radius-full)',
+                                    background: 'rgba(0,112,185,0.08)', border: '1px solid rgba(0,112,185,0.25)',
+                                    fontSize: 'var(--font-size-xs)', color: '#0070b9', fontWeight: 600,
+                                }}>
+                                    🏢 掲載元：ハローワーク
+                                </span>
+                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                    お近くのハローワークまたは公式サイトからご応募ください
+                                </span>
+                            </div>
+                        ) : user?.role === 'jobseeker' ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
                                 {applied ? (
                                     <span className="badge badge-success" style={{ fontSize: 'var(--font-size-sm)', padding: '8px 16px' }}>
@@ -574,6 +588,16 @@ export default function JobDetailPage() {
 
                     {/* バッジ */}
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                        {job.source === 'hellowork' && (
+                            <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '3px 10px', borderRadius: 'var(--radius-full)',
+                                background: 'rgba(0,112,185,0.08)', border: '1px solid rgba(0,112,185,0.25)',
+                                fontSize: 'var(--font-size-xs)', color: '#0070b9', fontWeight: 600,
+                            }}>
+                                🏢 ハローワーク掲載
+                            </span>
+                        )}
                         {job.is_agency_job && <span className="badge badge-warning">人材紹介</span>}
                         {job.application_type && <span className="badge badge-info">{job.application_type}</span>}
                         {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
@@ -868,8 +892,8 @@ export default function JobDetailPage() {
                     </div>
                 )}
 
-                {/* 固定フッター応募ボタン（求職者・未応募時） */}
-                {user?.role === 'jobseeker' && !applied && (
+                {/* 固定フッター応募ボタン（求職者・未応募時・ハローワーク求人以外） */}
+                {user?.role === 'jobseeker' && !applied && job.source !== 'hellowork' && (
                     <div style={{
                         position: 'fixed', bottom: 0, left: 0, right: 0,
                         padding: 'var(--space-md) var(--space-xl)',
@@ -899,8 +923,8 @@ export default function JobDetailPage() {
                     </div>
                 )}
 
-                {/* ゲスト向け応募CTA */}
-                {!user && (
+                {/* ゲスト向け応募CTA（ハローワーク求人には表示しない） */}
+                {!user && job.source !== 'hellowork' && (
                     <div className="card" style={{
                         padding: 'var(--space-xl)',
                         background: 'linear-gradient(135deg, rgba(18,28,52,0.08) 0%, rgba(168,85,247,0.05) 100%)',
@@ -983,7 +1007,7 @@ export default function JobDetailPage() {
                 })()}
 
                 {/* 固定フッターの分のスペーサー */}
-                {user?.role === 'jobseeker' && !applied && <div style={{ height: 80 }} />}
+                {user?.role === 'jobseeker' && !applied && job.source !== 'hellowork' && <div style={{ height: 80 }} />}
             </div>
 
             {/* 応募モーダル */}
