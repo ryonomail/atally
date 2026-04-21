@@ -109,7 +109,17 @@ class JobController extends Controller
         // リスト用カラムのみ選択（JOINは不要: ranking_scoreで並び替え済み）
         $query->select(self::LIST_COLUMNS);
 
-        $sort = $request->input('sort', 'ranking');
+        $sort    = $request->input('sort', 'ranking');
+        $perPage = min((int) $request->input('per_page', 20), 50);
+        $page    = max(1, (int) $request->input('page', 1));
+
+        // ── フルレスポンスキャッシュ ──────────────────────────────────────────
+        // 同じ条件のリクエストは Redis から即返却（インデックスページ高速化）
+        // キャッシュキーにページ・ソート・全フィルターを含める（条件が変われば別キー）
+        $fullCacheKey = 'jobs_list_' . md5(json_encode($request->all()));
+        if ($cached = Cache::get($fullCacheKey)) {
+            return response()->json($cached);
+        }
 
         // ペルソナマッチ用プロフィール取得（ログインユーザー or ゲスト属性パラメータ）
         $profile = $this->resolveProfileForMatching($request);
@@ -121,13 +131,9 @@ class JobController extends Controller
             default       => $query->orderBy('jobs.ranking_score', 'desc'),
         };
 
-        $perPage = min((int) $request->input('per_page', 20), 50);
-        $page    = max(1, (int) $request->input('page', 1));
-
-        // COUNT(*) を Redis にキャッシュ（270k件でも paginate() は毎回フルカウントするため）
-        // フィルター条件が変わったら別キーになるので 5分 TTL で十分
-        $cacheKey = 'jobs_count_' . md5(json_encode($request->except(['page', 'per_page', 'sort'])));
-        $total    = Cache::remember($cacheKey, 300, fn() => (clone $query)->count());
+        // COUNT(*) を Redis にキャッシュ（270k件でも毎回フルカウントを避ける）
+        $countCacheKey = 'jobs_count_' . md5(json_encode($request->except(['page', 'per_page', 'sort'])));
+        $total         = Cache::remember($countCacheKey, 300, fn() => (clone $query)->count());
 
         $items  = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
         $result = new LengthAwarePaginator(
@@ -148,8 +154,6 @@ class JobController extends Controller
             });
 
             $sorted = $items->sortByDesc(function ($job) {
-                // ranking_scoreを大きな桁に、ペルソナマッチを小さな桁に配置
-                // → ranking_scoreが同じ場合のみペルソナマッチが順位に影響
                 return ($job->ranking_score ?? 0) * 10000 + ($job->persona_match ?? 0);
             })->values();
 
@@ -160,20 +164,24 @@ class JobController extends Controller
         $result->getCollection()->transform(function ($job) {
             $job->setAttribute('is_agency_job', $job->company && $job->company->company_type === 'recruitment_agency');
 
-            // 放置ラベル: 60日以上アクションなしの求人に警告表示
             $lastAction = $job->last_company_action_at;
             $job->setAttribute('slow_response_warning',
                 $lastAction && Carbon::parse($lastAction)->lt(Carbon::now()->subDays(60))
             );
 
-            // パブリックAPIではエージェント限定フィールドを非公開
             foreach (Job::AGENT_ONLY_FIELDS as $field) {
                 unset($job[$field]);
             }
             return $job;
         });
 
-        return response()->json($result);
+        $responseData = $result->toArray();
+
+        // フルレスポンスを 45秒キャッシュ（求人データの鮮度と速度のバランス）
+        // 45秒: キャッシュ切れで新しいデータが反映されるまでの最大待ち時間
+        Cache::put($fullCacheKey, $responseData, 45);
+
+        return response()->json($responseData);
     }
 
     /**

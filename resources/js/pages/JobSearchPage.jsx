@@ -1342,16 +1342,28 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 )}
 
                 {/* 選考情報 */}
-                {(job.selection_process || job.required_documents || job.estimated_timeline) && (
+                {(job.selection_process || job.required_documents || job.estimated_timeline ||
+                  job.application_type || job.positions_available) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
-                        <SectionHeader icon="📊" title="選考について" />
+                        <SectionHeader icon="📊" title="選考・採用について" />
+                        <InfoRow label="応募方法" value={job.application_type} />
+                        <InfoRow label="募集人数" value={job.positions_available ? `${job.positions_available}名` : null} />
                         {job.selection_process && (
-                            <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-sm)' }}>
+                            <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)', margin: 'var(--space-sm) 0' }}>
                                 {job.selection_process}
                             </p>
                         )}
                         <InfoRow label="必要書類" value={job.required_documents} />
                         <InfoRow label="選考期間" value={job.estimated_timeline} />
+                    </div>
+                )}
+
+                {/* 掲載情報 */}
+                {(job.published_at || job.expires_at) && (
+                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                        <SectionHeader icon="📅" title="掲載情報" />
+                        <InfoRow label="掲載開始日" value={job.published_at ? new Date(job.published_at).toLocaleDateString('ja-JP') : null} />
+                        <InfoRow label="応募締切" value={job.expires_at ? new Date(job.expires_at).toLocaleDateString('ja-JP') : null} />
                     </div>
                 )}
 
@@ -1363,19 +1375,38 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         <InfoRow label="業界" value={job.industry || job.company?.industry} />
                         <InfoRow label="従業員数" value={job.number_of_employees || job.company?.number_of_employees} />
                         <InfoRow label="設立" value={job.founded_year} />
-                        {job.company?.address && <InfoRow label="所在地" value={job.company.address} />}
+                        <InfoRow label="資本金" value={job.company?.capital} />
+                        <InfoRow label="売上高" value={job.company?.revenue} />
+                        {job.company?.address && <InfoRow label="本社所在地" value={job.company.address} />}
+                        {job.company?.phone && <InfoRow label="電話番号" value={job.company.phone} />}
                         {job.company?.website && (
-                            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', fontSize: 'var(--font-size-sm)' }}>
-                                <span style={{ color: 'var(--color-text-muted)', minWidth: 80 }}>Webサイト</span>
+                            <div style={{ display: 'flex', gap: 'var(--space-sm)', padding: 'var(--space-xs) 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                                <span style={{ flex: '0 0 110px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 600 }}>Webサイト</span>
                                 <a href={job.company.website} target="_blank" rel="noopener noreferrer"
-                                    style={{ color: 'var(--color-text-accent)', wordBreak: 'break-all' }}>
+                                    style={{ flex: 1, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-accent)', wordBreak: 'break-all' }}>
                                     {job.company.website}
                                 </a>
                             </div>
                         )}
                         {job.company?.description && (
-                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginTop: 'var(--space-xs)', whiteSpace: 'pre-wrap' }}>
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginTop: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>
                                 {job.company.description}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* 人材紹介: 紹介先クライアント企業 */}
+                {job.is_agency_job && job.client_company && (
+                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                        <SectionHeader icon="🤝" title="求人企業情報" />
+                        <InfoRow label="企業名" value={job.client_company.name} />
+                        <InfoRow label="業界" value={job.client_company.industry} />
+                        <InfoRow label="従業員数" value={job.client_company.employees} />
+                        <InfoRow label="所在地" value={job.client_company.address} />
+                        {job.client_company.description && (
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginTop: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>
+                                {job.client_company.description}
                             </p>
                         )}
                     </div>
@@ -1385,9 +1416,10 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 {job.notes && (
                     <div style={{
                         padding: 'var(--space-md)', background: 'var(--color-bg-surface)',
-                        borderRadius: 'var(--radius-md)', marginTop: 'var(--space-md)',
-                        fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', lineHeight: 1.6,
+                        borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)',
+                        fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7,
                     }}>
+                        <p style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 6 }}>備考</p>
                         {job.notes}
                     </div>
                 )}
