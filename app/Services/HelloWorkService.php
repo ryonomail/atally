@@ -323,10 +323,26 @@ class HelloWorkService
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        // PHP の curl は CA bundle を自動検出できないことがある
+        // システムの証明書バンドルを明示的に指定
+        $caBundle = '/etc/ssl/certs/ca-certificates.crt';
+        if (file_exists($caBundle)) {
+            curl_setopt($ch, CURLOPT_CAINFO, $caBundle);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
+
         $body = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
+        $code  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+
+        if ($errno) {
+            Log::error('HelloWork: curl error', ['errno' => $errno, 'error' => $error, 'url' => $url]);
+        }
 
         return [$code, (string) $body];
     }
