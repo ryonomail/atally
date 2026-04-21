@@ -16,14 +16,24 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Stripe\PaymentMethod;
 
 class JobController extends Controller
 {
     // パブリック: 求人検索
+    // リスト用に必要な列のみ取得（description等の重いテキスト列は show() で取得）
+    private const LIST_COLUMNS = [
+        'jobs.id', 'jobs.title', 'jobs.company_id', 'jobs.employment_type',
+        'jobs.location', 'jobs.salary_min', 'jobs.salary_max', 'jobs.salary_type',
+        'jobs.source', 'jobs.hellowork_id', 'jobs.feature_tags', 'jobs.remote_policy',
+        'jobs.published_at', 'jobs.ranking_score', 'jobs.daily_budget',
+        'jobs.last_company_action_at', 'jobs.status',
+    ];
+
     public function index(Request $request)
     {
-        $query = Job::with(['company', 'persona'])
+        $query = Job::with(['company:id,company_name,company_type', 'persona'])
             ->whereIn('jobs.status', ['active', 'suspended']);
 
         if ($request->filled('keyword')) {
@@ -96,9 +106,8 @@ class JobController extends Controller
             }
         }
 
-        $query->join('companies', 'jobs.company_id', '=', 'companies.id')
-            ->leftJoin('job_personas', 'jobs.id', '=', 'job_personas.job_id')
-            ->select('jobs.*');
+        // リスト用カラムのみ選択（JOINは不要: ranking_scoreで並び替え済み）
+        $query->select(self::LIST_COLUMNS);
 
         $sort = $request->input('sort', 'ranking');
 
@@ -113,7 +122,18 @@ class JobController extends Controller
         };
 
         $perPage = min((int) $request->input('per_page', 20), 50);
-        $result = $query->paginate($perPage);
+        $page    = max(1, (int) $request->input('page', 1));
+
+        // COUNT(*) を Redis にキャッシュ（270k件でも paginate() は毎回フルカウントするため）
+        // フィルター条件が変わったら別キーになるので 5分 TTL で十分
+        $cacheKey = 'jobs_count_' . md5(json_encode($request->except(['page', 'per_page', 'sort'])));
+        $total    = Cache::remember($cacheKey, 300, fn() => (clone $query)->count());
+
+        $items  = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        $result = new LengthAwarePaginator(
+            $items, $total, $perPage, $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         // タイブレーク2: ペルソナマッチ度（ログインユーザー/ゲスト共通）
         // DB側でのソート後、同スコア帯内でペルソナマッチ度を加味して再ソート
