@@ -1168,14 +1168,21 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 </div>
             )}
 
-            {/* 応募ボタン */}
+            {/* 応募ボタン / ハローワーク通知 */}
             <div style={{
                 padding: 'var(--space-md) var(--space-xl)',
                 borderBottom: '1px solid var(--color-border)',
                 display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
-                background: 'rgba(16,185,129,0.03)',
+                background: job.source === 'hellowork' ? 'rgba(0,112,185,0.04)' : 'rgba(16,185,129,0.03)',
             }}>
-                {user?.role === 'jobseeker' ? (
+                {job.source === 'hellowork' ? (
+                    <span style={{
+                        fontSize: 'var(--font-size-xs)', color: '#0070b9',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                    }}>
+                        🏢 お近くのハローワークまたは公式サイトからご応募ください
+                    </span>
+                ) : user?.role === 'jobseeker' ? (
                     <button className="btn btn-primary" onClick={() => navigate(`/jobs/${job.id}`)}>
                         応募する
                     </button>
@@ -1222,6 +1229,28 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         <InfoRow label="変更の範囲" value={job.scope_of_change} />
                     )}
                 </div>
+
+                {/* ハローワーク求人の案内 */}
+                {job.source === 'hellowork' && (
+                    <div style={{
+                        padding: 'var(--space-md)',
+                        background: 'rgba(0,112,185,0.06)',
+                        border: '1px solid rgba(0,112,185,0.2)',
+                        borderRadius: 'var(--radius-md)',
+                        marginBottom: 'var(--space-xl)',
+                    }}>
+                        <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#0070b9', marginBottom: 6 }}>
+                            🏢 ハローワーク掲載求人について
+                        </p>
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>
+                            この求人はハローワーク（公共職業安定所）が提供する求人情報です。
+                            応募・詳細確認はお近くのハローワーク窓口または
+                            <a href="https://www.hellowork.mhlw.go.jp/" target="_blank" rel="noopener noreferrer"
+                                style={{ color: '#0070b9' }}>ハローワークインターネットサービス</a>
+                            からお手続きください。
+                        </p>
+                    </div>
+                )}
 
                 {/* 応募要件 */}
                 {(job.requirements || job.preferred_qualifications) && (
