@@ -39,7 +39,7 @@ class HelloWorkService
      *
      * @return array{inserted:int, updated:int, deleted:int, errors:int}
      */
-    public function sync(string $dataId = 'M100'): array
+    public function sync(string $dataId = 'M100', int $maxPages = 0): array
     {
         $token = $this->getToken();
         if (!$token) {
@@ -56,6 +56,10 @@ class HelloWorkService
             $activeIds = [];
 
             while (true) {
+                if ($maxPages > 0 && $page > $maxPages) {
+                    break;
+                }
+
                 $jobs = $this->fetchJobPage($token, $dataId, $page);
                 if (empty($jobs)) {
                     break;
@@ -80,8 +84,8 @@ class HelloWorkService
                 $page++;
             }
 
-            // APIに存在しなくなった求人を非公開に
-            if (!empty($activeIds)) {
+            // APIに存在しなくなった求人を非公開に（全件取得時のみ実行）
+            if ($maxPages === 0 && !empty($activeIds)) {
                 $deleted = Job::where('source', 'hellowork')
                     ->whereNotIn('hellowork_id', $activeIds)
                     ->where('status', 'active')
@@ -107,7 +111,10 @@ class HelloWorkService
         }
 
         try {
-            $url = "{$this->baseUrl}/auth/getToken?id={$this->apiId}&pass={$this->apiPass}";
+            $url = "{$this->baseUrl}/auth/getToken?" . http_build_query([
+                'id'   => $this->apiId,
+                'pass' => $this->apiPass,
+            ]);
             $response = Http::timeout(30)->post($url);
 
             if (!$response->successful()) {
@@ -174,7 +181,7 @@ class HelloWorkService
 
     /**
      * ハローワーク求人XMLをパースして配列に変換
-     * 仕様: APIインタフェース仕様書(マスキング版) v1.4 2026年3月
+     * 実際のXML構造: <root><kyujin><data>...</data><data>...</data></kyujin></root>
      */
     private function parseJobsXml(string $xml): array
     {
@@ -182,14 +189,11 @@ class HelloWorkService
 
         try {
             $root = simplexml_load_string($xml);
-            if (!$root) {
+            if (!$root || !isset($root->kyujin)) {
                 return [];
             }
 
-            // <kyujin> 要素を繰り返す（仕様上の要素名が確定次第修正）
-            $items = $root->kyujin ?? $root->item ?? $root->children();
-
-            foreach ($items as $item) {
+            foreach ($root->kyujin->data as $item) {
                 $jobs[] = $this->mapXmlToJobData($item);
             }
         } catch (\Throwable $e) {
@@ -202,35 +206,41 @@ class HelloWorkService
     /**
      * XML要素を jobs テーブル用の配列に変換
      *
-     * フィールド名は仕様書 v1.4 準拠:
-     *   kjno        = 求人番号
-     *   jgshmei     = 事業所名（会社名）
-     *   sksu        = 職種
-     *   shigoto_ny  = 仕事内容
-     *   koyokeitai_n= 雇用形態
-     *   shgbsjusho  = 就業場所
-     *   kjyukoymd   = 有効期限 (YYYYMMDD)
-     *   uktkymd_seireki = 受付日 (YYYYMMDD)
-     *   kihonkyugenga   = 基本給下限
-     *   kihonkyujoge    = 基本給上限
+     * 実測フィールド名（APIレスポンスより確認済み）:
+     *   kjno             = 求人番号
+     *   jgshmei          = 事業所名
+     *   sksu             = 職種
+     *   shigoto_ny       = 仕事内容
+     *   koyokeitai_n     = 雇用形態名
+     *   shgbsjusho1_n    = 就業場所（都道府県市区町村）
+     *   kjyukoymd        = 有効期限 (YYYY/MM/DD)
+     *   uktkymd_seireki  = 受付日 (YYYY/MM/DD)
+     *   khkykagen        = 基本給下限（月額）
+     *   khkyjgn          = 基本給上限（月額）
+     *   chgnkeitai_n     = 賃金形態名（時給・月給等）
+     *   chgnkeitai_kagen = 賃金形態別下限
+     *   chgnkeitai_jgn   = 賃金形態別上限
      */
     private function mapXmlToJobData(\SimpleXMLElement $item): array
     {
         $get = fn(string $key) => trim((string) ($item->$key ?? ''));
 
-        $salaryMin = $this->parseSalary($get('kihonkyugenga'));
-        $salaryMax = $this->parseSalary($get('kihonkyujoge'));
+        // 賃金形態に応じて適切なフィールドを使用
+        $salaryTypeRaw = $get('chgnkeitai_n'); // 時給・月給・日給等
+        $salaryMin = $this->parseSalary($get('chgnkeitai_kagen')) ?: $this->parseSalary($get('khkykagen'));
+        $salaryMax = $this->parseSalary($get('chgnkeitai_jgn')) ?: $this->parseSalary($get('khkyjgn'));
+        $salaryType = $this->normalizeSalaryType($salaryTypeRaw);
 
         $expiresAt = null;
         $rawExpiry = $get('kjyukoymd');
-        if (preg_match('/^\d{8}$/', $rawExpiry)) {
-            $expiresAt = Carbon::createFromFormat('Ymd', $rawExpiry)->endOfDay();
+        if (preg_match('/^\d{4}\/\d{2}\/\d{2}$/', $rawExpiry)) {
+            $expiresAt = Carbon::createFromFormat('Y/m/d', $rawExpiry)->endOfDay();
         }
 
         $publishedAt = null;
         $rawPublished = $get('uktkymd_seireki');
-        if (preg_match('/^\d{8}$/', $rawPublished)) {
-            $publishedAt = Carbon::createFromFormat('Ymd', $rawPublished)->startOfDay();
+        if (preg_match('/^\d{4}\/\d{2}\/\d{2}$/', $rawPublished)) {
+            $publishedAt = Carbon::createFromFormat('Y/m/d', $rawPublished)->startOfDay();
         }
 
         return [
@@ -238,13 +248,12 @@ class HelloWorkService
             'title'          => $get('sksu') ?: '職種未記載',
             'description'    => $get('shigoto_ny') ?: '',
             'employment_type'=> $this->normalizeEmploymentType($get('koyokeitai_n')),
-            'location'       => $get('shgbsjusho') ?: null,
+            'location'       => $get('shgbsjusho1_n') ?: $get('jgshjusho_n') ?: null,
             'salary_min'     => $salaryMin,
             'salary_max'     => $salaryMax,
-            'salary_type'    => ($salaryMin || $salaryMax) ? '月給' : null,
+            'salary_type'    => $salaryType,
             'expires_at'     => $expiresAt,
             'published_at'   => $publishedAt,
-            // 企業名は description に付記（ハローワークは企業IDなし）
             '_company_name'  => $get('jgshmei'),
         ];
     }
@@ -303,6 +312,15 @@ class HelloWorkService
     {
         $num = preg_replace('/[^\d]/', '', $value);
         return $num !== '' ? (int) $num : null;
+    }
+
+    private function normalizeSalaryType(string $raw): ?string
+    {
+        if (str_contains($raw, '時給')) return '時給';
+        if (str_contains($raw, '日給')) return '日給';
+        if (str_contains($raw, '月額') || str_contains($raw, '月給')) return '月給';
+        if (str_contains($raw, '年収') || str_contains($raw, '年額')) return '年収';
+        return $raw ?: null;
     }
 
     private function normalizeEmploymentType(string $raw): ?string
