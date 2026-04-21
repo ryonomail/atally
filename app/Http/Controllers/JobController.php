@@ -108,12 +108,15 @@ class JobController extends Controller
         match ($sort) {
             'newest'      => $query->orderBy('jobs.published_at', 'desc'),
             'salary_high' => $query->orderBy('jobs.salary_max', 'desc'),
-            default       => $query->orderByRaw(
+            default       => $query
+                // Atally求人を先頭に（ハローワーク求人は後ろ）
+                ->orderByRaw("CASE WHEN jobs.source = 'atally' THEN 0 ELSE 1 END ASC")
                 // メインスコア: 予算 × 品質スコア × ブースト係数 × 採用実績係数
-                '(jobs.daily_budget * companies.quality_score * COALESCE(job_personas.boost_factor, 1.0) * companies.hiring_reputation) DESC'
-            )
-            // タイブレーク1: 品質スコア単体
-            ->orderBy('companies.quality_score', 'desc'),
+                ->orderByRaw(
+                    '(jobs.daily_budget * companies.quality_score * COALESCE(job_personas.boost_factor, 1.0) * companies.hiring_reputation) DESC'
+                )
+                // タイブレーク1: 品質スコア単体
+                ->orderBy('companies.quality_score', 'desc'),
         };
 
         $perPage = min((int) $request->input('per_page', 20), 50);
