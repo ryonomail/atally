@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\Job;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -115,14 +114,14 @@ class HelloWorkService
                 'id'   => $this->apiId,
                 'pass' => $this->apiPass,
             ]);
-            $response = Http::timeout(30)->post($url);
+            [$code, $body] = $this->curlPost($url, 30);
 
-            if (!$response->successful()) {
-                Log::error('HelloWork: getToken failed', ['status' => $response->status()]);
+            if ($code !== 200) {
+                Log::error('HelloWork: getToken failed', ['status' => $code]);
                 return null;
             }
 
-            $xml = simplexml_load_string($response->body());
+            $xml = simplexml_load_string($body);
             $token = (string) ($xml->token ?? '');
 
             if (empty($token)) {
@@ -140,7 +139,7 @@ class HelloWorkService
     private function deleteToken(string $token): void
     {
         try {
-            Http::timeout(10)->post("{$this->baseUrl}/auth/delToken?token={$token}");
+            $this->curlPost("{$this->baseUrl}/auth/delToken?token={$token}", 10);
         } catch (\Throwable $e) {
             Log::warning('HelloWork: delToken failed', ['error' => $e->getMessage()]);
         }
@@ -158,18 +157,18 @@ class HelloWorkService
     {
         try {
             $url = "{$this->baseUrl}/kyujin/{$dataId}/{$page}?token={$token}";
-            $response = Http::timeout(60)->post($url);
+            [$code, $body] = $this->curlPost($url, 60);
 
-            if (!$response->successful()) {
+            if ($code !== 200) {
                 Log::warning('HelloWork: fetchJobPage failed', [
                     'dataId' => $dataId,
                     'page'   => $page,
-                    'status' => $response->status(),
+                    'status' => $code,
                 ]);
                 return [];
             }
 
-            return $this->parseJobsXml($response->body());
+            return $this->parseJobsXml($body);
         } catch (\Throwable $e) {
             Log::error('HelloWork: fetchJobPage exception', [
                 'page'  => $page,
@@ -312,6 +311,24 @@ class HelloWorkService
     {
         $num = preg_replace('/[^\d]/', '', $value);
         return $num !== '' ? (int) $num : null;
+    }
+
+    /**
+     * シンプルなPHP curlでPOSTリクエスト（Guzzleの余分なヘッダーを回避）
+     * @return array{int, string} [HTTPステータスコード, レスポンスボディ]
+     */
+    private function curlPost(string $url, int $timeout = 30): array
+    {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        $body = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return [$code, (string) $body];
     }
 
     private function normalizeSalaryType(string $raw): ?string
