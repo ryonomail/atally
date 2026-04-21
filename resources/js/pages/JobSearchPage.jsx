@@ -1074,7 +1074,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                             </div>
                         )}
                         <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)', lineHeight: 1.4 }}>
-                            <Link to={`/jobs/${job.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>{job.title}</Link>
+                            {job.title}
                         </h2>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                             🏢 <Link to={`/companies/${job.company?.id}`} style={{ color: 'var(--color-text-secondary)' }}>{job.company?.company_name || '企業名非公開'}</Link>
@@ -1103,9 +1103,12 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     {job.location && <span className="badge badge-info">📍 {job.location}</span>}
                     {(job.salary_min || job.salary_max) && (
                         <span className="badge badge-success">
-                            💰 {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
-                            {job.salary_min && job.salary_max ? '〜' : ''}
-                            {job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}
+                            💰 {(() => {
+                                const fmt = v => v >= 100000 ? `${Math.round(v / 10000)}万円` : `${v.toLocaleString()}円`;
+                                if (job.salary_min && job.salary_max) return `${fmt(job.salary_min)}〜${fmt(job.salary_max)}`;
+                                if (job.salary_min) return fmt(job.salary_min) + '〜';
+                                return '〜' + fmt(job.salary_max);
+                            })()}
                         </span>
                     )}
                     {job.overtime_average && <span className="badge badge-info">⏱ 残業{job.overtime_average}</span>}
@@ -1198,12 +1201,6 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         </span>
                     </>
                 ) : null}
-                <Link to={`/jobs/${job.id}`} style={{
-                    marginLeft: 'auto', fontSize: 'var(--font-size-xs)',
-                    color: 'var(--color-text-accent)', textDecoration: 'none',
-                }}>
-                    詳細ページで見る →
-                </Link>
             </div>
 
             {/* 本文セクション */}
@@ -1277,9 +1274,13 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
                         <SectionHeader icon="💰" title="給与・待遇" />
                         <InfoRow label="給与" value={
-                            job.salary_details || (job.salary_min || job.salary_max
-                                ? `${job.salary_type || '年収'} ${job.salary_min ? `${(job.salary_min / 10000).toLocaleString()}万` : ''}${job.salary_min && job.salary_max ? '〜' : ''}${job.salary_max ? `${(job.salary_max / 10000).toLocaleString()}万円` : ''}`
-                                : null)
+                            job.salary_details || (job.salary_min || job.salary_max ? (() => {
+                                const fmt = v => v >= 100000 ? `${(v / 10000).toLocaleString()}万円` : `${v.toLocaleString()}円`;
+                                const type = job.salary_type ? job.salary_type + ' ' : '';
+                                if (job.salary_min && job.salary_max) return `${type}${fmt(job.salary_min)}〜${fmt(job.salary_max)}`;
+                                if (job.salary_min) return `${type}${fmt(job.salary_min)}〜`;
+                                return `${type}〜${fmt(job.salary_max)}`;
+                            })() : null)
                         } />
                         <InfoRow label="昇給" value={job.raise_frequency} />
                         <InfoRow label="賞与" value={job.bonus} />
@@ -1383,8 +1384,8 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 )}
             </div>
 
-            {/* ゲスト向けCTA */}
-            {!user && (
+            {/* ゲスト向けCTA（ハローワーク求人には表示しない） */}
+            {!user && job.source !== 'hellowork' && (
                 <div style={{
                     padding: 'var(--space-xl)',
                     background: 'linear-gradient(135deg, rgba(18,28,52,0.08) 0%, rgba(168,85,247,0.05) 100%)',
