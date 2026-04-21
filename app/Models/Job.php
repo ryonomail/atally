@@ -113,6 +113,7 @@ class Job extends Model
         'last_company_action_at',
         'source',
         'hellowork_id',
+        'ranking_score',
     ];
 
     protected function casts(): array

@@ -8,6 +8,7 @@ use App\Models\DailyUsage;
 use App\Models\InterviewSchedule;
 use App\Models\Message;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class QualityScoreService
 {
@@ -44,6 +45,15 @@ class QualityScoreService
                     $count++;
                 }
             });
+
+        // Atally求人のranking_scoreを品質スコア更新後に一括再計算
+        DB::statement("
+            UPDATE jobs
+            SET ranking_score = 10000 + COALESCE(jobs.daily_budget, 0) * c.quality_score * c.hiring_reputation
+            FROM companies c
+            WHERE jobs.company_id = c.id
+              AND jobs.source = 'atally'
+        ");
 
         return $count;
     }

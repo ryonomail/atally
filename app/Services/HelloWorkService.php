@@ -271,10 +271,17 @@ class HelloWorkService
 
         $existing = Job::where('hellowork_id', $helloworkId)->first();
 
+        // ランキングスコア: published_at の UNIX時間 / 10^12（新しい求人ほど高い、常にAtally未満）
+        $publishedAt = $data['published_at'] ?? $data['created_at'] ?? null;
+        $rankingScore = $publishedAt
+            ? ($publishedAt instanceof Carbon ? $publishedAt : Carbon::parse($publishedAt))->timestamp / 1_000_000_000_000.0
+            : 0;
+
         $attributes = array_merge($data, [
-            'source'      => 'hellowork',
-            'status'      => 'active',
-            'company_id'  => $this->companyId,
+            'source'         => 'hellowork',
+            'status'         => 'active',
+            'company_id'     => $this->companyId,
+            'ranking_score'  => $rankingScore,
         ]);
 
         if ($existing) {

@@ -1270,7 +1270,8 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 )}
 
                 {/* 給与・待遇 */}
-                {(job.salary_details || job.raise_frequency || job.bonus || job.salary_min) && (
+                {(job.salary_details || job.salary_min || job.salary_max || job.salary_type ||
+                  job.raise_frequency || job.bonus || job.allowances || benefitsText || insuranceText) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
                         <SectionHeader icon="💰" title="給与・待遇" />
                         <InfoRow label="給与" value={
@@ -1280,7 +1281,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                                 if (job.salary_min && job.salary_max) return `${type}${fmt(job.salary_min)}〜${fmt(job.salary_max)}`;
                                 if (job.salary_min) return `${type}${fmt(job.salary_min)}〜`;
                                 return `${type}〜${fmt(job.salary_max)}`;
-                            })() : null)
+                            })() : job.salary_type || null)
                         } />
                         <InfoRow label="昇給" value={job.raise_frequency} />
                         <InfoRow label="賞与" value={job.bonus} />
@@ -1291,18 +1292,21 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 )}
 
                 {/* 勤務条件 */}
-                {(job.work_hours || job.holidays || job.remote_policy || job.office_address) && (
+                {(job.employment_type || job.location || job.work_hours || job.holidays ||
+                  job.remote_policy || job.office_address || job.overtime_average ||
+                  job.nearest_station || job.contract_period || job.dormitory) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
                         <SectionHeader icon="🏢" title="勤務条件" />
+                        <InfoRow label="雇用形態" value={job.employment_type} />
+                        <InfoRow label="勤務地" value={job.location} />
+                        {job.office_address && <InfoRow label="詳細住所" value={job.office_address} />}
+                        {job.nearest_station && <InfoRow label="最寄り駅" value={job.nearest_station} />}
+                        {job.access_info && <InfoRow label="アクセス" value={job.access_info} />}
                         <InfoRow label="勤務時間" value={job.work_hours} />
                         <InfoRow label="残業" value={job.overtime_average} />
                         <InfoRow label="休日・休暇" value={job.holidays} />
                         <InfoRow label="休暇詳細" value={job.holiday_details} />
                         <InfoRow label="リモート" value={job.remote_policy} />
-                        <InfoRow label="勤務地" value={job.location} />
-                        {job.office_address && <InfoRow label="詳細住所" value={job.office_address} />}
-                        {job.nearest_station && <InfoRow label="最寄り駅" value={job.nearest_station} />}
-                        {job.access_info && <InfoRow label="アクセス" value={job.access_info} />}
                         {job.transfer_policy && <InfoRow label="転勤" value={job.transfer_policy} />}
                         {job.location_scope_of_change && <InfoRow label="勤務地変更の範囲" value={job.location_scope_of_change} />}
                         {job.dormitory && <InfoRow label="寮" value={job.dormitory} />}
@@ -1352,12 +1356,28 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 )}
 
                 {/* 企業情報 */}
-                {(job.number_of_employees || job.founded_year || job.industry) && (
+                {(job.number_of_employees || job.founded_year || job.industry ||
+                  job.company?.description || job.company?.website || job.company?.address) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
                         <SectionHeader icon="🏛" title="企業情報" />
-                        <InfoRow label="従業員数" value={job.number_of_employees} />
+                        <InfoRow label="業界" value={job.industry || job.company?.industry} />
+                        <InfoRow label="従業員数" value={job.number_of_employees || job.company?.number_of_employees} />
                         <InfoRow label="設立" value={job.founded_year} />
-                        <InfoRow label="業界" value={job.industry} />
+                        {job.company?.address && <InfoRow label="所在地" value={job.company.address} />}
+                        {job.company?.website && (
+                            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', fontSize: 'var(--font-size-sm)' }}>
+                                <span style={{ color: 'var(--color-text-muted)', minWidth: 80 }}>Webサイト</span>
+                                <a href={job.company.website} target="_blank" rel="noopener noreferrer"
+                                    style={{ color: 'var(--color-text-accent)', wordBreak: 'break-all' }}>
+                                    {job.company.website}
+                                </a>
+                            </div>
+                        )}
+                        {job.company?.description && (
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginTop: 'var(--space-xs)', whiteSpace: 'pre-wrap' }}>
+                                {job.company.description}
+                            </p>
+                        )}
                     </div>
                 )}
 

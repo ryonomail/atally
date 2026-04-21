@@ -108,15 +108,8 @@ class JobController extends Controller
         match ($sort) {
             'newest'      => $query->orderBy('jobs.published_at', 'desc'),
             'salary_high' => $query->orderBy('jobs.salary_max', 'desc'),
-            default       => $query
-                // Atally求人を先頭に（ハローワーク求人は後ろ）
-                ->orderByRaw("CASE WHEN jobs.source = 'atally' THEN 0 ELSE 1 END ASC")
-                // メインスコア: 予算 × 品質スコア × ブースト係数 × 採用実績係数
-                ->orderByRaw(
-                    '(jobs.daily_budget * companies.quality_score * COALESCE(job_personas.boost_factor, 1.0) * companies.hiring_reputation) DESC'
-                )
-                // タイブレーク1: 品質スコア単体
-                ->orderBy('companies.quality_score', 'desc'),
+            // 事前計算済みランキングスコアで高速ソート（Atally: 10000+, HelloWork: ~0.0017）
+            default       => $query->orderBy('jobs.ranking_score', 'desc'),
         };
 
         $perPage = min((int) $request->input('per_page', 20), 50);
@@ -135,14 +128,9 @@ class JobController extends Controller
             });
 
             $sorted = $items->sortByDesc(function ($job) {
-                // メインスコアでグループ化し、同スコア内でペルソナマッチ度でソート
-                $mainScore = ($job->daily_budget ?? 0)
-                    * ($job->company->quality_score ?? 1)
-                    * ($job->persona?->boost_factor ?? 1.0)
-                    * ($job->company->hiring_reputation ?? 1.0);
-                // メインスコアを大きな桁に、ペルソナマッチを小さな桁に配置
-                // → メインスコアが同じ場合のみペルソナマッチが順位に影響
-                return $mainScore * 10000 + ($job->persona_match ?? 0);
+                // ranking_scoreを大きな桁に、ペルソナマッチを小さな桁に配置
+                // → ranking_scoreが同じ場合のみペルソナマッチが順位に影響
+                return ($job->ranking_score ?? 0) * 10000 + ($job->persona_match ?? 0);
             })->values();
 
             $result->setCollection($sorted);
@@ -519,6 +507,8 @@ class JobController extends Controller
         $data['ng_word_flagged'] = $hasNgWord;
         $data['daily_budget'] = $data['daily_budget'] ?? 0;
         $data['expires_at'] = $request->input('expires_at');
+        // ランキングスコアを事前計算（Atally求人: 10000 + 予算 × 品質スコア × 採用実績係数）
+        $data['ranking_score'] = 10000 + $data['daily_budget'] * ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
 
         // 公開予約の処理
         if ($request->filled('scheduled_publish_at')) {
@@ -828,10 +818,12 @@ class JobController extends Controller
         }
 
         $oldBudget = (float) $job->daily_budget;
+        // ランキングスコアを再計算（予算または公開状態が変わった場合に反映）
+        $newBudget = (float) ($data['daily_budget'] ?? $oldBudget);
+        $data['ranking_score'] = 10000 + $newBudget * ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
         $job->update($data);
 
         // 課金保護: 予算変更ログ
-        $newBudget = (float) ($data['daily_budget'] ?? $oldBudget);
         if ($oldBudget !== $newBudget) {
             BillingProtectionService::logBudgetChange(
                 $company->id, $job->id, 'budget_change', $oldBudget, $newBudget
