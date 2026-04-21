@@ -24,7 +24,7 @@ class HelloWorkService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('services.hellowork.base_url', ''), '/');
+        $this->baseUrl = rtrim(trim(config('services.hellowork.base_url', '')), '/');
         $this->apiId   = config('services.hellowork.id', '');
         $this->apiPass = config('services.hellowork.pass', '');
     }
