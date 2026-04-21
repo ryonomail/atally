@@ -12,7 +12,7 @@ Route::get('/jobs/{id}', function ($id) {
     $job = \App\Models\Job::with('company:id,company_name,website')->find($id);
 
     if (!$job || $job->status->value !== 'active') {
-        return view('app');
+        return response(view('app'), 404);
     }
 
     $employmentTypeMap = [
@@ -38,6 +38,7 @@ Route::get('/jobs/{id}', function ($id) {
             'title' => $job->title,
             'description' => mb_substr($job->description ?? '', 0, 5000),
             'datePosted' => ($job->published_at ?? $job->created_at)?->toIso8601String(),
+            ...($job->expires_at ? ['validThrough' => $job->expires_at->toIso8601String()] : []),
             'employmentType' => $employmentTypeMap[$job->employment_type] ?? 'OTHER',
             'hiringOrganization' => [
                 '@type' => 'Organization',
@@ -75,7 +76,7 @@ Route::get('/companies/{id}', function ($id) {
     $company = \App\Models\Company::find($id);
 
     if (!$company || $company->verification_status !== 'approved') {
-        return view('app');
+        return response(view('app'), 404);
     }
 
     $seo = [
