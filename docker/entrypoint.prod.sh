@@ -39,8 +39,6 @@ echo "--- route:cache ---"
 php artisan route:cache
 echo "--- view:cache ---"
 php artisan view:cache
-echo "--- optimize ---"
-php artisan optimize
 
 # マイグレーション
 echo "--- migrate ---"
