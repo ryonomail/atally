@@ -1,48 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Routes, Route, Navigate, Link, BrowserRouter, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
 import Navbar from './components/Navbar';
-import LandingPage from './pages/LandingPage';
-import GuestResumeEditorPage from './pages/GuestResumeEditorPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import api from './api';
+
+// ── 即時ロード（最初に表示される可能性が高いページ） ──────────────────
+import LandingPage   from './pages/LandingPage';
 import JobSearchPage from './pages/JobSearchPage';
 import JobDetailPage from './pages/JobDetailPage';
-import DashboardPage from './pages/DashboardPage';
-import ProfilePage from './pages/ProfilePage';
-import ResumeListPage from './pages/ResumeListPage';
-import ResumeEditorPage from './pages/ResumeEditorPage';
-import CompanyDashboard from './pages/CompanyDashboard';
-import CompanyJobsPage from './pages/CompanyJobsPage';
-import ScoutSearchPage from './pages/ScoutSearchPage';
-import AgencyJobDBPage from './pages/AgencyJobDBPage';
-import AgencyBulkUploadPage from './pages/AgencyBulkUploadPage';
-import AgencyClientsPage from './pages/AgencyClientsPage';
-import AgencyDashboardPage from './pages/AgencyDashboardPage';
-import CompanyApplicationsPage from './pages/CompanyApplicationsPage';
-import AdminDashboard from './pages/AdminDashboard';
-import MyApplicationsPage from './pages/MyApplicationsPage';
-import MessagesListPage from './pages/MessagesListPage';
-import TermsPage from './pages/TermsPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import SettingsPage from './pages/SettingsPage';
-import SavedJobsPage from './pages/SavedJobsPage';
-import JobAlertsPage from './pages/JobAlertsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import NotFoundPage from './pages/NotFoundPage';
-import ForbiddenPage from './pages/ForbiddenPage';
-import HelpPage from './pages/HelpPage';
-import PricingPage from './pages/PricingPage';
-import ForCompaniesPage from './pages/ForCompaniesPage';
-import ForAgenciesPage from './pages/ForAgenciesPage';
-import AboutPage from './pages/AboutPage';
-import CompanyProfilePage from './pages/CompanyProfilePage';
-import OnboardingModal from './components/OnboardingModal';
+import LoginPage     from './pages/LoginPage';
+import RegisterPage  from './pages/RegisterPage';
+
+// ── 遅延ロード（必要になるまでJSを読み込まない）────────────────────────
+// → ユーザーがそのページに遷移したときだけダウンロードされる
+const GuestResumeEditorPage  = lazy(() => import('./pages/GuestResumeEditorPage'));
+const DashboardPage          = lazy(() => import('./pages/DashboardPage'));
+const ProfilePage            = lazy(() => import('./pages/ProfilePage'));
+const ResumeListPage         = lazy(() => import('./pages/ResumeListPage'));
+const ResumeEditorPage       = lazy(() => import('./pages/ResumeEditorPage'));
+const CompanyDashboard       = lazy(() => import('./pages/CompanyDashboard'));
+const CompanyJobsPage        = lazy(() => import('./pages/CompanyJobsPage'));
+const ScoutSearchPage        = lazy(() => import('./pages/ScoutSearchPage'));
+const AgencyJobDBPage        = lazy(() => import('./pages/AgencyJobDBPage'));
+const AgencyBulkUploadPage   = lazy(() => import('./pages/AgencyBulkUploadPage'));
+const AgencyClientsPage      = lazy(() => import('./pages/AgencyClientsPage'));
+const AgencyDashboardPage    = lazy(() => import('./pages/AgencyDashboardPage'));
+const CompanyApplicationsPage = lazy(() => import('./pages/CompanyApplicationsPage'));
+const AdminDashboard         = lazy(() => import('./pages/AdminDashboard'));
+const MyApplicationsPage     = lazy(() => import('./pages/MyApplicationsPage'));
+const MessagesListPage       = lazy(() => import('./pages/MessagesListPage'));
+const TermsPage              = lazy(() => import('./pages/TermsPage'));
+const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
+const ForgotPasswordPage     = lazy(() => import('./pages/ForgotPasswordPage'));
+const VerifyEmailPage        = lazy(() => import('./pages/VerifyEmailPage'));
+const SettingsPage           = lazy(() => import('./pages/SettingsPage'));
+const SavedJobsPage          = lazy(() => import('./pages/SavedJobsPage'));
+const JobAlertsPage          = lazy(() => import('./pages/JobAlertsPage'));
+const NotificationsPage      = lazy(() => import('./pages/NotificationsPage'));
+const NotFoundPage           = lazy(() => import('./pages/NotFoundPage'));
+const ForbiddenPage          = lazy(() => import('./pages/ForbiddenPage'));
+const HelpPage               = lazy(() => import('./pages/HelpPage'));
+const PricingPage            = lazy(() => import('./pages/PricingPage'));
+const ForCompaniesPage       = lazy(() => import('./pages/ForCompaniesPage'));
+const ForAgenciesPage        = lazy(() => import('./pages/ForAgenciesPage'));
+const AboutPage              = lazy(() => import('./pages/AboutPage'));
+const CompanyProfilePage     = lazy(() => import('./pages/CompanyProfilePage'));
+const OnboardingModal        = lazy(() => import('./components/OnboardingModal'));
+
+// ページ遷移中のフォールバック（スピナー）
+function PageFallback() {
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+            <div style={{ width: 32, height: 32, border: '3px solid var(--color-border)', borderTopColor: 'var(--color-accent)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        </div>
+    );
+}
 
 function ProtectedRoute({ children, role }) {
     const { user, loading } = useAuth();
@@ -159,14 +174,20 @@ function AppRoutes() {
     const { user } = useAuth();
     const homePath = getHomePath(user);
 
+    // アプリ起動直後に求人1ページ目を先読み（ユーザーが/jobsに遷移する前にデータ取得開始）
+    useEffect(() => {
+        api.get('/jobs', { params: { page: 1, sort: 'ranking' } }).catch(() => {});
+    }, []);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <ScrollToTop />
             <OfflineBanner />
             <Navbar />
-            <MobileBottomNav />
-            <OnboardingModal />
+            <Suspense fallback={null}><MobileBottomNav /></Suspense>
+            <Suspense fallback={null}><OnboardingModal /></Suspense>
             <div style={{ flex: 1 }}>
+            <Suspense fallback={<PageFallback />}>
             <Routes>
                 <Route path="/" element={user ? <Navigate to={homePath} /> : <LandingPage />} />
                 <Route path="/resumes/guest" element={<GuestResumeEditorPage />} />
@@ -219,6 +240,7 @@ function AppRoutes() {
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
+            </Suspense>
             </div>
             <footer style={{
                 borderTop: '1px solid var(--color-border)',

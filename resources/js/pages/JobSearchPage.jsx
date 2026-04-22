@@ -420,6 +420,18 @@ export default function JobSearchPage() {
         }
     };
 
+    // ホバー時に詳細をプリフェッチ（クリック前にAPIレスポンスをキャッシュに入れる）
+    const prefetchTimer = useRef(null);
+    const handleJobHover = (jobId) => {
+        if (jobId === selectedJobId || isMobile) return;
+        // 200ms後にプリフェッチ（素早いマウス通過は無視）
+        clearTimeout(prefetchTimer.current);
+        prefetchTimer.current = setTimeout(() => {
+            api.get(`/jobs/${jobId}`).catch(() => {});
+        }, 200);
+    };
+    const handleJobHoverEnd = () => clearTimeout(prefetchTimer.current);
+
     return (
         <div className="page" style={{ background: 'var(--color-bg-primary)' }}>
             <SEO
@@ -867,6 +879,8 @@ export default function JobSearchPage() {
                                         isApplied={appliedJobIds.includes(job.id)}
                                         onToggleSave={() => toggleSaveJob(job.id)}
                                         onClick={() => handleJobClick(job)}
+                                        onMouseEnter={() => handleJobHover(job.id)}
+                                        onMouseLeave={handleJobHoverEnd}
                                     />
                                 ))}
                             </div>
@@ -933,10 +947,12 @@ export default function JobSearchPage() {
 /* ============================================
    左パネル用コンパクトジョブカード
    ============================================ */
-function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClick }) {
+function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClick, onMouseEnter, onMouseLeave }) {
     return (
         <div
             onClick={onClick}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
             style={{
                 padding: 'var(--space-md)',
                 borderRadius: 'var(--radius-lg)',
