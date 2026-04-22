@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 return new class extends Migration
 {
+    // CONCURRENTLY はトランザクション内で実行不可 → Laravel のトランザクションを無効化
+    public bool $withinTransaction = false;
+
     public function up(): void
     {
         DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_jobs_active_published
