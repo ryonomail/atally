@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../api';
+import { formatSalary } from '../utils/salary';
 
 const EMPLOYMENT_TYPES = [
     { value: '', label: 'すべて' },
@@ -981,11 +982,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                     {(job.salary_min || job.salary_max || job.salary_details) && (
                         <div style={{ marginBottom: 'var(--space-xl)' }}>
                             <SectionHeader icon="💰" title="給与・待遇" />
-                            <InfoRow label="給与" value={
-                                job.salary_details || (job.salary_min || job.salary_max
-                                    ? `${job.salary_type || '年収'} ${job.salary_min ? `${(job.salary_min / 10000).toLocaleString()}万` : ''}${job.salary_min && job.salary_max ? '〜' : ''}${job.salary_max ? `${(job.salary_max / 10000).toLocaleString()}万円` : ''}`
-                                    : null)
-                            } />
+                            <InfoRow label="給与" value={job.salary_details || formatSalary(job) || null} />
                             <InfoRow label="手数料" value={job.fee_display} />
                             <InfoRow label="紹介条件" value={job.referral_conditions} />
                         </div>

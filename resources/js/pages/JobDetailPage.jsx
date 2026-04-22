@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
 import SEO from '../components/SEO';
+import { formatSalary } from '../utils/salary';
 
 function SectionHeader({ icon, title }) {
     return (
@@ -744,11 +745,7 @@ export default function JobDetailPage() {
                 {/* 給与・待遇 */}
                 <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
                     <SectionHeader icon="💰" title="給与・待遇" />
-                    <InfoRow label="給与" value={
-                        job.salary_details || (job.salary_min || job.salary_max
-                            ? `${job.salary_type || '年収'} ${job.salary_min ? `${(job.salary_min / 10000).toLocaleString()}万` : ''}${job.salary_min && job.salary_max ? '〜' : ''}${job.salary_max ? `${(job.salary_max / 10000).toLocaleString()}万円` : ''}`
-                            : null)
-                    } />
+                    <InfoRow label="給与" value={job.salary_details || formatSalary(job) || null} />
                     <InfoRow label="昇給" value={job.raise_frequency} />
                     <InfoRow label="賞与" value={job.bonus} />
                     <InfoRow label="手当" value={job.allowances} />

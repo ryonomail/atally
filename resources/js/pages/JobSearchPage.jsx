@@ -6,6 +6,7 @@ import { useToast } from '../hooks/useToast';
 import SEO from '../components/SEO';
 import GuestProfileBanner, { getGuestProfile } from '../components/GuestProfileBanner';
 import { JOB_CATEGORY_MAJORS } from '../data/jobCategories';
+import { formatSalary } from '../utils/salary';
 
 const EMPLOYMENT_TYPES = [
     { value: '', label: 'すべて' },
@@ -67,28 +68,6 @@ const JOB_CATEGORIES = [
     { icon: '📚', label: '教育' },
     { icon: '🛒', label: '販売・接客' },
 ];
-
-// 給与フォーマット: salary_type に応じて適切な単位で表示
-// 時給/日給 → 円表示、月給/年収 → 10万未満なら円、以上なら万円
-function formatSalaryValue(value, isSmallUnit) {
-    if (!value && value !== 0) return null;
-    if (isSmallUnit || value < 100000) return `${Number(value).toLocaleString()}円`;
-    return `${Math.round(value / 10000)}万円`;
-}
-
-function formatSalary(job) {
-    const { salary_min, salary_max, salary_type } = job;
-    if (!salary_min && !salary_max) return null;
-    const isSmallUnit = salary_type === '時給' || salary_type === '日給';
-    const fmt = v => formatSalaryValue(v, isSmallUnit);
-    let range;
-    if (salary_min && salary_max) range = `${fmt(salary_min)}〜${fmt(salary_max)}`;
-    else if (salary_min)          range = `${fmt(salary_min)}〜`;
-    else                          range = `〜${fmt(salary_max)}`;
-    // salary_type が未設定で値が年収レベル（100万円以上）なら「年収」と見なす
-    const label = salary_type || ((salary_min >= 1000000 || salary_max >= 1000000) ? '年収' : '');
-    return label ? `${label} ${range}` : range;
-}
 
 // 検索履歴ユーティリティ
 const SEARCH_HISTORY_KEY = 'search_history';
