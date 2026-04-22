@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Enums\VerificationStatus;
 use App\Enums\JobStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
@@ -21,20 +22,45 @@ class AdminController extends Controller
      */
     public function dashboard()
     {
-        return response()->json([
-            'stats' => [
-                'total_jobseekers'      => User::where('role', 'jobseeker')->count(),
-                'total_companies'       => Company::count(),
-                'pending_verifications' => Company::where('verification_status', 'pending')->count(),
-                'pending_job_reviews'   => Job::where('status', 'pending_review')->count(),
-                'active_jobs'           => Job::where('status', 'active')->count(),
-                'open_reports'          => Report::where('status', 'open')->count(),
-                'pending_licenses'      => Company::where('company_type', 'recruitment_agency')
-                    ->where('license_verified', false)
-                    ->whereNotNull('license_document_path')
-                    ->count(),
-            ],
-        ]);
+        $stats = Cache::remember('admin_dashboard_stats', 60, function () {
+            $userCounts = DB::table('users')
+                ->selectRaw("
+                    COUNT(*) FILTER (WHERE role = 'jobseeker') AS total_jobseekers
+                ")
+                ->first();
+
+            $companyCounts = DB::table('companies')
+                ->selectRaw("
+                    COUNT(*) AS total_companies,
+                    COUNT(*) FILTER (WHERE verification_status = 'pending') AS pending_verifications,
+                    COUNT(*) FILTER (WHERE company_type = 'recruitment_agency' AND license_verified = false AND license_document_path IS NOT NULL) AS pending_licenses
+                ")
+                ->first();
+
+            $jobCounts = DB::table('jobs')
+                ->whereNull('deleted_at')
+                ->selectRaw("
+                    COUNT(*) FILTER (WHERE status = 'pending_review') AS pending_job_reviews,
+                    COUNT(*) FILTER (WHERE status = 'active') AS active_jobs
+                ")
+                ->first();
+
+            $openReports = DB::table('reports')
+                ->where('status', 'open')
+                ->count();
+
+            return [
+                'total_jobseekers'      => (int) $userCounts->total_jobseekers,
+                'total_companies'       => (int) $companyCounts->total_companies,
+                'pending_verifications' => (int) $companyCounts->pending_verifications,
+                'pending_job_reviews'   => (int) $jobCounts->pending_job_reviews,
+                'active_jobs'           => (int) $jobCounts->active_jobs,
+                'open_reports'          => (int) $openReports,
+                'pending_licenses'      => (int) $companyCounts->pending_licenses,
+            ];
+        });
+
+        return response()->json(['stats' => $stats]);
     }
 
     /**
@@ -435,15 +461,29 @@ class AdminController extends Controller
 
         $result = $query->paginate(50);
 
-        // Resolve target names for display
-        $result->getCollection()->transform(function ($log) {
+        // ターゲット名をバッチ取得して N+1 を回避
+        $logs = $result->getCollection();
+        $companyIds = $logs->where('target_type', 'company')->pluck('target_id')->unique();
+        $jobIds     = $logs->where('target_type', 'job')->pluck('target_id')->unique();
+        $userIds    = $logs->where('target_type', 'user')->pluck('target_id')->unique();
+
+        $companies = $companyIds->isNotEmpty()
+            ? Company::whereIn('id', $companyIds)->pluck('company_name', 'id')
+            : collect();
+        $jobs = $jobIds->isNotEmpty()
+            ? Job::whereIn('id', $jobIds)->pluck('title', 'id')
+            : collect();
+        $users = $userIds->isNotEmpty()
+            ? User::whereIn('id', $userIds)->pluck('name', 'id')
+            : collect();
+
+        $logs->transform(function ($log) use ($companies, $jobs, $users) {
             $raw = match ($log->target_type) {
-                'company' => \App\Models\Company::find($log->target_id)?->company_name,
-                'job' => \App\Models\Job::find($log->target_id)?->title,
-                'user' => User::find($log->target_id)?->name,
-                default => null,
+                'company' => $companies[$log->target_id] ?? null,
+                'job'     => $jobs[$log->target_id] ?? null,
+                'user'    => $users[$log->target_id] ?? null,
+                default   => null,
             };
-            // XSS対策: HTMLエスケープしてからセット
             $log->target_name = $raw !== null
                 ? htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
                 : null;
