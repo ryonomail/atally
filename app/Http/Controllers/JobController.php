@@ -33,7 +33,14 @@ class JobController extends Controller
 
     public function index(Request $request)
     {
-        $query = Job::with(['company:id,company_name,company_type', 'persona'])
+        // ペルソナマッチが必要かどうかを先に判定（不要なDB取得を避ける）
+        $needsPersona = Auth::guard('sanctum')->check()
+            || $request->hasAny(['guest_skills', 'guest_age', 'guest_experience_years']);
+
+        $query = Job::with(array_filter([
+                'company:id,company_name,company_type',
+                $needsPersona ? 'persona' : null,
+            ]))
             ->whereIn('jobs.status', ['active', 'suspended']);
 
         if ($request->filled('keyword')) {
@@ -177,9 +184,8 @@ class JobController extends Controller
 
         $responseData = $result->toArray();
 
-        // フルレスポンスを 45秒キャッシュ（求人データの鮮度と速度のバランス）
-        // 45秒: キャッシュ切れで新しいデータが反映されるまでの最大待ち時間
-        Cache::put($fullCacheKey, $responseData, 45);
+        // フルレスポンスを 5分キャッシュ（求人データは数分で変わらない）
+        Cache::put($fullCacheKey, $responseData, 300);
 
         return response()->json($responseData);
     }
@@ -242,6 +248,14 @@ class JobController extends Controller
 
         // 閲覧記録（同一ユーザー/IPから1時間以内の重複を除外）
         $user = Auth::guard('sanctum')->user();
+
+        // 非ログインユーザーの詳細ページは 3分キャッシュ
+        if (!$user) {
+            $detailCacheKey = 'job_detail_' . $job->id;
+            if ($cached = Cache::get($detailCacheKey)) {
+                return response()->json($cached);
+            }
+        }
         $ip = $request->ip();
         $oneHourAgo = Carbon::now()->subHour();
 
@@ -338,6 +352,11 @@ class JobController extends Controller
                 ->get();
         } else {
             $data['similar_jobs'] = [];
+        }
+
+        // 非ログインユーザー向けに 3分キャッシュ
+        if (!$user) {
+            Cache::put('job_detail_' . $job->id, $data, 180);
         }
 
         return response()->json($data);

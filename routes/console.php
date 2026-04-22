@@ -28,3 +28,6 @@ Schedule::command('app:send-job-alert-notifications')->dailyAt('09:00');
 
 // 毎朝7時: ハローワーク求人同期（メンテナンス時間帯 0:00-6:00 を避けて実行）
 Schedule::command('app:sync-hellowork-jobs')->dailyAt('07:00');
+
+// 4分ごと: 求人リストキャッシュをウォームアップ（TTL5分切れ前に再生成）
+Schedule::command('app:warm-jobs-cache')->everyFourMinutes();
