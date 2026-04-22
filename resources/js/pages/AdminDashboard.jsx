@@ -20,13 +20,18 @@ const TABS = [
 /* ============================================
    概要タブ
    ============================================ */
-function OverviewTab({ stats, onTabChange }) {
+function OverviewTab({ stats, statsError, onTabChange }) {
     const [revenue, setRevenue] = useState(null);
 
     useEffect(() => {
         api.get('/admin/revenue').then(res => setRevenue(res.data)).catch(() => {});
     }, []);
 
+    if (statsError) return (
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: '#ef4444' }}>
+            概要の読み込みに失敗しました: {statsError}
+        </div>
+    );
     if (!stats) return <div className="skeleton" style={{ height: 200 }} />;
 
     const cards = [
@@ -1360,6 +1365,7 @@ export default function AdminDashboard() {
     const initialTab = TABS.find(t => t.key === searchParams.get('tab'))?.key || 'overview';
     const [tab, setTabState] = useState(initialTab);
     const [stats, setStats] = useState(null);
+    const [statsError, setStatsError] = useState(null);
     const [userDetailId, setUserDetailId] = useState(null);
     const navigate = useNavigate();
 
@@ -1372,7 +1378,11 @@ export default function AdminDashboard() {
         api.get('/admin/dashboard').then(res => {
             setStats(res.data.stats);
         }).catch(err => {
-            if (err.response?.status === 403) navigate('/');
+            if (err.response?.status === 403 || err.response?.status === 401) {
+                navigate('/');
+            } else {
+                setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
+            }
         });
     }, []);
 
@@ -1431,7 +1441,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* タブコンテンツ */}
-            {tab === 'overview' && <OverviewTab stats={stats} onTabChange={setTab} />}
+            {tab === 'overview' && <OverviewTab stats={stats} statsError={statsError} onTabChange={setTab} />}
             {tab === 'revenue' && <RevenueTab />}
             {tab === 'jobseekers' && <JobseekersTab onViewUser={setUserDetailId} />}
             {tab === 'all-companies' && <AllCompaniesTab />}
