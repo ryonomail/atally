@@ -1377,11 +1377,17 @@ export default function AdminDashboard() {
     useEffect(() => {
         api.get('/admin/dashboard').then(res => {
             setStats(res.data.stats);
+            if (res.data.errors) {
+                setStatsError('一部クエリエラー: ' + JSON.stringify(res.data.errors));
+            }
         }).catch(err => {
             if (err.response?.status === 403 || err.response?.status === 401) {
                 navigate('/');
             } else {
-                setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
+                setStatsError(
+                    (err.response?.data?.message || err.message || '読み込みエラー') +
+                    (err.response?.status ? ` (HTTP ${err.response.status})` : '')
+                );
             }
         });
     }, []);
