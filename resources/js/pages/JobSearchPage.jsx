@@ -1137,7 +1137,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     borderBottom: '1px solid var(--color-border)',
                     background: 'rgba(245,158,11,0.04)',
                 }}>
-                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#d97706', marginBottom: 4 }}>この求人のポイント</p>
+                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#d97706', marginBottom: 4 }}>✨ アピールポイント</p>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: 0 }}>
                         {job.appeal_points}
                     </p>
