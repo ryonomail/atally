@@ -32,13 +32,15 @@ if [ -n "${REDIS_URL}" ]; then
     echo "--- REDIS_HOST=$REDIS_HOST REDIS_PORT=$REDIS_PORT ---"
 fi
 
-# config:cache
+# Laravelキャッシュ生成（OPcacheと組み合わせて起動後の初回リクエストを高速化）
 echo "--- config:cache ---"
 php artisan config:cache
 echo "--- route:cache ---"
 php artisan route:cache
 echo "--- view:cache ---"
 php artisan view:cache
+echo "--- optimize ---"
+php artisan optimize
 
 # マイグレーション
 echo "--- migrate ---"
