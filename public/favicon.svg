@@ -3,11 +3,10 @@
   <text
     x="50"
     y="72"
-    font-family="'Georgia', 'Noto Serif JP', serif"
-    font-size="62"
+    font-family="-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', Arial, sans-serif"
+    font-size="60"
     font-weight="700"
     text-anchor="middle"
     fill="#c8952e"
-    letter-spacing="-2"
   >A</text>
 </svg>
