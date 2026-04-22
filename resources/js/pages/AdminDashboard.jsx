@@ -20,10 +20,11 @@ const TABS = [
 /* ============================================
    概要タブ
    ============================================ */
-function OverviewTab({ stats, statsError, onTabChange }) {
-    const [revenue, setRevenue] = useState(null);
+function OverviewTab({ stats, statsError, onTabChange, initialRevenue }) {
+    const [revenue, setRevenue] = useState(initialRevenue || null);
 
     useEffect(() => {
+        if (initialRevenue) return;
         api.get('/admin/revenue').then(res => setRevenue(res.data)).catch(() => {});
     }, []);
 
@@ -101,11 +102,12 @@ function OverviewTab({ stats, statsError, onTabChange }) {
 /* ============================================
    売上タブ
    ============================================ */
-function RevenueTab() {
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+function RevenueTab({ initialData }) {
+    const [data, setData] = useState(initialData || null);
+    const [loading, setLoading] = useState(!initialData);
 
     useEffect(() => {
+        if (initialData) return;
         api.get('/admin/revenue').then(res => setData(res.data)).finally(() => setLoading(false));
     }, []);
 
@@ -1389,6 +1391,7 @@ export default function AdminDashboard() {
         api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {});
         api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {});
         api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {});
+        api.get('/admin/revenue').then(r => setPrefetched(p => ({ ...p, revenue: r.data }))).catch(() => {});
     }, []);
 
     const alertCount = stats
@@ -1446,8 +1449,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* タブコンテンツ */}
-            {tab === 'overview' && <OverviewTab stats={stats} statsError={statsError} onTabChange={setTab} />}
-            {tab === 'revenue' && <RevenueTab />}
+            {tab === 'overview' && <OverviewTab stats={stats} statsError={statsError} onTabChange={setTab} initialRevenue={prefetched.revenue} />}
+            {tab === 'revenue' && <RevenueTab initialData={prefetched.revenue} />}
             {tab === 'jobseekers' && <JobseekersTab initialData={prefetched.jobseekers} onViewUser={setUserDetailId} />}
             {tab === 'all-companies' && <AllCompaniesTab initialData={prefetched.companies} />}
             {tab === 'all-jobs' && <AllJobsTab initialData={prefetched.jobs} />}

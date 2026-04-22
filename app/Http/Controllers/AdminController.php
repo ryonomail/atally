@@ -399,49 +399,57 @@ class AdminController extends Controller
      */
     public function revenue()
     {
-        $today = now();
+        $data = Cache::remember('admin_revenue', 300, function () {
+            $today = now();
 
-        // 今月の売上（その日の最高額で請求）
-        $thisMonth = DailyUsage::whereYear('date', $today->year)
-            ->whereMonth('date', $today->month)
-            ->sum('max_budget_amount');
+            $thisMonth = DailyUsage::whereYear('date', $today->year)
+                ->whereMonth('date', $today->month)
+                ->sum('max_budget_amount');
 
-        // 先月の売上
-        $lastMonth = DailyUsage::whereYear('date', $today->copy()->subMonth()->year)
-            ->whereMonth('date', $today->copy()->subMonth()->month)
-            ->sum('max_budget_amount');
+            $lastMonth = DailyUsage::whereYear('date', $today->copy()->subMonth()->year)
+                ->whereMonth('date', $today->copy()->subMonth()->month)
+                ->sum('max_budget_amount');
 
-        // 直近30日の日別売上
-        $daily = DailyUsage::where('date', '>=', $today->copy()->subDays(30)->toDateString())
-            ->select(DB::raw("date, SUM(max_budget_amount) as total"))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+            $daily = DailyUsage::where('date', '>=', $today->copy()->subDays(30)->toDateString())
+                ->select(DB::raw("date::text, SUM(max_budget_amount) as total"))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('total', 'date')
+                ->map(fn($v) => (int) $v);
 
-        // 企業別売上ランキング（今月）
-        $topCompanies = DailyUsage::whereYear('date', $today->year)
-            ->whereMonth('date', $today->month)
-            ->select('company_id', DB::raw("SUM(max_budget_amount) as total"))
-            ->groupBy('company_id')
-            ->orderByDesc('total')
-            ->limit(10)
-            ->with('company:id,company_name')
-            ->get();
+            $topCompanies = DailyUsage::whereYear('date', $today->year)
+                ->whereMonth('date', $today->month)
+                ->select('company_id', DB::raw("SUM(max_budget_amount) as total"))
+                ->groupBy('company_id')
+                ->orderByDesc('total')
+                ->limit(10)
+                ->with('company:id,company_name')
+                ->get()
+                ->map(fn($r) => [
+                    'company_id'   => $r->company_id,
+                    'total'        => (int) $r->total,
+                    'company_name' => $r->company?->company_name,
+                ])
+                ->values()
+                ->all();
 
-        // 月別推移（過去6ヶ月）
-        $monthly = DailyUsage::where('date', '>=', $today->copy()->subMonths(6)->startOfMonth()->toDateString())
-            ->select(DB::raw("TO_CHAR(date, 'YYYY-MM') as month"), DB::raw("SUM(max_budget_amount) as total"))
-            ->groupBy(DB::raw("TO_CHAR(date, 'YYYY-MM')"))
-            ->orderBy('month')
-            ->get();
+            $monthly = DailyUsage::where('date', '>=', $today->copy()->subMonths(6)->startOfMonth()->toDateString())
+                ->select(DB::raw("TO_CHAR(date, 'YYYY-MM') as month"), DB::raw("SUM(max_budget_amount) as total"))
+                ->groupBy(DB::raw("TO_CHAR(date, 'YYYY-MM')"))
+                ->orderBy('month')
+                ->pluck('total', 'month')
+                ->map(fn($v) => (int) $v);
 
-        return response()->json([
-            'this_month' => round($thisMonth),
-            'last_month' => round($lastMonth),
-            'daily' => $daily,
-            'top_companies' => $topCompanies,
-            'monthly' => $monthly,
-        ]);
+            return [
+                'this_month'    => round($thisMonth),
+                'last_month'    => round($lastMonth),
+                'daily'         => $daily,
+                'top_companies' => $topCompanies,
+                'monthly'       => $monthly,
+            ];
+        });
+
+        return response()->json($data);
     }
 
     /**
