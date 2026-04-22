@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     // CONCURRENTLY はトランザクション内で実行不可 → Laravel のトランザクションを無効化
-    public bool $withinTransaction = false;
+    // 注意: 親クラスは型なしで宣言しているため、ここも型なしで上書きする必要がある
+    public $withinTransaction = false;
 
     public function up(): void
     {
