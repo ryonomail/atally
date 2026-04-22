@@ -33,15 +33,33 @@ class JobController extends Controller
 
     public function index(Request $request)
     {
-        // ペルソナマッチが必要かどうかを先に判定（不要なDB取得を避ける）
-        $needsPersona = Auth::guard('sanctum')->check()
-            || $request->hasAny(['guest_skills', 'guest_age', 'guest_experience_years']);
+        // ── キャッシュ最優先チェック ──────────────────────────────────────────────
+        // 認証なし・ゲストパラメータなし = 全ユーザー共通レスポンス → 最速で返す
+        $hasAuth       = $request->hasHeader('Authorization');
+        $hasGuestParam = $request->hasAny(['guest_skills', 'guest_age', 'guest_experience_years']);
+
+        $sortedParams = $request->all();
+        ksort($sortedParams);
+        $fullCacheKey = 'jobs_list_' . md5(json_encode($sortedParams));
+
+        if (!$hasAuth && !$hasGuestParam) {
+            if ($cached = Cache::get($fullCacheKey)) {
+                return response()->json($cached)
+                    ->header('X-Cache', 'HIT')
+                    ->header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+            }
+        }
+
+        // ── ペルソナマッチが必要かどうかを判定 ───────────────────────────────────
+        $needsPersona = ($hasAuth && Auth::guard('sanctum')->check()) || $hasGuestParam;
 
         $query = Job::with(array_filter([
                 'company:id,company_name,company_type',
                 $needsPersona ? 'persona' : null,
             ]))
-            ->whereIn('jobs.status', ['active', 'suspended']);
+            // status = 'active' のみ: 部分インデックス(idx_jobs_active_ranking)を確実に利用
+            // suspended(支払い停止中)の求人は求職者に表示しない
+            ->where('jobs.status', 'active');
 
         if ($request->filled('keyword')) {
             // ReDoS対策: キーワード長と分割数を制限
@@ -113,21 +131,18 @@ class JobController extends Controller
             }
         }
 
-        // リスト用カラムのみ選択（JOINは不要: ranking_scoreで並び替え済み）
+        // リスト用カラムのみ選択
         $query->select(self::LIST_COLUMNS);
 
         $sort    = $request->input('sort', 'ranking');
         $perPage = min((int) $request->input('per_page', 20), 50);
         $page    = max(1, (int) $request->input('page', 1));
 
-        // ── フルレスポンスキャッシュ ──────────────────────────────────────────
-        // 同じ条件のリクエストは Redis から即返却（インデックスページ高速化）
-        // パラメータをキーでソートしてから md5 → 順序が違っても同じキーを生成
-        $sortedParams = $request->all();
-        ksort($sortedParams);
-        $fullCacheKey = 'jobs_list_' . md5(json_encode($sortedParams));
-        if ($cached = Cache::get($fullCacheKey)) {
-            return response()->json($cached);
+        // 認証ユーザーのキャッシュチェック（上でスキップされていない場合）
+        if ($hasAuth || $hasGuestParam) {
+            if ($cached = Cache::get($fullCacheKey)) {
+                return response()->json($cached);
+            }
         }
 
         // ペルソナマッチ用プロフィール取得（ログインユーザー or ゲスト属性パラメータ）
@@ -188,10 +203,14 @@ class JobController extends Controller
 
         $responseData = $result->toArray();
 
-        // フルレスポンスを 5分キャッシュ（求人データは数分で変わらない）
+        // フルレスポンスを 5分キャッシュ
         Cache::put($fullCacheKey, $responseData, 300);
 
-        return response()->json($responseData);
+        $headers = ['X-Cache' => 'MISS'];
+        if (!$hasAuth && !$hasGuestParam) {
+            $headers['Cache-Control'] = 'public, max-age=30, stale-while-revalidate=60';
+        }
+        return response()->json($responseData, 200, $headers);
     }
 
     /**
