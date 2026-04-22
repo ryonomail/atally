@@ -176,7 +176,7 @@ function AppRoutes() {
 
     // アプリ起動直後に求人1ページ目を先読み（ユーザーが/jobsに遷移する前にデータ取得開始）
     useEffect(() => {
-        api.get('/jobs', { params: { page: 1, sort: 'ranking' } }).catch(() => {});
+        api.get('/jobs', { params: { page: 1, per_page: 20, sort: 'ranking' } }).catch(() => {});
     }, []);
 
     return (

@@ -122,8 +122,10 @@ class JobController extends Controller
 
         // ── フルレスポンスキャッシュ ──────────────────────────────────────────
         // 同じ条件のリクエストは Redis から即返却（インデックスページ高速化）
-        // キャッシュキーにページ・ソート・全フィルターを含める（条件が変われば別キー）
-        $fullCacheKey = 'jobs_list_' . md5(json_encode($request->all()));
+        // パラメータをキーでソートしてから md5 → 順序が違っても同じキーを生成
+        $sortedParams = $request->all();
+        ksort($sortedParams);
+        $fullCacheKey = 'jobs_list_' . md5(json_encode($sortedParams));
         if ($cached = Cache::get($fullCacheKey)) {
             return response()->json($cached);
         }
@@ -139,7 +141,9 @@ class JobController extends Controller
         };
 
         // COUNT(*) を Redis にキャッシュ（270k件でも毎回フルカウントを避ける）
-        $countCacheKey = 'jobs_count_' . md5(json_encode($request->except(['page', 'per_page', 'sort'])));
+        $countParams = $request->except(['page', 'per_page', 'sort']);
+        ksort($countParams);
+        $countCacheKey = 'jobs_count_' . md5(json_encode($countParams));
         $total         = Cache::remember($countCacheKey, 300, fn() => (clone $query)->count());
 
         $items  = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();

@@ -21,11 +21,12 @@ class WarmJobsCache extends Command
         $baseUrl = rtrim(config('app.url'), '/');
 
         // デフォルトページ（ランキング順・1〜3ページ目）をウォームアップ
+        // per_page=20 はフロントエンドのデフォルト値と一致させること（キャッシュキーに含まれるため）
         $endpoints = [
-            "{$baseUrl}/api/jobs?page=1&sort=ranking",
-            "{$baseUrl}/api/jobs?page=2&sort=ranking",
-            "{$baseUrl}/api/jobs?page=3&sort=ranking",
-            "{$baseUrl}/api/jobs?page=1&sort=newest",
+            "{$baseUrl}/api/jobs?page=1&per_page=20&sort=ranking",
+            "{$baseUrl}/api/jobs?page=2&per_page=20&sort=ranking",
+            "{$baseUrl}/api/jobs?page=3&per_page=20&sort=ranking",
+            "{$baseUrl}/api/jobs?page=1&per_page=20&sort=newest",
         ];
 
         foreach ($endpoints as $url) {
