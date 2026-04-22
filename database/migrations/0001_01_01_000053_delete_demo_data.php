@@ -64,6 +64,8 @@ return new class extends Migration
 
         DB::table('job_referrals')
             ->whereIn('job_id', $demoJobIds)
+            ->orWhereIn('source_company_id', $demoCompanyIds)
+            ->orWhereIn('referrer_company_id', $demoCompanyIds)
             ->delete();
 
         DB::table('job_photos')
@@ -87,9 +89,16 @@ return new class extends Migration
             ->whereIn('company_id', $demoCompanyIds)
             ->delete();
 
+        DB::table('daily_usages')
+            ->whereIn('company_id', $demoCompanyIds)
+            ->delete();
+
+        DB::table('billing_protection')
+            ->whereIn('company_id', $demoCompanyIds)
+            ->delete();
+
         DB::table('agency_clients')
-            ->whereIn('agency_id', $demoCompanyIds)
-            ->orWhereIn('client_company_id', $demoCompanyIds)
+            ->whereIn('company_id', $demoCompanyIds)
             ->delete();
 
         DB::table('company_invitations')
@@ -120,9 +129,9 @@ return new class extends Migration
             ->whereIn('reporter_id', $demoUserIds)
             ->delete();
 
-        // users.company_id の外部キーをクリアしてからユーザー削除
+        // users.company_id の外部キーをクリアしてからユーザー削除（デモ会社を参照する全ユーザー対象）
         DB::table('users')
-            ->whereIn('id', $demoUserIds)
+            ->whereIn('company_id', $demoCompanyIds)
             ->update(['company_id' => null]);
 
         DB::table('users')
