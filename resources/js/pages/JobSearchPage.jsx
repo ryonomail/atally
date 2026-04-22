@@ -239,8 +239,10 @@ export default function JobSearchPage() {
     }, []);
 
     const abortControllerRef = useRef(null);
+    // フィルター変更かページ送りかを区別するためのref（null = 初回）
+    const prevFiltersRef = useRef(null);
 
-    const fetchJobs = useCallback(async (currentFilters, currentPage, currentGuestProfile) => {
+    const fetchJobs = useCallback(async (currentFilters, currentPage, currentGuestProfile, resetSelection) => {
         // 前回のリクエストをキャンセル（race condition防止）
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -273,8 +275,8 @@ export default function JobSearchPage() {
             const data = res.data.data || [];
             setJobs(data);
             setMeta(res.data);
-            // 最初の求人を自動選択（PC時）— リストデータを即反映してからID変更
-            if (data.length > 0 && !isMobile) {
+            // フィルター変更・初回のみ先頭を自動選択（ページ送りは現在の選択を維持）
+            if (data.length > 0 && !isMobile && resetSelection) {
                 selectedJobListDataRef.current = data[0];
                 setSelectedJob(data[0]);
                 setSelectedJobId(data[0].id);
@@ -290,7 +292,11 @@ export default function JobSearchPage() {
     }, [isMobile, user, perPage]);
 
     useEffect(() => {
-        fetchJobs(filters, page, guestProfile);
+        // 初回 or フィルター変更 → 先頭を自動選択 / ページ送りのみ → 選択を維持
+        const filtersKey = JSON.stringify(filters);
+        const resetSelection = prevFiltersRef.current === null || prevFiltersRef.current !== filtersKey;
+        prevFiltersRef.current = filtersKey;
+        fetchJobs(filters, page, guestProfile, resetSelection);
         return () => {
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
