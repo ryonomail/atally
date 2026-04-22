@@ -447,12 +447,10 @@ class AdminController extends Controller
             ->orderByDesc('created_at');
 
         if ($request->filled('action')) {
-            // ホワイトリストによるフィルター（SQLインジェクション・情報漏洩対策）
-            $allowedPrefixes = ['user.', 'company.', 'job.', 'report.', 'license.', 'settings.', 'stripe_', 'payment_'];
+            $allowedCategories = ['user', 'company', 'job', 'report', 'license', 'settings'];
             $action = $request->action;
-            $isAllowed = collect($allowedPrefixes)->contains(fn($p) => str_starts_with($action, $p));
-            if ($isAllowed) {
-                $query->where('action', 'like', $action . '%');
+            if (in_array($action, $allowedCategories, true)) {
+                $query->where('action', 'like', $action . '.%');
             }
         }
 
