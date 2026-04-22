@@ -93,7 +93,7 @@ return new class extends Migration
             ->whereIn('company_id', $demoCompanyIds)
             ->delete();
 
-        DB::table('billing_protection')
+        DB::table('budget_audit_logs')
             ->whereIn('company_id', $demoCompanyIds)
             ->delete();
 
