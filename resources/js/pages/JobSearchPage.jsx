@@ -68,6 +68,27 @@ const JOB_CATEGORIES = [
     { icon: '🛒', label: '販売・接客' },
 ];
 
+// 給与フォーマット: salary_type に応じて適切な単位で表示
+// 時給/日給 → 円表示、月給/年収 → 10万未満なら円、以上なら万円
+function formatSalaryValue(value, isSmallUnit) {
+    if (!value && value !== 0) return null;
+    if (isSmallUnit || value < 100000) return `${Number(value).toLocaleString()}円`;
+    return `${Math.round(value / 10000)}万円`;
+}
+
+function formatSalary(job) {
+    const { salary_min, salary_max, salary_type } = job;
+    if (!salary_min && !salary_max) return null;
+    const type = salary_type || '';
+    const isSmallUnit = type === '時給' || type === '日給';
+    const fmt = v => formatSalaryValue(v, isSmallUnit);
+    let range;
+    if (salary_min && salary_max) range = `${fmt(salary_min)}〜${fmt(salary_max)}`;
+    else if (salary_min)          range = `${fmt(salary_min)}〜`;
+    else                          range = `〜${fmt(salary_max)}`;
+    return type ? `${type} ${range}` : range;
+}
+
 // 検索履歴ユーティリティ
 const SEARCH_HISTORY_KEY = 'search_history';
 const MAX_HISTORY = 10;
@@ -1016,11 +1037,9 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
                         📍 {job.location}
                     </span>
                 )}
-                {(job.salary_min || job.salary_max) && (
+                {formatSalary(job) && (
                     <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)', fontWeight: 600 }}>
-                        💰 {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
-                        {job.salary_min && job.salary_max ? '〜' : ''}
-                        {job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}
+                        💰 {formatSalary(job)}
                     </span>
                 )}
             </div>
@@ -1129,15 +1148,8 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
                     {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}
                     {job.location && <span className="badge badge-info">📍 {job.location}</span>}
-                    {(job.salary_min || job.salary_max) && (
-                        <span className="badge badge-success">
-                            💰 {(() => {
-                                const fmt = v => v >= 100000 ? `${Math.round(v / 10000)}万円` : `${v.toLocaleString()}円`;
-                                if (job.salary_min && job.salary_max) return `${fmt(job.salary_min)}〜${fmt(job.salary_max)}`;
-                                if (job.salary_min) return fmt(job.salary_min) + '〜';
-                                return '〜' + fmt(job.salary_max);
-                            })()}
-                        </span>
+                    {formatSalary(job) && (
+                        <span className="badge badge-success">💰 {formatSalary(job)}</span>
                     )}
                     {job.overtime_average && <span className="badge badge-info">⏱ 残業{job.overtime_average}</span>}
                     {job.holidays && <span className="badge badge-info">📅 {job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
@@ -1302,15 +1314,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                   job.raise_frequency || job.bonus || job.allowances || benefitsText || insuranceText) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
                         <SectionHeader icon="💰" title="給与・待遇" />
-                        <InfoRow label="給与" value={
-                            job.salary_details || (job.salary_min || job.salary_max ? (() => {
-                                const fmt = v => v >= 100000 ? `${(v / 10000).toLocaleString()}万円` : `${v.toLocaleString()}円`;
-                                const type = job.salary_type ? job.salary_type + ' ' : '';
-                                if (job.salary_min && job.salary_max) return `${type}${fmt(job.salary_min)}〜${fmt(job.salary_max)}`;
-                                if (job.salary_min) return `${type}${fmt(job.salary_min)}〜`;
-                                return `${type}〜${fmt(job.salary_max)}`;
-                            })() : job.salary_type || null)
-                        } />
+                        <InfoRow label="給与" value={job.salary_details || formatSalary(job) || job.salary_type || null} />
                         <InfoRow label="昇給" value={job.raise_frequency} />
                         <InfoRow label="賞与" value={job.bonus} />
                         <InfoRow label="手当" value={job.allowances} />
