@@ -5,6 +5,7 @@ return [
     'env' => env('APP_ENV', 'production'),
     'debug' => (bool) env('APP_DEBUG', false),
     'url' => env('APP_URL', 'http://localhost'),
+    'og_image' => env('APP_OG_IMAGE', null),
     'timezone' => 'Asia/Tokyo',
     'locale' => 'ja',
     'fallback_locale' => 'en',

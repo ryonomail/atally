@@ -20,48 +20,59 @@ Route::get('/jobs/{id}', function ($id) {
         '派遣' => 'TEMPORARY', '業務委託' => 'OTHER', 'インターン' => 'INTERN',
     ];
 
+    // salary_type に応じた unitText（Google Jobs の仕様に準拠）
+    $salaryUnitMap = ['時給' => 'HOUR', '日給' => 'DAY', '月給' => 'MONTH', '年収' => 'YEAR'];
+    $salaryUnit = $salaryUnitMap[$job->salary_type ?? ''] ?? 'YEAR';
+
+    // validThrough: 設定がなければ掲載日から90日後
+    $validThrough = $job->expires_at
+        ?? ($job->published_at ?? $job->created_at)?->copy()->addDays(90);
+
+    $defaultOgImage = config('app.og_image'); // APP_OG_IMAGE 環境変数で設定可能
+
     $seo = [
         'title' => $job->title . ' - ' . ($job->company->company_name ?? '') . ' | Atally',
         'description' => mb_substr(
             ($job->company->company_name ?? '') . 'の' . $job->title . '。'
             . ($job->location ? $job->location . ' / ' : '')
             . ($job->employment_type ?? '')
-            . ($job->salary_min ? ' / 年収' . round($job->salary_min / 10000) . '万円〜' : ''),
+            . ($job->salary_min ? ' / ' . ($job->salary_type ?? '年収') . round($job->salary_min / 10000) . '万円〜' : ''),
             0, 160
         ),
-        'url' => config('app.url') . '/jobs/' . $job->id,
-        'type' => 'website',
-        'image' => null,
+        'url'   => config('app.url') . '/jobs/' . $job->id,
+        'type'  => 'website',
+        'image' => $defaultOgImage,
         'jsonLd' => [
-            '@context' => 'https://schema.org/',
-            '@type' => 'JobPosting',
-            'title' => $job->title,
-            'description' => mb_substr($job->description ?? '', 0, 5000),
-            'datePosted' => ($job->published_at ?? $job->created_at)?->toIso8601String(),
-            ...($job->expires_at ? ['validThrough' => $job->expires_at->toIso8601String()] : []),
+            '@context'       => 'https://schema.org/',
+            '@type'          => 'JobPosting',
+            'title'          => $job->title,
+            'description'    => mb_substr($job->description ?? '', 0, 5000),
+            'datePosted'     => ($job->published_at ?? $job->created_at)?->toIso8601String(),
+            'validThrough'   => $validThrough?->toIso8601String(),
+            'directApply'    => true,
             'employmentType' => $employmentTypeMap[$job->employment_type] ?? 'OTHER',
             'hiringOrganization' => [
-                '@type' => 'Organization',
-                'name' => $job->company->company_name ?? '',
-                'sameAs' => $job->company->website ?? '',
+                '@type'  => 'Organization',
+                'name'   => $job->company->company_name ?? '',
+                ...($job->company->website ? ['sameAs' => $job->company->website] : []),
             ],
             'jobLocation' => [
-                '@type' => 'Place',
+                '@type'   => 'Place',
                 'address' => [
-                    '@type' => 'PostalAddress',
+                    '@type'         => 'PostalAddress',
                     'addressRegion' => $job->location ?? '',
-                    'addressCountry' => 'JP',
+                    'addressCountry'=> 'JP',
                 ],
             ],
             ...($job->salary_min || $job->salary_max ? [
                 'baseSalary' => [
-                    '@type' => 'MonetaryAmount',
+                    '@type'    => 'MonetaryAmount',
                     'currency' => 'JPY',
-                    'value' => array_filter([
-                        '@type' => 'QuantitativeValue',
-                        'minValue' => $job->salary_min,
-                        'maxValue' => $job->salary_max,
-                        'unitText' => 'YEAR',
+                    'value'    => array_filter([
+                        '@type'    => 'QuantitativeValue',
+                        'minValue' => $job->salary_min ?: null,
+                        'maxValue' => $job->salary_max ?: null,
+                        'unitText' => $salaryUnit,
                     ]),
                 ],
             ] : []),
