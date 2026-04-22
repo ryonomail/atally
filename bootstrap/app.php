@@ -63,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (app()->isProduction()) {
                 return response()->json([
                     'message' => 'サーバーエラーが発生しました。しばらくしてから再度お試しください。',
+                    '_debug' => get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine(),
                 ], 500);
             }
 
