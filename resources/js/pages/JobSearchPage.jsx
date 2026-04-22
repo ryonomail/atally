@@ -79,14 +79,15 @@ function formatSalaryValue(value, isSmallUnit) {
 function formatSalary(job) {
     const { salary_min, salary_max, salary_type } = job;
     if (!salary_min && !salary_max) return null;
-    const type = salary_type || '';
-    const isSmallUnit = type === '時給' || type === '日給';
+    const isSmallUnit = salary_type === '時給' || salary_type === '日給';
     const fmt = v => formatSalaryValue(v, isSmallUnit);
     let range;
     if (salary_min && salary_max) range = `${fmt(salary_min)}〜${fmt(salary_max)}`;
     else if (salary_min)          range = `${fmt(salary_min)}〜`;
     else                          range = `〜${fmt(salary_max)}`;
-    return type ? `${type} ${range}` : range;
+    // salary_type が未設定で値が年収レベル（100万円以上）なら「年収」と見なす
+    const label = salary_type || ((salary_min >= 1000000 || salary_max >= 1000000) ? '年収' : '');
+    return label ? `${label} ${range}` : range;
 }
 
 // 検索履歴ユーティリティ
