@@ -17,6 +17,13 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
+    private function paramHash(Request $request): string
+    {
+        $params = $request->all();
+        ksort($params);
+        return md5(json_encode($params));
+    }
+
     /**
      * ダッシュボード統計
      */
@@ -251,20 +258,16 @@ class AdminController extends Controller
      */
     public function jobseekers(Request $request)
     {
-        $query = User::where('role', 'jobseeker')
-            ->withCount('applications');
-
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where(function ($w) use ($q) {
-                $w->where('name', 'ilike', "%{$q}%")
-                  ->orWhere('email', 'ilike', "%{$q}%");
-            });
-        }
-
-        return response()->json(
-            $query->orderBy('created_at', 'desc')->paginate(30)
-        );
+        $cacheKey = 'admin_jobseekers_' . $this->paramHash($request);
+        $result = Cache::remember($cacheKey, 120, function () use ($request) {
+            $query = User::where('role', 'jobseeker')->withCount('applications');
+            if ($request->filled('q')) {
+                $q = $request->q;
+                $query->where(fn($w) => $w->where('name', 'ilike', "%{$q}%")->orWhere('email', 'ilike', "%{$q}%"));
+            }
+            return $query->orderBy('created_at', 'desc')->paginate(30)->toArray();
+        });
+        return response()->json($result);
     }
 
     /**
@@ -272,21 +275,18 @@ class AdminController extends Controller
      */
     public function allCompanies(Request $request)
     {
-        $query = Company::with('user:id,name,email,suspended_at')
-            ->withCount('jobs');
-
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where('company_name', 'ilike', "%{$q}%");
-        }
-
-        if ($request->filled('status')) {
-            $query->where('verification_status', $request->status);
-        }
-
-        return response()->json(
-            $query->orderBy('created_at', 'desc')->paginate(30)
-        );
+        $cacheKey = 'admin_companies_all_' . $this->paramHash($request);
+        $result = Cache::remember($cacheKey, 120, function () use ($request) {
+            $query = Company::with('user:id,name,email,suspended_at')->withCount('jobs');
+            if ($request->filled('q')) {
+                $query->where('company_name', 'ilike', "%{$request->q}%");
+            }
+            if ($request->filled('status')) {
+                $query->where('verification_status', $request->status);
+            }
+            return $query->orderBy('created_at', 'desc')->paginate(30)->toArray();
+        });
+        return response()->json($result);
     }
 
     /**
@@ -294,23 +294,20 @@ class AdminController extends Controller
      */
     public function allJobs(Request $request)
     {
-        $query = Job::with(['company:id,company_name'])
-            ->withCount('applications');
-
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where('title', 'ilike', "%{$q}%");
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        } else {
-            $query->where('status', 'active');
-        }
-
-        return response()->json(
-            $query->orderBy('created_at', 'desc')->paginate(30)
-        );
+        $cacheKey = 'admin_jobs_all_' . $this->paramHash($request);
+        $result = Cache::remember($cacheKey, 120, function () use ($request) {
+            $query = Job::with(['company:id,company_name'])->withCount('applications');
+            if ($request->filled('q')) {
+                $query->where('title', 'ilike', "%{$request->q}%");
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            } else {
+                $query->where('status', 'active');
+            }
+            return $query->orderBy('created_at', 'desc')->paginate(30)->toArray();
+        });
+        return response()->json($result);
     }
 
     /**

@@ -222,12 +222,12 @@ function RevenueTab() {
 /* ============================================
    求職者一覧タブ
    ============================================ */
-function JobseekersTab({ onViewUser }) {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+function JobseekersTab({ initialData, onViewUser }) {
+    const [users, setUsers] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [meta, setMeta] = useState(null);
+    const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
 
     const fetchData = (p = 1, q = '') => {
         setLoading(true);
@@ -238,7 +238,7 @@ function JobseekersTab({ onViewUser }) {
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { if (!initialData) fetchData(); }, []);
 
     return (
         <div>
@@ -332,13 +332,13 @@ function JobseekersTab({ onViewUser }) {
 /* ============================================
    全企業一覧タブ
    ============================================ */
-function AllCompaniesTab() {
-    const [companies, setCompanies] = useState([]);
-    const [loading, setLoading] = useState(true);
+function AllCompaniesTab({ initialData }) {
+    const [companies, setCompanies] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [page, setPage] = useState(1);
-    const [meta, setMeta] = useState(null);
+    const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
 
     const fetchData = (p = 1, q = '', status = '') => {
         setLoading(true);
@@ -349,7 +349,7 @@ function AllCompaniesTab() {
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { if (!initialData) fetchData(); }, []);
 
     const VSTATUS = { unverified: { label: '未申請', cls: 'badge-info' }, pending: { label: '審査中', cls: 'badge-warning' }, verified: { label: '承認済', cls: 'badge-success' }, rejected: { label: '却下', cls: 'badge-danger' } };
 
@@ -460,14 +460,14 @@ function AllCompaniesTab() {
 /* ============================================
    全求人一覧タブ
    ============================================ */
-function AllJobsTab() {
+function AllJobsTab({ initialData }) {
     const toast = useToast();
-    const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [jobs, setJobs] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [page, setPage] = useState(1);
-    const [meta, setMeta] = useState(null);
+    const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
     const [processing, setProcessing] = useState(null);
 
     const fetchData = (p = 1, q = '', status = '') => {
@@ -479,7 +479,7 @@ function AllJobsTab() {
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { if (!initialData) fetchData(); }, []);
 
     const handleJobAction = async (jobId, status) => {
         const msg = status === 'suspended' ? 'この求人を停止しますか？' : 'この求人を公開に戻しますか？';
@@ -1366,6 +1366,7 @@ export default function AdminDashboard() {
     const [tab, setTabState] = useState(initialTab);
     const [stats, setStats] = useState(null);
     const [statsError, setStatsError] = useState(null);
+    const [prefetched, setPrefetched] = useState({});
     const [userDetailId, setUserDetailId] = useState(null);
     const navigate = useNavigate();
 
@@ -1375,11 +1376,9 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
+        // ダッシュボード統計 + 主要3タブを並列プリフェッチ
         api.get('/admin/dashboard').then(res => {
             setStats(res.data.stats);
-            if (res.data.errors) {
-                setStatsError('一部クエリエラー: ' + JSON.stringify(res.data.errors));
-            }
         }).catch(err => {
             if (err.response?.status === 403 || err.response?.status === 401) {
                 navigate('/');
@@ -1387,6 +1386,9 @@ export default function AdminDashboard() {
                 setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
             }
         });
+        api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {});
+        api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {});
+        api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {});
     }, []);
 
     const alertCount = stats
@@ -1446,9 +1448,9 @@ export default function AdminDashboard() {
             {/* タブコンテンツ */}
             {tab === 'overview' && <OverviewTab stats={stats} statsError={statsError} onTabChange={setTab} />}
             {tab === 'revenue' && <RevenueTab />}
-            {tab === 'jobseekers' && <JobseekersTab onViewUser={setUserDetailId} />}
-            {tab === 'all-companies' && <AllCompaniesTab />}
-            {tab === 'all-jobs' && <AllJobsTab />}
+            {tab === 'jobseekers' && <JobseekersTab initialData={prefetched.jobseekers} onViewUser={setUserDetailId} />}
+            {tab === 'all-companies' && <AllCompaniesTab initialData={prefetched.companies} />}
+            {tab === 'all-jobs' && <AllJobsTab initialData={prefetched.jobs} />}
             {tab === 'companies' && <CompaniesTab />}
             {tab === 'jobs' && <JobsTab />}
             {tab === 'licenses' && <LicensesTab />}
