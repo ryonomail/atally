@@ -75,7 +75,7 @@ Route::get('/jobs/{id}', function ($id) {
 Route::get('/companies/{id}', function ($id) {
     $company = \App\Models\Company::find($id);
 
-    if (!$company || $company->verification_status !== 'approved') {
+    if (!$company || $company->verification_status->value !== 'verified') {
         return response(view('app'), 404);
     }
 
@@ -120,7 +120,7 @@ Route::get('/sitemap.xml', function () {
         ->limit(1000)
         ->get();
 
-    $companies = \App\Models\Company::where('verification_status', 'approved')
+    $companies = \App\Models\Company::where('verification_status', 'verified')
         ->select('id', 'updated_at')
         ->orderByDesc('updated_at')
         ->limit(200)
