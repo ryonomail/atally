@@ -11,6 +11,7 @@ use App\Models\UserProfile;
 use App\Models\Company;
 use App\Services\NgWordService;
 use App\Services\BillingProtectionService;
+use App\Services\GoogleIndexingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -1183,7 +1184,11 @@ class JobController extends Controller
 
         $updated = [];
         foreach ($jobs as $job) {
+            $wasActive = $job->status->value === 'active';
             $job->update(['status' => $request->status]);
+            if ($request->status === 'active' && !$wasActive) {
+                GoogleIndexingService::notifyJobPublished($job->id);
+            }
             $updated[] = $job->fresh();
         }
 

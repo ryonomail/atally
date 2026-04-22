@@ -11,6 +11,7 @@ use App\Models\Report;
 use App\Models\User;
 use App\Enums\VerificationStatus;
 use App\Enums\JobStatus;
+use App\Services\GoogleIndexingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -139,10 +140,15 @@ class AdminController extends Controller
             'status' => ['required', 'in:active,suspended'],
         ]);
 
+        $wasActive = $job->status->value === 'active';
         $job->update([
             'status' => $validated['status'],
             'published_at' => $validated['status'] === 'active' ? now() : null,
         ]);
+
+        if ($validated['status'] === 'active' && !$wasActive) {
+            GoogleIndexingService::notifyJobPublished($job->id);
+        }
 
         AdminAuditLog::log(auth()->id(), 'job.' . $validated['status'], 'job', $job->id);
 
