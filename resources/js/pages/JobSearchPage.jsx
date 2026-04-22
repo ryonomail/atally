@@ -185,6 +185,8 @@ export default function JobSearchPage() {
     const [selectedJobId, setSelectedJobId] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    // 選択中の求人リスト上のデータ（クリック瞬時表示用）
+    const selectedJobListDataRef = useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     // Sync filters + page to URL query parameters
@@ -270,8 +272,10 @@ export default function JobSearchPage() {
             const data = res.data.data || [];
             setJobs(data);
             setMeta(res.data);
-            // 最初の求人を自動選択（PC時）
+            // 最初の求人を自動選択（PC時）— リストデータを即反映してからID変更
             if (data.length > 0 && !isMobile) {
+                selectedJobListDataRef.current = data[0];
+                setSelectedJob(data[0]);
                 setSelectedJobId(data[0].id);
             }
         } catch (err) {
@@ -293,16 +297,21 @@ export default function JobSearchPage() {
         };
     }, [filters, page, guestProfile]);
 
-    // 選択された求人の詳細を取得
+    // 選択された求人の詳細をバックグラウンドで取得（リストデータはクリック時に即表示済み）
     useEffect(() => {
         if (!selectedJobId) {
             setSelectedJob(null);
+            selectedJobListDataRef.current = null;
             return;
         }
-        setDetailLoading(true);
+        // リストデータが即セットされていない場合のみローディング表示
+        const hasInstantData = selectedJobListDataRef.current?.id === selectedJobId;
+        if (!hasInstantData) {
+            setDetailLoading(true);
+        }
         api.get(`/jobs/${selectedJobId}`)
             .then(res => setSelectedJob(res.data))
-            .catch(() => setSelectedJob(null))
+            .catch(() => { if (!hasInstantData) setSelectedJob(null); })
             .finally(() => setDetailLoading(false));
     }, [selectedJobId]);
 
@@ -416,6 +425,9 @@ export default function JobSearchPage() {
         if (isMobile) {
             navigate(`/jobs/${job.id}`);
         } else {
+            // リストデータを即座に表示（待機時間ゼロ）、詳細はバックグラウンドで取得
+            selectedJobListDataRef.current = job;
+            setSelectedJob(job);
             setSelectedJobId(job.id);
         }
     };
