@@ -17,47 +17,24 @@ use Illuminate\Support\Facades\DB;
 class AdminController extends Controller
 {
     /**
-     * 防御的 middleware 宣言（ルート設定ミス時のフォールバック）
-     */
-    public function __construct()
-    {
-        $this->middleware(['auth:sanctum', 'role:admin']);
-    }
-
-    /**
      * ダッシュボード統計
      */
     public function dashboard()
     {
-        $stats = [];
-        $errors = [];
-
-        $queries = [
-            'total_jobseekers'      => fn() => User::where('role', 'jobseeker')->count(),
-            'total_companies'       => fn() => Company::count(),
-            'pending_verifications' => fn() => Company::where('verification_status', 'pending')->count(),
-            'pending_job_reviews'   => fn() => Job::where('status', 'pending_review')->count(),
-            'active_jobs'           => fn() => Job::where('status', 'active')->count(),
-            'open_reports'          => fn() => Report::where('status', 'open')->count(),
-            'pending_licenses'      => fn() => Company::where('company_type', 'recruitment_agency')
-                ->where('license_verified', false)
-                ->whereNotNull('license_document_path')
-                ->count(),
-        ];
-
-        foreach ($queries as $key => $query) {
-            try {
-                $stats[$key] = $query();
-            } catch (\Throwable $e) {
-                $stats[$key] = 0;
-                $errors[$key] = $e->getMessage();
-            }
-        }
-
-        return response()->json(array_filter([
-            'stats'  => $stats,
-            'errors' => !empty($errors) ? $errors : null,
-        ]));
+        return response()->json([
+            'stats' => [
+                'total_jobseekers'      => User::where('role', 'jobseeker')->count(),
+                'total_companies'       => Company::count(),
+                'pending_verifications' => Company::where('verification_status', 'pending')->count(),
+                'pending_job_reviews'   => Job::where('status', 'pending_review')->count(),
+                'active_jobs'           => Job::where('status', 'active')->count(),
+                'open_reports'          => Report::where('status', 'open')->count(),
+                'pending_licenses'      => Company::where('company_type', 'recruitment_agency')
+                    ->where('license_verified', false)
+                    ->whereNotNull('license_document_path')
+                    ->count(),
+            ],
+        ]);
     }
 
     /**

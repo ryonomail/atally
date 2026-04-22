@@ -1384,9 +1384,7 @@ export default function AdminDashboard() {
             if (err.response?.status === 403 || err.response?.status === 401) {
                 navigate('/');
             } else {
-                const msg = err.response?.data?.message || err.message || '読み込みエラー';
-                const debug = err.response?.data?._debug ? `\n${err.response.data._debug}` : '';
-                setStatsError(msg + (err.response?.status ? ` (HTTP ${err.response.status})` : '') + debug);
+                setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
             }
         });
     }, []);
