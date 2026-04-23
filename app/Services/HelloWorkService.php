@@ -205,31 +205,45 @@ class HelloWorkService
     /**
      * XML要素を jobs テーブル用の配列に変換
      *
-     * 実測フィールド名（APIレスポンスより確認済み）:
-     *   kjno             = 求人番号
-     *   jgshmei          = 事業所名
-     *   sksu             = 職種
-     *   shigoto_ny       = 仕事内容
-     *   koyokeitai_n     = 雇用形態名
-     *   shgbsjusho1_n    = 就業場所（都道府県市区町村）
-     *   kjyukoymd        = 有効期限 (YYYY/MM/DD)
-     *   uktkymd_seireki  = 受付日 (YYYY/MM/DD)
-     *   khkykagen        = 基本給下限（月額）
-     *   khkyjgn          = 基本給上限（月額）
-     *   chgnkeitai_n     = 賃金形態名（時給・月給等）
-     *   chgnkeitai_kagen = 賃金形態別下限
-     *   chgnkeitai_jgn   = 賃金形態別上限
+     * ハローワーク求人情報提供サービス API v2.0 フィールド対応表:
+     *   kjno              = 求人番号
+     *   jgshmei           = 事業所名
+     *   sksu              = 職種
+     *   shigoto_ny        = 仕事内容
+     *   koyokeitai_n      = 雇用形態名
+     *   shgbsjusho1_n     = 就業場所（都道府県市区町村）
+     *   shgbsjusho2_n     = 就業場所（番地以降）
+     *   kjyukoymd         = 有効期限 (YYYY/MM/DD)
+     *   uktkymd_seireki   = 受付日 (YYYY/MM/DD)
+     *   khkykagen         = 基本給下限（月額）
+     *   khkyjgn           = 基本給上限（月額）
+     *   chgnkeitai_n      = 賃金形態名（時給・月給等）
+     *   chgnkeitai_kagen  = 賃金形態別下限
+     *   chgnkeitai_jgn    = 賃金形態別上限
+     *   kszk_jikan1_f     = 就業時間1（始）HH:MM
+     *   kszk_jikan1_t     = 就業時間1（終）HH:MM
+     *   kszk_jikan2_f     = 就業時間2（始）HH:MM
+     *   kszk_jikan2_t     = 就業時間2（終）HH:MM
+     *   kszk_jikan_bko    = 就業時間の備考
+     *   kyuujitsu_naiy    = 休日等
+     *   taiguu_naiy       = 待遇・福利厚生
+     *   boshuyoken_naiy   = 応募に必要な資格・経験
+     *   hoken_f1          = 雇用保険 (1=あり)
+     *   hoken_f2          = 労災保険 (1=あり)
+     *   hoken_f3          = 健康保険 (1=あり)
+     *   hoken_f4          = 厚生年金 (1=あり)
      */
     private function mapXmlToJobData(\SimpleXMLElement $item): array
     {
         $get = fn(string $key) => trim((string) ($item->$key ?? ''));
 
-        // 賃金形態に応じて適切なフィールドを使用
-        $salaryTypeRaw = $get('chgnkeitai_n'); // 時給・月給・日給等
-        $salaryMin = $this->parseSalary($get('chgnkeitai_kagen')) ?: $this->parseSalary($get('khkykagen'));
-        $salaryMax = $this->parseSalary($get('chgnkeitai_jgn')) ?: $this->parseSalary($get('khkyjgn'));
+        // 賃金
+        $salaryTypeRaw = $get('chgnkeitai_n');
+        $salaryMin  = $this->parseSalary($get('chgnkeitai_kagen')) ?: $this->parseSalary($get('khkykagen'));
+        $salaryMax  = $this->parseSalary($get('chgnkeitai_jgn'))   ?: $this->parseSalary($get('khkyjgn'));
         $salaryType = $this->normalizeSalaryType($salaryTypeRaw);
 
+        // 日付
         $expiresAt = null;
         $rawExpiry = $get('kjyukoymd');
         if (preg_match('/^\d{4}\/\d{2}\/\d{2}$/', $rawExpiry)) {
@@ -242,19 +256,82 @@ class HelloWorkService
             $publishedAt = Carbon::createFromFormat('Y/m/d', $rawPublished)->startOfDay();
         }
 
+        // 就業時間
+        $workHours = $this->buildWorkHours(
+            $get('kszk_jikan1_f'), $get('kszk_jikan1_t'),
+            $get('kszk_jikan2_f'), $get('kszk_jikan2_t'),
+            $get('kszk_jikan_bko')
+        );
+
+        // 就業場所 → 都道府県 / 市区町村 に分割
+        $locationRaw = $get('shgbsjusho1_n') ?: $get('jgshjusho_n') ?: '';
+        [$prefecture, $city] = $this->splitLocation($locationRaw);
+
+        // 詳細住所（番地以降）
+        $addressDetail = $get('shgbsjusho2_n') ?: null;
+        $officeAddress = $addressDetail
+            ? trim($locationRaw . ' ' . $addressDetail)
+            : ($locationRaw ?: null);
+
+        // 社会保険（フラグ → 文字列配列）
+        $insurance = [];
+        if ($get('hoken_f1') === '1') $insurance[] = '雇用保険';
+        if ($get('hoken_f2') === '1') $insurance[] = '労災保険';
+        if ($get('hoken_f3') === '1') $insurance[] = '健康保険';
+        if ($get('hoken_f4') === '1') $insurance[] = '厚生年金';
+
+        // 待遇・福利厚生（テキスト → JSON配列の1要素として格納）
+        $taiguuNaiy = $get('taiguu_naiy');
+        $benefits = $taiguuNaiy ? [$taiguuNaiy] : null;
+
         return [
-            'hellowork_id'   => $get('kjno') ?: null,
-            'title'          => $get('sksu') ?: '職種未記載',
-            'description'    => $get('shigoto_ny') ?: '',
-            'employment_type'=> $this->normalizeEmploymentType($get('koyokeitai_n')),
-            'location'       => $get('shgbsjusho1_n') ?: $get('jgshjusho_n') ?: null,
-            'salary_min'     => $salaryMin,
-            'salary_max'     => $salaryMax,
-            'salary_type'    => $salaryType,
-            'expires_at'     => $expiresAt,
-            'published_at'   => $publishedAt,
-            '_company_name'  => $get('jgshmei'),
+            'hellowork_id'    => $get('kjno') ?: null,
+            'title'           => $get('sksu') ?: '職種未記載',
+            'description'     => $get('shigoto_ny') ?: '',
+            'requirements'    => $get('boshuyoken_naiy') ?: null,
+            'employment_type' => $this->normalizeEmploymentType($get('koyokeitai_n')),
+            'location'        => $locationRaw ?: null,
+            'prefecture'      => $prefecture,
+            'city'            => $city,
+            'office_address'  => $officeAddress,
+            'salary_min'      => $salaryMin,
+            'salary_max'      => $salaryMax,
+            'salary_type'     => $salaryType,
+            'work_hours'      => $workHours,
+            'holidays'        => $get('kyuujitsu_naiy') ?: null,
+            'benefits'        => $benefits ?: null,
+            'insurance'       => $insurance ?: null,
+            'expires_at'      => $expiresAt,
+            'published_at'    => $publishedAt,
+            '_company_name'   => $get('jgshmei'),
         ];
+    }
+
+    private function buildWorkHours(string $f1, string $t1, string $f2, string $t2, string $bko): ?string
+    {
+        $parts = [];
+        if ($f1 && $t1) $parts[] = "{$f1}〜{$t1}";
+        if ($f2 && $t2) $parts[] = "{$f2}〜{$t2}";
+        if ($bko)       $parts[] = $bko;
+        return $parts ? implode(' / ', $parts) : null;
+    }
+
+    /**
+     * "群馬県前橋市" → ["群馬県", "前橋市"]
+     * 都道府県（都/道/府/県）を分離し残りを市区町村とする
+     */
+    private function splitLocation(string $location): array
+    {
+        if (empty($location)) return [null, null];
+
+        if (preg_match('/^(.+?[都道府県])(.*)$/', $location, $m)) {
+            return [
+                $m[1],
+                $m[2] ?: null,
+            ];
+        }
+
+        return [null, $location];
     }
 
     // ----------------------------------------------------------------
