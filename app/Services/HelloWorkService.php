@@ -110,14 +110,13 @@ class HelloWorkService
         }
 
         try {
-            $url = "{$this->baseUrl}/auth/getToken?" . http_build_query([
-                'id'   => $this->apiId,
-                'pass' => $this->apiPass,
-            ]);
-            [$code, $body] = $this->curlPost($url, 30);
+            $url    = "{$this->baseUrl}/auth/getToken";
+            $fields = ['id' => $this->apiId, 'pass' => $this->apiPass];
+
+            [$code, $body] = $this->curlPost($url, 30, $fields);
 
             if ($code !== 200) {
-                Log::error('HelloWork: getToken failed', ['status' => $code]);
+                Log::error('HelloWork: getToken failed', ['status' => $code, 'body' => substr($body, 0, 500)]);
                 return null;
             }
 
@@ -125,7 +124,7 @@ class HelloWorkService
             $token = (string) ($xml->token ?? '');
 
             if (empty($token)) {
-                Log::error('HelloWork: getToken returned empty token');
+                Log::error('HelloWork: getToken returned empty token', ['body' => substr($body, 0, 500)]);
                 return null;
             }
 
@@ -139,7 +138,7 @@ class HelloWorkService
     private function deleteToken(string $token): void
     {
         try {
-            $this->curlPost("{$this->baseUrl}/auth/delToken?token={$token}", 10);
+            $this->curlPost("{$this->baseUrl}/auth/delToken", 10, ['token' => $token]);
         } catch (\Throwable $e) {
             Log::warning('HelloWork: delToken failed', ['error' => $e->getMessage()]);
         }
@@ -156,8 +155,8 @@ class HelloWorkService
     private function fetchJobPage(string $token, string $dataId, int $page): array
     {
         try {
-            $url = "{$this->baseUrl}/kyujin/{$dataId}/{$page}?token={$token}";
-            [$code, $body] = $this->curlPost($url, 60);
+            $url = "{$this->baseUrl}/kyujin/{$dataId}/{$page}";
+            [$code, $body] = $this->curlPost($url, 60, ['token' => $token]);
 
             if ($code !== 200) {
                 Log::warning('HelloWork: fetchJobPage failed', [
@@ -382,7 +381,7 @@ class HelloWorkService
         $company = Company::firstOrCreate(
             ['company_name' => 'ハローワーク'],
             [
-                'verification_status' => 'approved',
+                'verification_status' => 'verified',
                 'website'             => 'https://www.hellowork.mhlw.go.jp/',
                 'description'         => '厚生労働省が運営する公共職業安定所（ハローワーク）の求人情報です。',
             ]
@@ -398,15 +397,18 @@ class HelloWorkService
     }
 
     /**
-     * シンプルなPHP curlでPOSTリクエスト（Guzzleの余分なヘッダーを回避）
      * @return array{int, string} [HTTPステータスコード, レスポンスボディ]
      */
-    private function curlPost(string $url, int $timeout = 30): array
+    private function curlPost(string $url, int $timeout = 30, array $fields = []): array
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        if ($fields) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+        }
 
         // PHP の curl は CA bundle を自動検出できないことがある
         // システムの証明書バンドルを明示的に指定
