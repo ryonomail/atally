@@ -24,11 +24,11 @@ class CompanyController extends Controller
         $validated = $request->validate([
             'company_name' => ['required', 'string', 'max:255'],
             'company_type' => ['required', 'in:direct_employer,recruitment_agency'],
-            'description' => ['sometimes', 'string', 'max:2000'],
-            'website' => ['sometimes', 'url', 'max:255'],
-            'phone' => ['sometimes', 'string', 'max:20'],
-            'address' => ['sometimes', 'string', 'max:500'],
-            'permit_number' => ['required_if:company_type,recruitment_agency', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'website' => ['sometimes', 'nullable', 'url', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'address' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'permit_number' => ['required_if:company_type,recruitment_agency', 'nullable', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
         ]);
 
         $company = Company::create(array_merge($validated, [
@@ -78,11 +78,11 @@ class CompanyController extends Controller
 
         $validated = $request->validate([
             'company_name' => ['sometimes', 'string', 'max:255'],
-            'description' => ['sometimes', 'string', 'max:2000'],
-            'website' => ['sometimes', 'url', 'max:255'],
-            'phone' => ['sometimes', 'string', 'max:20'],
-            'address' => ['sometimes', 'string', 'max:500'],
-            'permit_number' => ['sometimes', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'website' => ['sometimes', 'nullable', 'url', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'address' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'permit_number' => ['sometimes', 'nullable', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
             'industry' => ['sometimes', 'nullable', 'string', 'max:100'],
             'number_of_employees' => ['sometimes', 'nullable', 'string', 'max:50'],
             'founded_year' => ['sometimes', 'nullable', 'string', 'max:20'],
