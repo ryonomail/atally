@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import api from '../api';
+import { useAuth } from '../hooks/useAuth';
 
 const CSV_TEMPLATE = 'title,description,requirements,salary_min,salary_max,salary_type,salary_details,raise_frequency,bonus,location,office_address,employment_type,work_hours,remote_policy,overtime_average,contract_period,holidays,holiday_details,allowances,probation_period,probation_conditions,selection_process,required_documents,estimated_timeline,company_culture,work_environment,number_of_employees,founded_year,industry,appeal_points,notes,allow_referral,referral_fee_type,referral_fee,referral_conditions,persona_age_min,persona_age_max,persona_experience_min,persona_experience_max,persona_target_skills,persona_target_locations,persona_target_job_types,persona_target_employment_status,persona_target_education,persona_target_industries,persona_target_salary_min,persona_target_salary_max,persona_target_certifications,persona_target_management_experience,persona_max_company_changes,persona_personality_traits,persona_ng_conditions,persona_ideal_candidate_description,persona_boost_factor\n"Webエンジニア","Reactを用いたフロントエンド開発を担当。新規機能の設計・実装・コードレビューまで幅広く携わっていただきます。","React経験3年以上、TypeScript実務経験",5000000,8000000,"年収","月給制（固定残業20h含む）","年1回（4月）","年2回（6月・12月）","東京都渋谷区","渋谷駅徒歩5分","正社員","9:00〜18:00（フレックス制あり）","フルリモート可","月10時間程度","期間の定めなし","完全週休2日制（土日祝）","年末年始・夏季休暇・慶弔休暇","交通費全額支給、住宅手当","3ヶ月","本採用と同条件","書類選考→一次面接→最終面接","履歴書・職務経歴書","2週間程度","フラットな組織、1on1面談あり","モダンな開発環境、最新MacBook支給","50名","2020","IT・Web","自社プロダクト開発に集中できる環境","未経験の方も歓迎",true,"percentage",30,"成果報酬型。入社後3ヶ月の返金規定あり",25,35,3,10,"React;TypeScript;Laravel","東京都;神奈川県","フロントエンド;バックエンド","在職中;離職中","大卒以上","IT・Web;SaaS","5000000","8000000","TOEIC700点以上;AWS認定","あり",3,"主体性;チームワーク","短期離職が多い方","モダンな技術スタックに興味があり、チームで協力して開発を進められる方",1.5';
 
@@ -77,12 +78,28 @@ function groupErrors(errors) {
 }
 
 export default function AgencyBulkUploadPage() {
+    const { user } = useAuth();
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
     const [preview, setPreview] = useState(null); // { headers, rows, totalRows, warnings }
     const fileInputRef = useRef(null);
+
+    if (user?.company?.verification_status !== 'verified') {
+        return (
+            <div className="page container animate-fade-in">
+                <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', maxWidth: 500, margin: '0 auto' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>⏳</div>
+                    <h2 style={{ marginBottom: 'var(--space-md)' }}>企業審査中です</h2>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                        審査が完了すると求人の一括アップロードが可能になります。<br />
+                        審査状況はダッシュボードでご確認ください。
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     const handleFileSelect = (selectedFile) => {
         setFile(selectedFile);

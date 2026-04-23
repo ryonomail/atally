@@ -375,7 +375,7 @@ function NavLinks({ user, logout, showAll = false }) {
                                 <li><Link to="/company/scout" className="navbar-link">スカウト</Link></li>
                                 <li><Link to="/agency" className="navbar-link">紹介管理</Link></li>
                                 <li><Link to="/agency/job-database" className="navbar-link">求人DB</Link></li>
-                                <li><Link to="/agency/bulk-upload" className="navbar-link">一括登録</Link></li>
+                                <li><Link to="/agency/bulk-upload" className="navbar-link">求人一括アップロード</Link></li>
                                 <li><Link to="/agency/clients" className="navbar-link">クライアント</Link></li>
                             </>
                         ) : (
@@ -383,7 +383,7 @@ function NavLinks({ user, logout, showAll = false }) {
                                 <Link to="/company/scout" className="navbar-dropdown-item">スカウト</Link>
                                 <Link to="/agency" className="navbar-dropdown-item">紹介管理</Link>
                                 <Link to="/agency/job-database" className="navbar-dropdown-item">求人DB</Link>
-                                <Link to="/agency/bulk-upload" className="navbar-dropdown-item">一括登録</Link>
+                                <Link to="/agency/bulk-upload" className="navbar-dropdown-item">求人一括アップロード</Link>
                                 <Link to="/agency/clients" className="navbar-dropdown-item">クライアント</Link>
                             </NavDropdown>
                         )
