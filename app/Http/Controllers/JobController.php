@@ -270,46 +270,26 @@ class JobController extends Controller
             return response()->json(['message' => 'Job not found'], 404);
         }
 
-        // 閲覧記録（同一ユーザー/IPから1時間以内の重複を除外）
         $user = Auth::guard('sanctum')->user();
-
-        // 非ログインユーザーの詳細ページは 3分キャッシュ
-        if (!$user) {
-            $detailCacheKey = 'job_detail_' . $job->id;
-            if ($cached = Cache::get($detailCacheKey)) {
-                return response()->json($cached);
-            }
-        }
-        $ip = $request->ip();
-        $oneHourAgo = Carbon::now()->subHour();
-
-        $duplicate = JobView::where('job_id', $job->id)
-            ->where('viewed_at', '>=', $oneHourAgo)
-            ->where(function ($q) use ($user, $ip) {
-                if ($user) {
-                    $q->where('user_id', $user->id);
-                } else {
-                    $q->where('ip_address', $ip);
-                }
-            })
-            ->exists();
-
-        if (!$duplicate) {
-            JobView::create([
-                'job_id' => $job->id,
-                'user_id' => $user?->id,
-                'ip_address' => $ip,
-                'viewed_at' => Carbon::now(),
-            ]);
-        }
-
-        $job->load(['company', 'agencyClient', 'photos']);
-
-        $data = $job->toArray();
-
-        // エージェント限定フィールドを非公開（企業オーナー・管理者のみ閲覧可）
         $isOwner = $user && $user->company && $user->company->id === $job->company_id;
         $isAdmin = $user && $user->role === 'admin';
+
+        // オーナー・管理者以外（求職者・非ログイン）は共通キャッシュを使う
+        $useCache = !$isOwner && !$isAdmin;
+        $detailCacheKey = 'job_detail_' . $job->id;
+
+        if ($useCache && $cached = Cache::get($detailCacheKey)) {
+            // 閲覧記録だけ非同期的に記録（レスポンスをブロックしない）
+            $this->recordView($job->id, $user?->id, $request->ip());
+            return response()->json($cached);
+        }
+
+        // 閲覧記録
+        $this->recordView($job->id, $user?->id, $request->ip());
+
+        $job->load(['company', 'agencyClient', 'photos']);
+        $data = $job->toArray();
+
         if (!$isOwner && !$isAdmin) {
             foreach (Job::AGENT_ONLY_FIELDS as $field) {
                 unset($data[$field]);
@@ -322,68 +302,64 @@ class JobController extends Controller
         if ($data['is_agency_job']) {
             $permitNumber = $job->company->permit_number ?? '未登録';
             $data['agency_display'] = "この求人は {$job->company->company_name}（有料職業紹介事業許可番号: {$permitNumber}）を通じて掲載されています。";
-            // 紹介先クライアント企業情報
             $client = $job->agencyClient;
             $data['client_company'] = $client ? [
-                'name' => $client->company_name,
-                'address' => $client->address,
-                'industry' => $job->client_company_industry ?: ($client->industry ?? null),
-                'employees' => $job->client_company_employees ?: ($client->number_of_employees ?? null),
+                'name'        => $client->company_name,
+                'address'     => $client->address,
+                'industry'    => $job->client_company_industry ?: ($client->industry ?? null),
+                'employees'   => $job->client_company_employees ?: ($client->number_of_employees ?? null),
                 'description' => $client->description ?? null,
             ] : null;
-            // 紹介元会社情報
             $data['agency_company'] = [
-                'name' => $job->company->company_name,
+                'name'          => $job->company->company_name,
                 'permit_number' => $permitNumber,
-                'website' => $job->company->website,
-                'phone' => $job->company->phone,
-                'address' => $job->company->address,
+                'website'       => $job->company->website,
+                'phone'         => $job->company->phone,
+                'address'       => $job->company->address,
             ];
         }
 
-        // 似ている求人を取得
-        $similarQuery = Job::with(['company'])
-            ->join('companies', 'jobs.company_id', '=', 'companies.id')
-            ->leftJoin('job_personas', 'jobs.id', '=', 'job_personas.job_id')
-            ->select('jobs.*')
-            ->where('jobs.id', '!=', $job->id)
-            ->where('jobs.status', 'active');
+        // 似ている求人（5分キャッシュ・重いJOINを切り離す）
+        $data['similar_jobs'] = Cache::remember('similar_jobs_' . $job->id, 300, function () use ($job) {
+            if (!$job->prefecture && !$job->employment_type) {
+                return [];
+            }
+            $query = Job::with('company:id,company_name,quality_score')
+                ->select('jobs.*')
+                ->where('jobs.id', '!=', $job->id)
+                ->where('jobs.status', 'active');
 
-        $hasCondition = false;
+            if ($job->prefecture)      $query->where('prefecture', $job->prefecture);
+            if ($job->employment_type) $query->where('employment_type', $job->employment_type);
 
-        if ($job->prefecture) {
-            $similarQuery->where('jobs.prefecture', $job->prefecture);
-            $hasCondition = true;
-        }
+            return $query->orderByDesc('daily_budget')->limit(5)->get()->toArray();
+        });
 
-        if ($job->employment_type) {
-            $similarQuery->where('jobs.employment_type', $job->employment_type);
-            $hasCondition = true;
-        }
-
-        if ($job->salary_min && $job->salary_max) {
-            $range = ($job->salary_max - $job->salary_min) * 0.3;
-            $similarQuery->where('jobs.salary_min', '>=', $job->salary_min - $range)
-                         ->where('jobs.salary_max', '<=', $job->salary_max + $range);
-            $hasCondition = true;
-        }
-
-        if ($hasCondition) {
-            $data['similar_jobs'] = $similarQuery
-                ->orderByRaw('(jobs.daily_budget * companies.quality_score * COALESCE(job_personas.boost_factor, 1.0)) DESC')
-                ->orderBy('companies.quality_score', 'desc')
-                ->limit(5)
-                ->get();
-        } else {
-            $data['similar_jobs'] = [];
-        }
-
-        // 非ログインユーザー向けに 3分キャッシュ
-        if (!$user) {
-            Cache::put('job_detail_' . $job->id, $data, 180);
+        if ($useCache) {
+            Cache::put($detailCacheKey, $data, 180);
         }
 
         return response()->json($data);
+    }
+
+    private function recordView(int $jobId, ?int $userId, string $ip): void
+    {
+        $oneHourAgo = Carbon::now()->subHour();
+        $exists = JobView::where('job_id', $jobId)
+            ->where('viewed_at', '>=', $oneHourAgo)
+            ->where(function ($q) use ($userId, $ip) {
+                $userId ? $q->where('user_id', $userId) : $q->where('ip_address', $ip);
+            })
+            ->exists();
+
+        if (!$exists) {
+            JobView::create([
+                'job_id'     => $jobId,
+                'user_id'    => $userId,
+                'ip_address' => $ip,
+                'viewed_at'  => Carbon::now(),
+            ]);
+        }
     }
 
     // 企業: 自社求人一覧
