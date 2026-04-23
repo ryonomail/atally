@@ -23,6 +23,7 @@ class CompanyController extends Controller
 
         $validated = $request->validate([
             'company_name' => ['required', 'string', 'max:255'],
+            'representative_name' => ['required', 'string', 'max:255'],
             'company_type' => ['required', 'in:direct_employer,recruitment_agency'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
@@ -78,6 +79,7 @@ class CompanyController extends Controller
 
         $validated = $request->validate([
             'company_name' => ['sometimes', 'string', 'max:255'],
+            'representative_name' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],

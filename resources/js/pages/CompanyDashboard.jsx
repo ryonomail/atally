@@ -668,7 +668,7 @@ export default function CompanyDashboard() {
     const [boostBreakdown, setBoostBreakdown] = useState([]);
     const [showRegister, setShowRegister] = useState(false);
     const [registerForm, setRegisterForm] = useState({
-        company_name: '', company_type: 'direct_employer', description: '',
+        company_name: '', representative_name: '', company_type: 'direct_employer', description: '',
         website: '', phone: '', address: '', permit_number: '',
     });
     const [saving, setSaving] = useState(false);
@@ -676,7 +676,7 @@ export default function CompanyDashboard() {
     const navigate = useNavigate();
 
     const initialRegForm = showRegister ? {
-        company_name: '', company_type: 'direct_employer', description: '',
+        company_name: '', representative_name: '', company_type: 'direct_employer', description: '',
         website: '', phone: '', address: '', permit_number: '',
     } : null;
     const { isDirty, confirmNavigation } = useUnsavedChanges(initialRegForm, registerForm);
@@ -733,6 +733,12 @@ export default function CompanyDashboard() {
                                 <input className="form-input" required value={registerForm.company_name}
                                     onChange={e => setRegisterForm({...registerForm, company_name: e.target.value})}
                                     placeholder="例: 株式会社〇〇" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">代表者名 *</label>
+                                <input className="form-input" required value={registerForm.representative_name}
+                                    onChange={e => setRegisterForm({...registerForm, representative_name: e.target.value})}
+                                    placeholder="例: 山田 太郎" />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">企業種別 *</label>
@@ -1030,6 +1036,7 @@ function CompanyProfileCard({ company, onUpdate }) {
     const startEdit = () => {
         setForm({
             company_name: company.company_name || '',
+            representative_name: company.representative_name || '',
             description: company.description || '',
             website: company.website || '',
             phone: company.phone || '',
@@ -1074,6 +1081,7 @@ function CompanyProfileCard({ company, onUpdate }) {
                 </div>
                 <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm) var(--space-xl)' }}>
                     <p><strong>企業名:</strong> {company.company_name}</p>
+                    {company.representative_name && <p><strong>代表者名:</strong> {company.representative_name}</p>}
                     <p><strong>種別:</strong> {company.company_type === 'recruitment_agency' ? '人材紹介・派遣会社' : '一般企業'}</p>
                     {company.industry && <p><strong>業界:</strong> {company.industry}</p>}
                     {company.number_of_employees && <p><strong>従業員数:</strong> {company.number_of_employees}</p>}
@@ -1118,6 +1126,10 @@ function CompanyProfileCard({ company, onUpdate }) {
                 <div className="form-group">
                     <label className="form-label">企業名</label>
                     <input className="form-input" value={form.company_name} onChange={e => set('company_name', e.target.value)} />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">代表者名 *</label>
+                    <input className="form-input" required value={form.representative_name || ''} onChange={e => set('representative_name', e.target.value)} placeholder="例: 山田 太郎" />
                 </div>
                 <div className="form-group">
                     <label className="form-label">業界・業種</label>
