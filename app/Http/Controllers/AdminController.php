@@ -137,12 +137,14 @@ class AdminController extends Controller
      */
     public function pendingCompanies()
     {
-        $companies = Company::where('verification_status', 'pending')
-            ->with('user:id,name,email')
-            ->orderBy('created_at', 'asc')
-            ->paginate(20);
-
-        return response()->json($companies);
+        $data = Cache::remember('admin_pending_companies', 120, function () {
+            return Company::where('verification_status', 'pending')
+                ->with('user:id,name,email')
+                ->orderBy('created_at', 'asc')
+                ->paginate(20)
+                ->toArray();
+        });
+        return response()->json($data);
     }
 
     /**
@@ -173,6 +175,9 @@ class AdminController extends Controller
             );
         }
 
+        Cache::forget('admin_pending_companies');
+        Cache::forget('admin_overview');
+
         return response()->json([
             'company' => $company->fresh(),
             'message' => $isApproved ? '企業を承認しました。' : '企業を却下しました。',
@@ -184,12 +189,14 @@ class AdminController extends Controller
      */
     public function pendingJobs()
     {
-        $jobs = Job::where('status', 'pending_review')
-            ->with(['company:id,company_name', 'agencyClient:id,client_name'])
-            ->orderBy('created_at', 'asc')
-            ->paginate(20);
-
-        return response()->json($jobs);
+        $data = Cache::remember('admin_pending_jobs', 120, function () {
+            return Job::where('status', 'pending_review')
+                ->with(['company:id,company_name', 'agencyClient:id,client_name'])
+                ->orderBy('created_at', 'asc')
+                ->paginate(20)
+                ->toArray();
+        });
+        return response()->json($data);
     }
 
     /**
@@ -211,6 +218,8 @@ class AdminController extends Controller
             GoogleIndexingService::notifyJobPublished($job->id);
         }
 
+        Cache::forget('admin_pending_jobs');
+        Cache::forget('admin_overview');
         AdminAuditLog::log(auth()->id(), 'job.' . $validated['status'], 'job', $job->id);
 
         // 企業オーナーに求人審査結果を通知
@@ -239,16 +248,16 @@ class AdminController extends Controller
      */
     public function reports(Request $request)
     {
-        $query = Report::with(['reporter:id,name', 'reportedUser:id,name', 'reportedJob:id,title'])
-            ->orderBy('created_at', 'desc');
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        $reports = $query->paginate(20);
-
-        return response()->json($reports);
+        $cacheKey = 'admin_reports_' . $this->paramHash($request);
+        $data = Cache::remember($cacheKey, 60, function () use ($request) {
+            $query = Report::with(['reporter:id,name', 'reportedUser:id,name', 'reportedJob:id,title'])
+                ->orderBy('created_at', 'desc');
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
+            return $query->paginate(20)->toArray();
+        });
+        return response()->json($data);
     }
 
     /**
@@ -267,6 +276,11 @@ class AdminController extends Controller
 
         AdminAuditLog::log(auth()->id(), 'report.' . $validated['status'], 'report', $report->id, $validated['admin_note']);
 
+        // 全ステータスのキャッシュを破棄
+        foreach (['open', 'reviewing', 'resolved', ''] as $s) {
+            Cache::forget('admin_reports_' . md5(json_encode($s ? ['status' => $s] : [])));
+        }
+
         return response()->json(['report' => $report->fresh()]);
     }
 
@@ -275,14 +289,16 @@ class AdminController extends Controller
      */
     public function pendingLicenses()
     {
-        $agencies = Company::where('company_type', 'recruitment_agency')
-            ->where('license_verified', false)
-            ->whereNotNull('license_document_path')
-            ->with('user:id,name,email')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        return response()->json($agencies);
+        $data = Cache::remember('admin_pending_licenses', 120, function () {
+            return Company::where('company_type', 'recruitment_agency')
+                ->where('license_verified', false)
+                ->whereNotNull('license_document_path')
+                ->with('user:id,name,email')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->toArray();
+        });
+        return response()->json($data);
     }
 
     /**
@@ -311,6 +327,9 @@ class AdminController extends Controller
                 '/agency'
             );
         }
+
+        Cache::forget('admin_pending_licenses');
+        Cache::forget('admin_overview');
 
         return response()->json([
             'company' => $company->fresh(),
@@ -472,11 +491,13 @@ class AdminController extends Controller
                 ->sum('max_budget_amount');
 
             $daily = DailyUsage::where('date', '>=', $today->copy()->subDays(30)->toDateString())
-                ->select(DB::raw("date::text, SUM(max_budget_amount) as total"))
+                ->selectRaw("TO_CHAR(date, 'YYYY-MM-DD') as date, SUM(max_budget_amount) as total")
                 ->groupBy('date')
                 ->orderBy('date')
-                ->pluck('total', 'date')
-                ->map(fn($v) => (int) $v);
+                ->get()
+                ->map(fn($r) => ['date' => $r->date, 'total' => (int) $r->total])
+                ->values()
+                ->all();
 
             $topCompanies = DailyUsage::whereYear('date', $today->year)
                 ->whereMonth('date', $today->month)
@@ -495,11 +516,13 @@ class AdminController extends Controller
                 ->all();
 
             $monthly = DailyUsage::where('date', '>=', $today->copy()->subMonths(6)->startOfMonth()->toDateString())
-                ->select(DB::raw("TO_CHAR(date, 'YYYY-MM') as month"), DB::raw("SUM(max_budget_amount) as total"))
-                ->groupBy(DB::raw("TO_CHAR(date, 'YYYY-MM')"))
+                ->selectRaw("TO_CHAR(date, 'YYYY-MM') as month, SUM(max_budget_amount) as total")
+                ->groupByRaw("TO_CHAR(date, 'YYYY-MM')")
                 ->orderBy('month')
-                ->pluck('total', 'month')
-                ->map(fn($v) => (int) $v);
+                ->get()
+                ->map(fn($r) => ['month' => $r->month, 'total' => (int) $r->total])
+                ->values()
+                ->all();
 
             return [
                 'this_month'    => round($thisMonth),
@@ -518,49 +541,47 @@ class AdminController extends Controller
      */
     public function auditLogs(Request $request)
     {
-        $query = AdminAuditLog::with('admin:id,name')
-            ->orderByDesc('created_at');
+        $cacheKey = 'admin_audit_' . $this->paramHash($request);
+        $data = Cache::remember($cacheKey, 30, function () use ($request) {
+            $query = AdminAuditLog::with('admin:id,name')
+                ->orderByDesc('created_at');
 
-        if ($request->filled('action')) {
-            $allowedCategories = ['user', 'company', 'job', 'report', 'license', 'settings'];
-            $action = $request->action;
-            if (in_array($action, $allowedCategories, true)) {
-                $query->where('action', 'like', $action . '.%');
+            if ($request->filled('action')) {
+                $allowedCategories = ['user', 'company', 'job', 'report', 'license', 'settings'];
+                $action = $request->action;
+                if (in_array($action, $allowedCategories, true)) {
+                    $query->where('action', 'like', $action . '.%');
+                }
             }
-        }
 
-        $result = $query->paginate(50);
+            $result = $query->paginate(50);
+            $logs = $result->getCollection();
 
-        // ターゲット名をバッチ取得して N+1 を回避
-        $logs = $result->getCollection();
-        $companyIds = $logs->where('target_type', 'company')->pluck('target_id')->unique();
-        $jobIds     = $logs->where('target_type', 'job')->pluck('target_id')->unique();
-        $userIds    = $logs->where('target_type', 'user')->pluck('target_id')->unique();
+            $companyIds = $logs->where('target_type', 'company')->pluck('target_id')->unique();
+            $jobIds     = $logs->where('target_type', 'job')->pluck('target_id')->unique();
+            $userIds    = $logs->where('target_type', 'user')->pluck('target_id')->unique();
 
-        $companies = $companyIds->isNotEmpty()
-            ? Company::whereIn('id', $companyIds)->pluck('company_name', 'id')
-            : collect();
-        $jobs = $jobIds->isNotEmpty()
-            ? Job::whereIn('id', $jobIds)->pluck('title', 'id')
-            : collect();
-        $users = $userIds->isNotEmpty()
-            ? User::whereIn('id', $userIds)->pluck('name', 'id')
-            : collect();
+            $companies = $companyIds->isNotEmpty() ? Company::whereIn('id', $companyIds)->pluck('company_name', 'id') : collect();
+            $jobs      = $jobIds->isNotEmpty()     ? Job::whereIn('id', $jobIds)->pluck('title', 'id')               : collect();
+            $users     = $userIds->isNotEmpty()    ? User::whereIn('id', $userIds)->pluck('name', 'id')              : collect();
 
-        $logs->transform(function ($log) use ($companies, $jobs, $users) {
-            $raw = match ($log->target_type) {
-                'company' => $companies[$log->target_id] ?? null,
-                'job'     => $jobs[$log->target_id] ?? null,
-                'user'    => $users[$log->target_id] ?? null,
-                default   => null,
-            };
-            $log->target_name = $raw !== null
-                ? htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-                : null;
-            return $log;
+            $logs->transform(function ($log) use ($companies, $jobs, $users) {
+                $raw = match ($log->target_type) {
+                    'company' => $companies[$log->target_id] ?? null,
+                    'job'     => $jobs[$log->target_id] ?? null,
+                    'user'    => $users[$log->target_id] ?? null,
+                    default   => null,
+                };
+                $log->target_name = $raw !== null
+                    ? htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                    : null;
+                return $log;
+            });
+
+            return $result->toArray();
         });
 
-        return response()->json($result);
+        return response()->json($data);
     }
 
     /**

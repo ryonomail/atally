@@ -204,7 +204,7 @@ function RevenueTab({ initialData }) {
                             {data.top_companies.map((c, i) => (
                                 <tr key={c.company_id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                     <td style={{ padding: '8px 0', fontWeight: 600, color: i < 3 ? '#f59e0b' : 'var(--color-text-secondary)' }}>{i + 1}</td>
-                                    <td style={{ padding: '8px 0' }}>{c.company?.company_name || `ID: ${c.company_id}`}</td>
+                                    <td style={{ padding: '8px 0' }}>{c.company_name || `ID: ${c.company_id}`}</td>
                                     <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>¥{Number(c.total || 0).toLocaleString()}</td>
                                 </tr>
                             ))}
@@ -592,13 +592,13 @@ function AllJobsTab({ initialData }) {
 /* ============================================
    企業審査タブ
    ============================================ */
-function CompaniesTab() {
+function CompaniesTab({ initialData }) {
     const toast = useToast();
-    const [companies, setCompanies] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [companies, setCompanies] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
     const [processing, setProcessing] = useState(null);
     const [page, setPage] = useState(1);
-    const [meta, setMeta] = useState(null);
+    const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
 
     const fetchData = (p = 1) => {
         setLoading(true);
@@ -609,7 +609,7 @@ function CompaniesTab() {
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { if (!initialData) fetchData(); }, []);
 
     const handleReview = async (companyId, status) => {
         const action = status === 'verified' ? '承認' : '却下';
@@ -698,14 +698,14 @@ function CompaniesTab() {
 /* ============================================
    求人審査タブ
    ============================================ */
-function JobsTab() {
+function JobsTab({ initialData }) {
     const toast = useToast();
-    const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [jobs, setJobs] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
     const [processing, setProcessing] = useState(null);
     const [expandedId, setExpandedId] = useState(null);
     const [page, setPage] = useState(1);
-    const [meta, setMeta] = useState(null);
+    const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
 
     const fetchData = (p = 1) => {
         setLoading(true);
@@ -716,7 +716,7 @@ function JobsTab() {
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { if (!initialData) fetchData(); }, []);
 
     const handleReview = async (jobId, status) => {
         const action = status === 'active' ? '公開' : '停止';
@@ -848,13 +848,14 @@ function JobsTab() {
 /* ============================================
    ライセンス審査タブ
    ============================================ */
-function LicensesTab() {
+function LicensesTab({ initialData }) {
     const toast = useToast();
-    const [agencies, setAgencies] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [agencies, setAgencies] = useState(initialData || []);
+    const [loading, setLoading] = useState(!initialData);
     const [processing, setProcessing] = useState(null);
 
     useEffect(() => {
+        if (initialData) return;
         api.get('/admin/licenses/pending').then(res => {
             setAgencies(res.data || []);
         }).finally(() => setLoading(false));
@@ -924,10 +925,10 @@ function LicensesTab() {
 /* ============================================
    通報管理タブ
    ============================================ */
-function ReportsTab() {
+function ReportsTab({ initialData }) {
     const toast = useToast();
-    const [reports, setReports] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [reports, setReports] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
     const [noteForm, setNoteForm] = useState({});
     const [statusFilter, setStatusFilter] = useState('open');
 
@@ -1384,12 +1385,19 @@ export default function AdminDashboard() {
                 setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
             }
         });
-        // 他タブのプリフェッチ（低優先: 少し遅延させてメモリ競合を避ける）
+        // 他タブのプリフェッチ（低優先: 遅延させてメモリ競合を避ける）
         setTimeout(() => {
             api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {});
             api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {});
             api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {});
+            api.get('/admin/revenue').then(r => setPrefetched(p => ({ ...p, revenue: r.data }))).catch(() => {});
         }, 1500);
+        setTimeout(() => {
+            api.get('/admin/companies/pending').then(r => setPrefetched(p => ({ ...p, pendingCompanies: r.data }))).catch(() => {});
+            api.get('/admin/jobs/pending').then(r => setPrefetched(p => ({ ...p, pendingJobs: r.data }))).catch(() => {});
+            api.get('/admin/licenses/pending').then(r => setPrefetched(p => ({ ...p, pendingLicenses: r.data }))).catch(() => {});
+            api.get('/admin/reports', { params: { status: 'open' } }).then(r => setPrefetched(p => ({ ...p, reports: r.data }))).catch(() => {});
+        }, 3000);
     }, []);
 
     const alertCount = stats
@@ -1452,10 +1460,10 @@ export default function AdminDashboard() {
             {tab === 'jobseekers' && <JobseekersTab initialData={prefetched.jobseekers} onViewUser={setUserDetailId} />}
             {tab === 'all-companies' && <AllCompaniesTab initialData={prefetched.companies} />}
             {tab === 'all-jobs' && <AllJobsTab initialData={prefetched.jobs} />}
-            {tab === 'companies' && <CompaniesTab />}
-            {tab === 'jobs' && <JobsTab />}
-            {tab === 'licenses' && <LicensesTab />}
-            {tab === 'reports' && <ReportsTab />}
+            {tab === 'companies' && <CompaniesTab initialData={prefetched.pendingCompanies} />}
+            {tab === 'jobs' && <JobsTab initialData={prefetched.pendingJobs} />}
+            {tab === 'licenses' && <LicensesTab initialData={prefetched.pendingLicenses} />}
+            {tab === 'reports' && <ReportsTab initialData={prefetched.reports} />}
             {tab === 'audit' && <AuditLogTab />}
             {tab === 'settings' && <SettingsTab />}
 
