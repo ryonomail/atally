@@ -1262,15 +1262,11 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         borderRadius: 'var(--radius-md)',
                         marginBottom: 'var(--space-xl)',
                     }}>
-                        <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#0070b9', marginBottom: 6 }}>
-                            🏢 ハローワーク掲載求人について
-                        </p>
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>
-                            この求人はハローワーク（公共職業安定所）が提供する求人情報です。
-                            応募・詳細確認はお近くのハローワーク窓口または
+                        <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#0070b9', margin: 0 }}>
+                            🏢 お近くのハローワークまたは
                             <a href="https://www.hellowork.mhlw.go.jp/" target="_blank" rel="noopener noreferrer"
-                                style={{ color: '#0070b9' }}>ハローワークインターネットサービス</a>
-                            からお手続きください。
+                                style={{ color: '#0070b9' }}>公式サイト</a>
+                            からご応募ください
                         </p>
                     </div>
                 )}
