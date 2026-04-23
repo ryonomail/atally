@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ScoutSearchPage() {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     // 検索フィルタ
     const [skills, setSkills] = useState('');
@@ -113,6 +115,21 @@ export default function ScoutSearchPage() {
     };
 
     const allOnPageSelected = profiles.length > 0 && profiles.every(p => selectedIds.includes(p.id));
+
+    if (user?.company?.verification_status !== 'verified') {
+        return (
+            <div className="page container animate-fade-in">
+                <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', maxWidth: 560, margin: '0 auto' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>⏳</div>
+                    <h2 style={{ marginBottom: 'var(--space-md)' }}>企業審査中です</h2>
+                    <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+                        審査が完了するとスカウト機能が利用できます。<br />
+                        通常 1〜3 営業日以内にご連絡いたします。
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="page container animate-fade-in">

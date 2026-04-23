@@ -113,7 +113,7 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
                     }}>{licenseStatusLabel.text}</span>
                     {verificationStatus && !licenseVerified && (
                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4, marginBottom: 0 }}>
-                            企業審査: {verificationStatus === 'approved' ? '承認済み' : verificationStatus === 'pending' ? '審査中' : verificationStatus === 'rejected' ? '却下' : verificationStatus}
+                            企業審査: {verificationStatus === 'verified' ? '承認済み' : verificationStatus === 'pending' ? '審査中' : verificationStatus === 'rejected' ? '却下' : verificationStatus}
                         </p>
                     )}
                 </div>
@@ -470,7 +470,7 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
                 )}
                 {verificationStatus && (
                     <p style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                        企業審査状況: {verificationStatus === 'approved' ? '承認済み' : verificationStatus === 'pending' ? '審査中' : verificationStatus === 'rejected' ? '却下' : verificationStatus}
+                        企業審査状況: {verificationStatus === 'verified' ? '承認済み' : verificationStatus === 'pending' ? '審査中' : verificationStatus === 'rejected' ? '却下' : verificationStatus}
                     </p>
                 )}
             </div>
