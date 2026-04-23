@@ -1205,12 +1205,18 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 background: job.source === 'hellowork' ? 'rgba(0,112,185,0.04)' : 'rgba(16,185,129,0.03)',
             }}>
                 {job.source === 'hellowork' ? (
-                    <span style={{
-                        fontSize: 'var(--font-size-xs)', color: '#0070b9',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                    }}>
-                        🏢 お近くのハローワークまたは公式サイトからご応募ください
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#0070b9', margin: 0 }}>
+                            🏢 ハローワーク掲載求人について
+                        </p>
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>
+                            この求人はハローワーク（公共職業安定所）が提供する求人情報です。
+                            応募・詳細確認はお近くのハローワーク窓口または
+                            <a href="https://www.hellowork.mhlw.go.jp/" target="_blank" rel="noopener noreferrer"
+                                style={{ color: '#0070b9' }}>ハローワークインターネットサービス</a>
+                            からお手続きください。
+                        </p>
+                    </div>
                 ) : user?.role === 'jobseeker' ? (
                     <button className="btn btn-primary" onClick={() => navigate(`/jobs/${job.id}`)}>
                         応募する
