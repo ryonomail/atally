@@ -30,6 +30,9 @@ class JobController extends Controller
         'jobs.source', 'jobs.hellowork_id', 'jobs.feature_tags', 'jobs.remote_policy',
         'jobs.published_at', 'jobs.ranking_score', 'jobs.daily_budget',
         'jobs.last_company_action_at', 'jobs.status',
+        'jobs.description', 'jobs.requirements', 'jobs.prefecture', 'jobs.city',
+        'jobs.work_hours', 'jobs.holidays', 'jobs.benefits', 'jobs.agency_client_id',
+        'jobs.scope_of_change',
     ];
 
     public function index(Request $request)
