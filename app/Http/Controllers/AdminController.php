@@ -614,7 +614,9 @@ class AdminController extends Controller
      */
     public function getSettings()
     {
-        $settings = DB::table('settings')->pluck('value', 'key');
+        $settings = Cache::remember('admin_settings', 300, function () {
+            return DB::table('settings')->pluck('value', 'key');
+        });
         return response()->json($settings);
     }
 
@@ -651,6 +653,7 @@ class AdminController extends Controller
         }
 
         AdminAuditLog::log(auth()->id(), 'settings.update', null, null, json_encode($updated));
+        Cache::forget('admin_settings');
 
         return response()->json(['message' => '設定を保存しました。']);
     }

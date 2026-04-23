@@ -154,6 +154,10 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/payment/check', [PaymentController::class , 'checkPaymentReady']);
             Route::post('/payment/charge-job-activation', [PaymentController::class , 'chargeJobActivation']);
 
+            // エージェント: 審査前も利用可能（ダッシュボード・ライセンス提出）
+            Route::post('/agency/license', [AgencyController::class , 'uploadLicense']);
+            Route::get('/agency/dashboard', [AgencyController::class , 'dashboard']);
+
             // 審査済み企業のみ
             Route::middleware('verified.company')->group(function () {
                     // 求人管理
@@ -206,9 +210,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
                     // 応募者CSV（個人情報含む: 1時間に10回まで）
                     Route::middleware('throttle:10,60')->get('/jobs/{job}/applications-csv', [ApplicationController::class , 'exportApplicationsCsv']);
 
-                    // エージェント機能
-                    Route::post('/agency/license', [AgencyController::class , 'uploadLicense']);
-                    Route::get('/agency/dashboard', [AgencyController::class , 'dashboard']);
+                    // エージェント機能（審査済み必須）
                     Route::get('/agency/revenue-analytics', [AgencyController::class , 'revenueAnalytics']);
                     Route::get('/agency/job-database', [AgencyController::class , 'jobDatabase']);
                     Route::post('/agency/bulk-upload', [AgencyController::class , 'bulkUpload']);

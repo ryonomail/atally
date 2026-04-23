@@ -818,6 +818,7 @@ function CompaniesTab() {
 export default function AgencyDashboardPage() {
     const [activeTab, setActiveTab] = useState('overview');
     const [stats, setStats] = useState(null);
+    const [fetchError, setFetchError] = useState('');
     const [licenseVerified, setLicenseVerified] = useState(false);
     const [permitNumber, setPermitNumber] = useState('');
     const [licenseDocSubmitted, setLicenseDocSubmitted] = useState(false);
@@ -841,8 +842,9 @@ export default function AgencyDashboardPage() {
             setPermitNumber(data.permit_number || '');
             setLicenseDocSubmitted(!!data.license_document_path);
             setVerificationStatus(data.verification_status || '');
+            setFetchError('');
         } catch (err) {
-            // エラーは静かに処理（ユーザーにはローディング状態で通知）
+            setFetchError(err.response?.data?.message || 'ダッシュボードの読み込みに失敗しました');
         } finally {
             setLoading(false);
         }
@@ -851,6 +853,18 @@ export default function AgencyDashboardPage() {
     useEffect(() => { fetchDashboard(); }, []);
 
     if (loading) return <div className="page container"><div className="skeleton" style={{ height: 400 }} /></div>;
+
+    if (fetchError) return (
+        <div className="page container animate-fade-in">
+            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-xl)' }}>人材紹介ダッシュボード</h1>
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: '#dc2626' }}>
+                <p style={{ marginBottom: 'var(--space-md)' }}>{fetchError}</p>
+                <button className="btn btn-primary" onClick={() => { setLoading(true); setFetchError(''); fetchDashboard(); }}>
+                    再読み込み
+                </button>
+            </div>
+        </div>
+    );
 
     const renderTab = () => {
         switch (activeTab) {

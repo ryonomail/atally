@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
@@ -939,7 +939,11 @@ function ReportsTab({ initialData }) {
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, [statusFilter]);
+    const skipFirstFetch = useRef(!!initialData);
+    useEffect(() => {
+        if (skipFirstFetch.current) { skipFirstFetch.current = false; return; }
+        fetchData();
+    }, [statusFilter]);
 
     const handleResolve = async (reportId, status) => {
         const note = noteForm[reportId];
@@ -1071,11 +1075,11 @@ const ACTION_LABELS = {
     'user.deleted': 'ユーザー削除',
 };
 
-function AuditLogTab() {
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [lastPage, setLastPage] = useState(1);
+function AuditLogTab({ initialData }) {
+    const [logs, setLogs] = useState(initialData?.data || []);
+    const [loading, setLoading] = useState(!initialData);
+    const [page, setPage] = useState(initialData?.current_page || 1);
+    const [lastPage, setLastPage] = useState(initialData?.last_page || 1);
     const [actionFilter, setActionFilter] = useState('');
 
     const fetchLogs = (p = 1) => {
@@ -1092,7 +1096,11 @@ function AuditLogTab() {
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchLogs(); }, [actionFilter]);
+    const skipFirstFetchAudit = useRef(!!initialData);
+    useEffect(() => {
+        if (skipFirstFetchAudit.current) { skipFirstFetchAudit.current = false; return; }
+        fetchLogs();
+    }, [actionFilter]);
 
     return (
         <div>
@@ -1185,13 +1193,14 @@ const SETTING_LABELS = {
     support_email: { label: 'サポートメール', type: 'text' },
 };
 
-function SettingsTab() {
-    const [settings, setSettings] = useState({});
-    const [loading, setLoading] = useState(true);
+function SettingsTab({ initialData }) {
+    const [settings, setSettings] = useState(initialData || {});
+    const [loading, setLoading] = useState(!initialData);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
 
     useEffect(() => {
+        if (initialData) return;
         api.get('/admin/settings')
             .then(res => setSettings(res.data || {}))
             .catch(() => {})
@@ -1398,7 +1407,27 @@ export default function AdminDashboard() {
             api.get('/admin/licenses/pending').then(r => setPrefetched(p => ({ ...p, pendingLicenses: r.data }))).catch(() => {});
             api.get('/admin/reports', { params: { status: 'open' } }).then(r => setPrefetched(p => ({ ...p, reports: r.data }))).catch(() => {});
         }, 3000);
+        setTimeout(() => {
+            api.get('/admin/audit-logs').then(r => setPrefetched(p => ({ ...p, auditLogs: r.data }))).catch(() => {});
+            api.get('/admin/settings').then(r => setPrefetched(p => ({ ...p, settings: r.data }))).catch(() => {});
+        }, 4500);
     }, []);
+
+    const prefetchTab = (key) => {
+        const map = {
+            revenue:        () => !prefetched.revenue         && api.get('/admin/revenue').then(r => setPrefetched(p => ({ ...p, revenue: r.data }))).catch(() => {}),
+            jobseekers:     () => !prefetched.jobseekers      && api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {}),
+            'all-companies':() => !prefetched.companies       && api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {}),
+            'all-jobs':     () => !prefetched.jobs            && api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {}),
+            companies:      () => !prefetched.pendingCompanies && api.get('/admin/companies/pending').then(r => setPrefetched(p => ({ ...p, pendingCompanies: r.data }))).catch(() => {}),
+            jobs:           () => !prefetched.pendingJobs     && api.get('/admin/jobs/pending').then(r => setPrefetched(p => ({ ...p, pendingJobs: r.data }))).catch(() => {}),
+            licenses:       () => !prefetched.pendingLicenses && api.get('/admin/licenses/pending').then(r => setPrefetched(p => ({ ...p, pendingLicenses: r.data }))).catch(() => {}),
+            reports:        () => !prefetched.reports         && api.get('/admin/reports', { params: { status: 'open' } }).then(r => setPrefetched(p => ({ ...p, reports: r.data }))).catch(() => {}),
+            audit:          () => !prefetched.auditLogs       && api.get('/admin/audit-logs').then(r => setPrefetched(p => ({ ...p, auditLogs: r.data }))).catch(() => {}),
+            settings:       () => !prefetched.settings        && api.get('/admin/settings').then(r => setPrefetched(p => ({ ...p, settings: r.data }))).catch(() => {}),
+        };
+        map[key]?.();
+    };
 
     const alertCount = stats
         ? (stats.pending_verifications || 0) + (stats.pending_job_reviews || 0) + (stats.open_reports || 0) + (stats.pending_licenses || 0)
@@ -1432,6 +1461,7 @@ export default function AdminDashboard() {
                     return (
                         <button key={t.key}
                             onClick={() => setTab(t.key)}
+                            onMouseEnter={() => prefetchTab(t.key)}
                             style={{
                                 padding: '8px 18px', border: 'none', cursor: 'pointer',
                                 borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
@@ -1464,8 +1494,8 @@ export default function AdminDashboard() {
             {tab === 'jobs' && <JobsTab initialData={prefetched.pendingJobs} />}
             {tab === 'licenses' && <LicensesTab initialData={prefetched.pendingLicenses} />}
             {tab === 'reports' && <ReportsTab initialData={prefetched.reports} />}
-            {tab === 'audit' && <AuditLogTab />}
-            {tab === 'settings' && <SettingsTab />}
+            {tab === 'audit' && <AuditLogTab initialData={prefetched.auditLogs} />}
+            {tab === 'settings' && <SettingsTab initialData={prefetched.settings} />}
 
             {/* ユーザー詳細モーダル */}
             {userDetailId && (
