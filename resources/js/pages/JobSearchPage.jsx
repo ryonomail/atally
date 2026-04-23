@@ -1253,24 +1253,6 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     )}
                 </div>
 
-                {/* ハローワーク求人の案内 */}
-                {job.source === 'hellowork' && (
-                    <div style={{
-                        padding: 'var(--space-md)',
-                        background: 'rgba(0,112,185,0.06)',
-                        border: '1px solid rgba(0,112,185,0.2)',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: 'var(--space-xl)',
-                    }}>
-                        <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#0070b9', margin: 0 }}>
-                            🏢 お近くのハローワークまたは
-                            <a href="https://www.hellowork.mhlw.go.jp/" target="_blank" rel="noopener noreferrer"
-                                style={{ color: '#0070b9' }}>公式サイト</a>
-                            からご応募ください
-                        </p>
-                    </div>
-                )}
-
                 {/* 応募要件 */}
                 {(job.requirements || job.preferred_qualifications) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
