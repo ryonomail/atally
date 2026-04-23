@@ -15,7 +15,7 @@ class EnsureCompanyVerified
             return response()->json(['message' => '企業情報が登録されていません。'], 403);
         }
 
-        if ($company->verification_status !== 'approved') {
+        if ($company->verification_status !== 'verified') {
             return response()->json(['message' => '企業審査が完了していません。'], 403);
         }
 

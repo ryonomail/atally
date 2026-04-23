@@ -186,7 +186,7 @@ class CompanyController extends Controller
      */
     public function publicProfile(Company $company)
     {
-        if ($company->verification_status !== 'approved') {
+        if ($company->verification_status !== 'verified') {
             return response()->json(['message' => '企業が見つかりません。'], 404);
         }
 
