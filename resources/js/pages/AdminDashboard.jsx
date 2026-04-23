@@ -622,10 +622,14 @@ function CompaniesTab({ initialData }) {
         }
         setProcessing(companyId);
         try {
-            await api.put(`/admin/companies/${companyId}/review`, { status, note });
+            await api.put(`/admin/companies/${companyId}/review`, { status, note: note || null });
             setCompanies(companies.filter(c => c.id !== companyId));
+            toast.success(status === 'verified' ? '企業を承認しました' : '企業を却下しました');
         } catch (err) {
-            toast.error('処理に失敗しました');
+            const msg = err.response?.data?.message || err.response?.data?.errors
+                ? (Object.values(err.response.data.errors || {}).flat().join(' / ') || err.response.data.message)
+                : err.message || '処理に失敗しました';
+            toast.error(msg);
         } finally {
             setProcessing(null);
         }
