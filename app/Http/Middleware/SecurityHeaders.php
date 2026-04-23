@@ -10,6 +10,15 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // nonceをリクエスト処理前に生成し、Bladeテンプレートから参照できるよう設定
+        $nonce = base64_encode(random_bytes(16));
+        $request->attributes->set('csp_nonce', $nonce);
+
+        // Vite (React Fast Refresh) のインラインスクリプトにもnonceを適用
+        if (class_exists(\Illuminate\Foundation\Vite::class)) {
+            app(\Illuminate\Foundation\Vite::class)->useCspNonce($nonce);
+        }
+
         $response = $next($request);
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -19,11 +28,10 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
-        // Content-Security-Policy: XSS・スクリプトインジェクション対策
-        // Stripe Elements は js.stripe.com から iframe を読み込むため frame-src に許可
+        // Content-Security-Policy: nonceベースでインラインスクリプトを許可
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' https://js.stripe.com https://client.crisp.chat",
+            "script-src 'self' 'nonce-{$nonce}' https://js.stripe.com https://client.crisp.chat",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: https:",
             "font-src 'self' data: https://fonts.gstatic.com",

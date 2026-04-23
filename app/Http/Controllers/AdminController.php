@@ -154,7 +154,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:verified,rejected'],
-            'note' => ['sometimes', 'string', 'max:1000'],
+            'note' => ['sometimes', 'nullable', 'string', 'max:1000'],
         ]);
 
         $company->update([

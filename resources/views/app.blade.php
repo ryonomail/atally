@@ -47,16 +47,16 @@
         <meta name="twitter:image" content="{{ $ogImage }}">
     @endif
 
-    <script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+    <script type="application/ld+json" nonce="{{ request()->attributes->get('csp_nonce') }}">{!! json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>window.__STRIPE_KEY__ = "{{ config('services.stripe.key') }}";</script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">window.__STRIPE_KEY__ = "{{ config('services.stripe.key') }}";</script>
 
     {{-- Crisp チャットウィジェット（CRISP_WEBSITE_ID が設定されている場合のみ） --}}
     @if(config('services.crisp.website_id'))
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         window.$crisp = [];
         window.CRISP_WEBSITE_ID = "{{ config('services.crisp.website_id') }}";
         (function() {
