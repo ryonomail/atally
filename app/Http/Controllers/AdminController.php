@@ -26,6 +26,67 @@ class AdminController extends Controller
     }
 
     /**
+     * 概要タブ用: stats + 売上サマリーを1リクエストで返す
+     */
+    public function overview()
+    {
+        $data = Cache::remember('admin_overview', 300, function () {
+            $today = now();
+
+            $userCounts = DB::table('users')
+                ->selectRaw("COUNT(*) FILTER (WHERE role = 'jobseeker') AS total_jobseekers")
+                ->first();
+
+            $companyCounts = DB::table('companies')
+                ->selectRaw("
+                    COUNT(*) AS total_companies,
+                    COUNT(*) FILTER (WHERE verification_status = 'pending') AS pending_verifications,
+                    COUNT(*) FILTER (WHERE company_type = 'recruitment_agency' AND license_verified = false AND license_document_path IS NOT NULL) AS pending_licenses
+                ")
+                ->first();
+
+            $jobCounts = DB::table('jobs')
+                ->whereNull('deleted_at')
+                ->selectRaw("
+                    COUNT(*) FILTER (WHERE status = 'pending_review') AS pending_job_reviews,
+                    COUNT(*) FILTER (WHERE status = 'active') AS active_jobs
+                ")
+                ->first();
+
+            $openReports = DB::table('reports')->where('status', 'open')->count();
+
+            // 今月・先月の売上を1クエリで取得
+            $revenueSums = DB::table('daily_usages')
+                ->selectRaw("
+                    SUM(max_budget_amount) FILTER (WHERE EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?) AS this_month,
+                    SUM(max_budget_amount) FILTER (WHERE EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?) AS last_month
+                ", [
+                    $today->year, $today->month,
+                    $today->copy()->subMonth()->year, $today->copy()->subMonth()->month,
+                ])
+                ->first();
+
+            return [
+                'stats' => [
+                    'total_jobseekers'      => (int) $userCounts->total_jobseekers,
+                    'total_companies'       => (int) $companyCounts->total_companies,
+                    'pending_verifications' => (int) $companyCounts->pending_verifications,
+                    'pending_job_reviews'   => (int) $jobCounts->pending_job_reviews,
+                    'active_jobs'           => (int) $jobCounts->active_jobs,
+                    'open_reports'          => (int) $openReports,
+                    'pending_licenses'      => (int) $companyCounts->pending_licenses,
+                ],
+                'revenue_summary' => [
+                    'this_month' => (int) round($revenueSums->this_month ?? 0),
+                    'last_month' => (int) round($revenueSums->last_month ?? 0),
+                ],
+            ];
+        });
+
+        return response()->json($data);
+    }
+
+    /**
      * ダッシュボード統計
      */
     public function dashboard()

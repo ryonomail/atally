@@ -20,13 +20,8 @@ const TABS = [
 /* ============================================
    概要タブ
    ============================================ */
-function OverviewTab({ stats, statsError, onTabChange, initialRevenue }) {
-    const [revenue, setRevenue] = useState(initialRevenue || null);
-
-    useEffect(() => {
-        if (initialRevenue) return;
-        api.get('/admin/revenue').then(res => setRevenue(res.data)).catch(() => {});
-    }, []);
+function OverviewTab({ stats, statsError, onTabChange, revenueSummary }) {
+    const revenue = revenueSummary || null;
 
     if (statsError) return (
         <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: '#ef4444' }}>
@@ -1378,9 +1373,10 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
-        // ダッシュボード統計 + 主要3タブを並列プリフェッチ
-        api.get('/admin/dashboard').then(res => {
+        // 概要 (stats + 売上サマリー) を1リクエストで取得
+        api.get('/admin/overview').then(res => {
             setStats(res.data.stats);
+            setPrefetched(p => ({ ...p, revenueSummary: res.data.revenue_summary }));
         }).catch(err => {
             if (err.response?.status === 403 || err.response?.status === 401) {
                 navigate('/');
@@ -1388,10 +1384,12 @@ export default function AdminDashboard() {
                 setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
             }
         });
-        api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {});
-        api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {});
-        api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {});
-        api.get('/admin/revenue').then(r => setPrefetched(p => ({ ...p, revenue: r.data }))).catch(() => {});
+        // 他タブのプリフェッチ（低優先: 少し遅延させてメモリ競合を避ける）
+        setTimeout(() => {
+            api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {});
+            api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {});
+            api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {});
+        }, 1500);
     }, []);
 
     const alertCount = stats
@@ -1449,7 +1447,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* タブコンテンツ */}
-            {tab === 'overview' && <OverviewTab stats={stats} statsError={statsError} onTabChange={setTab} initialRevenue={prefetched.revenue} />}
+            {tab === 'overview' && <OverviewTab stats={stats} statsError={statsError} onTabChange={setTab} revenueSummary={prefetched.revenueSummary} />}
             {tab === 'revenue' && <RevenueTab initialData={prefetched.revenue} />}
             {tab === 'jobseekers' && <JobseekersTab initialData={prefetched.jobseekers} onViewUser={setUserDetailId} />}
             {tab === 'all-companies' && <AllCompaniesTab initialData={prefetched.companies} />}

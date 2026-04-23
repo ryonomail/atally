@@ -256,6 +256,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
      |----------------------------------------------------------------------
      */
         Route::middleware('role:admin')->prefix('admin')->group(function () {
+            Route::get('/overview', [AdminController::class , 'overview']);
             Route::get('/dashboard', [AdminController::class , 'dashboard']);
             Route::get('/companies/pending', [AdminController::class , 'pendingCompanies']);
             Route::put('/companies/{company}/review', [AdminController::class , 'reviewCompany']);
