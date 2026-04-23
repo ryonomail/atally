@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\Job;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -46,33 +47,35 @@ class HelloWorkService
         }
 
         $stats = ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'errors' => 0];
+        // updated_at でこの同期で触れた求人を判別する
+        $syncStartedAt = now();
 
         try {
             $this->companyId = $this->getOrCreateHelloWorkCompany();
 
-            // ページネーションしながら全件取得
-            $page = 1;
-            $activeIds = [];
+            $page  = 1;
+            $batch = [];
 
             while (true) {
-                if ($maxPages > 0 && $page > $maxPages) {
-                    break;
-                }
+                if ($maxPages > 0 && $page > $maxPages) break;
 
                 $jobs = $this->fetchJobPage($token, $dataId, $page);
-                if (empty($jobs)) {
-                    break;
-                }
+                if (empty($jobs)) break;
 
                 foreach ($jobs as $jobData) {
                     try {
-                        $result = $this->upsertJob($jobData);
-                        $stats[$result]++;
-                        if ($jobData['hellowork_id']) {
-                            $activeIds[] = $jobData['hellowork_id'];
+                        $row = $this->prepareRow($jobData);
+                        if ($row) {
+                            $batch[] = $row;
+                            if (count($batch) >= 100) {
+                                $counts = $this->flushBatch($batch);
+                                $stats['inserted'] += $counts['inserted'];
+                                $stats['updated']  += $counts['updated'];
+                                $batch = [];
+                            }
                         }
                     } catch (\Throwable $e) {
-                        Log::error('HelloWork: upsert failed', [
+                        Log::error('HelloWork: prepare failed', [
                             'id'    => $jobData['hellowork_id'] ?? null,
                             'error' => $e->getMessage(),
                         ]);
@@ -83,19 +86,99 @@ class HelloWorkService
                 $page++;
             }
 
-            // APIに存在しなくなった求人を非公開に（全件取得時のみ実行）
-            if ($maxPages === 0 && !empty($activeIds)) {
-                $deleted = Job::where('source', 'hellowork')
-                    ->whereNotIn('hellowork_id', $activeIds)
+            if (!empty($batch)) {
+                $counts = $this->flushBatch($batch);
+                $stats['inserted'] += $counts['inserted'];
+                $stats['updated']  += $counts['updated'];
+            }
+
+            // updated_at < 同期開始時刻 の求人 = 今回APIに無かった → 非公開化
+            // whereNotIn(全ID) の代わりに timestamp 比較でメモリ/パラメータ上限を回避
+            if ($maxPages === 0) {
+                $stats['deleted'] = Job::where('source', 'hellowork')
                     ->where('status', 'active')
+                    ->where('updated_at', '<', $syncStartedAt)
                     ->update(['status' => 'closed']);
-                $stats['deleted'] = $deleted;
             }
         } finally {
             $this->deleteToken($token);
         }
 
         return $stats;
+    }
+
+    /**
+     * 1件分の DB 行データを作成（配列フィールドを JSON 文字列に変換）
+     */
+    private function prepareRow(array $data): ?array
+    {
+        $helloworkId = $data['hellowork_id'] ?? null;
+        if (!$helloworkId) return null;
+
+        unset($data['_company_name'], $data['hellowork_id']);
+
+        $publishedAt  = $data['published_at'] ?? null;
+        $rankingScore = $publishedAt
+            ? ($publishedAt instanceof Carbon ? $publishedAt : Carbon::parse($publishedAt))->timestamp / 1_000_000_000_000.0
+            : 0;
+
+        $now = now();
+
+        $row = array_merge($data, [
+            'hellowork_id'  => $helloworkId,
+            'source'        => 'hellowork',
+            'status'        => 'active',
+            'company_id'    => $this->companyId,
+            'ranking_score' => $rankingScore,
+            'created_at'    => $now,
+            'updated_at'    => $now,
+        ]);
+
+        // JSONB カラムは文字列に変換
+        foreach (['benefits', 'insurance', 'feature_tags'] as $field) {
+            if (isset($row[$field]) && is_array($row[$field])) {
+                $row[$field] = json_encode($row[$field], JSON_UNESCAPED_UNICODE);
+            }
+        }
+
+        // Carbon オブジェクトを文字列に変換
+        foreach (['expires_at', 'published_at', 'created_at', 'updated_at'] as $field) {
+            if (isset($row[$field]) && $row[$field] instanceof Carbon) {
+                $row[$field] = $row[$field]->toDateTimeString();
+            }
+        }
+
+        return $row;
+    }
+
+    /**
+     * 100件バッチを INSERT ON CONFLICT DO UPDATE で一括処理
+     * N+1 クエリを排除し、1バッチ = 1SQL に削減
+     */
+    private function flushBatch(array $batch): array
+    {
+        $ids      = array_column($batch, 'hellowork_id');
+        $existing = Job::whereIn('hellowork_id', $ids)->pluck('hellowork_id')->flip();
+
+        $insertCount = 0;
+        $updateCount = 0;
+        foreach ($batch as $row) {
+            if ($existing->has($row['hellowork_id'])) {
+                $updateCount++;
+            } else {
+                $insertCount++;
+            }
+        }
+
+        // created_at は新規挿入のみ、更新時は上書きしない
+        $updateColumns = array_values(array_diff(
+            array_keys($batch[0]),
+            ['hellowork_id', 'created_at']
+        ));
+
+        DB::table('jobs')->upsert($batch, ['hellowork_id'], $updateColumns);
+
+        return ['inserted' => $insertCount, 'updated' => $updateCount];
     }
 
     // ----------------------------------------------------------------
@@ -336,38 +419,6 @@ class HelloWorkService
     // ----------------------------------------------------------------
     // DB upsert
     // ----------------------------------------------------------------
-
-    /**
-     * @return 'inserted'|'updated'
-     */
-    private function upsertJob(array $data): string
-    {
-        $helloworkId = $data['hellowork_id'];
-        unset($data['_company_name'], $data['hellowork_id']);
-
-        $existing = Job::where('hellowork_id', $helloworkId)->first();
-
-        // ランキングスコア: published_at の UNIX時間 / 10^12（新しい求人ほど高い、常にAtally未満）
-        $publishedAt = $data['published_at'] ?? $data['created_at'] ?? null;
-        $rankingScore = $publishedAt
-            ? ($publishedAt instanceof Carbon ? $publishedAt : Carbon::parse($publishedAt))->timestamp / 1_000_000_000_000.0
-            : 0;
-
-        $attributes = array_merge($data, [
-            'source'         => 'hellowork',
-            'status'         => 'active',
-            'company_id'     => $this->companyId,
-            'ranking_score'  => $rankingScore,
-        ]);
-
-        if ($existing) {
-            $existing->update($attributes);
-            return 'updated';
-        }
-
-        Job::create(array_merge($attributes, ['hellowork_id' => $helloworkId]));
-        return 'inserted';
-    }
 
     // ----------------------------------------------------------------
     // Helpers
