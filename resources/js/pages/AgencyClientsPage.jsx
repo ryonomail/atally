@@ -256,7 +256,7 @@ export default function AgencyClientsPage() {
         <div className="page container animate-fade-in">
             {/* ヘッダー */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/agency/dashboard')} style={{ fontSize: 'var(--font-size-sm)' }}>
+                <button className="btn btn-secondary" onClick={() => navigate('/company')} style={{ fontSize: 'var(--font-size-sm)' }}>
                     ← 戻る
                 </button>
                 <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0, flex: 1 }}>クライアント管理</h1>

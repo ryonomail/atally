@@ -64,7 +64,6 @@ export default function LoginPage() {
             const role = res.user?.role;
             const companyType = res.user?.company?.company_type;
             const dest = role === 'admin' ? '/admin'
-                : role === 'company' && companyType === 'recruitment_agency' ? '/agency'
                 : role === 'company' ? '/company'
                 : '/jobs';
             navigate(dest);

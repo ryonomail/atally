@@ -22,7 +22,7 @@ export default function DashboardPage() {
         api.get('/saved-jobs').then(res => setSavedJobCount((res.data || []).length)).catch(() => {});
     }, [user]);
 
-    if (user?.role === 'company') return <Navigate to={user?.company?.company_type === 'recruitment_agency' ? '/agency' : '/company'} replace />;
+    if (user?.role === 'company') return <Navigate to="/company" replace />;
 
     // 応募ステータス集計
     const statusCounts = {};

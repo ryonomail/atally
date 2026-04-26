@@ -72,7 +72,6 @@ function ProtectedRoute({ children, role }) {
 function getHomePath(user) {
     if (!user) return '/jobs';
     if (user.role === 'admin') return '/admin';
-    if (user.role === 'company' && user.company?.company_type === 'recruitment_agency') return '/agency';
     if (user.role === 'company') return '/company';
     return '/jobs';
 }
@@ -226,16 +225,15 @@ function AppRoutes() {
                 <Route path="/company" element={<ProtectedRoute role="company"><CompanyDashboard /></ProtectedRoute>} />
                 <Route path="/company/jobs" element={<ProtectedRoute role="company"><CompanyJobsPage /></ProtectedRoute>} />
                 <Route path="/company/scout" element={<ProtectedRoute role="company"><ScoutSearchPage /></ProtectedRoute>} />
+                <Route path="/company/bulk-upload" element={<ProtectedRoute role="company"><AgencyBulkUploadPage /></ProtectedRoute>} />
                 <Route path="/company/jobs/:jobId/applications" element={<ProtectedRoute role="company"><CompanyApplicationsPage /></ProtectedRoute>} />
+
+                {/* /agency/* → /company へリダイレクト */}
+                <Route path="/agency" element={<Navigate to="/company" replace />} />
+                <Route path="/agency/*" element={<Navigate to="/company" replace />} />
 
                 {/* 運営管理 */}
                 <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-
-                {/* エージェント（企業ロール内） */}
-                <Route path="/agency" element={<ProtectedRoute role="company"><AgencyDashboardPage /></ProtectedRoute>} />
-                <Route path="/agency/job-database" element={<ProtectedRoute role="company"><AgencyJobDBPage /></ProtectedRoute>} />
-                <Route path="/agency/bulk-upload" element={<ProtectedRoute role="company"><AgencyBulkUploadPage /></ProtectedRoute>} />
-                <Route path="/agency/clients" element={<ProtectedRoute role="company"><AgencyClientsPage /></ProtectedRoute>} />
 
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage />} />

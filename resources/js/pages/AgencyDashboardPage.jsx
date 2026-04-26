@@ -891,7 +891,7 @@ export default function AgencyDashboardPage() {
         <div className="page container animate-fade-in">
             {/* ヘッダー */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
-                <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0 }}>人材紹介ダッシュボード</h1>
+                <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0 }}>管理画面（人材紹介）</h1>
             </div>
 
             {/* タブナビゲーション */}

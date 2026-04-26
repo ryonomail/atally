@@ -5,6 +5,8 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
+import { useAuth } from '../hooks/useAuth';
+import AgencyDashboardPage from './AgencyDashboardPage';
 
 const stripePromise = window.__STRIPE_KEY__ ? loadStripe(window.__STRIPE_KEY__) : null;
 
@@ -660,6 +662,15 @@ function OverviewStatsSection() {
    メインダッシュボード
    ──────────────────────────────────────────── */
 export default function CompanyDashboard() {
+    const { user } = useAuth();
+    if (user?.company?.company_type === 'recruitment_agency') {
+        return <AgencyDashboardPage />;
+    }
+
+    return <DirectEmployerDashboard />;
+}
+
+function DirectEmployerDashboard() {
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
     const [rankingScore, setRankingScore] = useState(0);
