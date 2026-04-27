@@ -50,7 +50,7 @@ class JobController extends Controller
             if ($cached = Cache::get($fullCacheKey)) {
                 return response()->json($cached)
                     ->header('X-Cache', 'HIT')
-                    ->header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+                    ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
             }
         }
 
@@ -159,11 +159,24 @@ class JobController extends Controller
             default       => $query->orderBy('jobs.ranking_score', 'desc'),
         };
 
-        // COUNT(*) を Redis にキャッシュ（270k件でも毎回フルカウントを避ける）
+        // COUNT取得: フィルターなし = PostgreSQL統計の近似値（超高速）、フィルターあり = 5分キャッシュ
         $countParams = $request->except(['page', 'per_page', 'sort']);
         ksort($countParams);
         $countCacheKey = 'jobs_count_' . md5(json_encode($countParams));
-        $total         = Cache::remember($countCacheKey, 300, fn() => (clone $query)->count());
+
+        $hasFilters = array_filter($countParams, fn($v) => $v !== null && $v !== '');
+        if (empty($hasFilters)) {
+            // フィルターなし: pg_class の reltuples（統計解析値）で高速近似カウント
+            $total = Cache::remember('jobs_count_active_approx', 60, function () {
+                $approx = DB::selectOne(
+                    "SELECT reltuples::bigint AS n FROM pg_class WHERE relname = 'jobs'"
+                )?->n ?? 0;
+                // 近似値が古い場合は正確なカウントにフォールバック
+                return $approx > 100 ? $approx : Job::where('status', 'active')->count();
+            });
+        } else {
+            $total = Cache::remember($countCacheKey, 300, fn() => (clone $query)->count());
+        }
 
         $items  = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
         $result = new LengthAwarePaginator(
@@ -207,12 +220,12 @@ class JobController extends Controller
 
         $responseData = $result->toArray();
 
-        // フルレスポンスを 5分キャッシュ
-        Cache::put($fullCacheKey, $responseData, 300);
+        // フルレスポンスを 15分キャッシュ（求人データは頻繁に変わらないため延長）
+        Cache::put($fullCacheKey, $responseData, 900);
 
         $headers = ['X-Cache' => 'MISS'];
         if (!$hasAuth && !$hasGuestParam) {
-            $headers['Cache-Control'] = 'public, max-age=30, stale-while-revalidate=60';
+            $headers['Cache-Control'] = 'public, max-age=60, stale-while-revalidate=300';
         }
         return response()->json($responseData, 200, $headers);
     }

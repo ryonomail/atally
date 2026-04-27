@@ -161,6 +161,7 @@ export default function JobSearchPage() {
     const [jobs, setJobs] = useState([]);
     const [meta, setMeta] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false); // データあり状態での再取得中フラグ
     const [page, setPage] = useState(() => {
         const p = parseInt(searchParams.get('page'), 10);
         return p > 0 ? p : 1;
@@ -250,7 +251,14 @@ export default function JobSearchPage() {
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
-        setLoading(true);
+        // データが既にある場合はスケルトンを出さず、薄いオーバーレイのみ表示
+        const hasExistingData = jobs.length > 0;
+        if (hasExistingData) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+
         try {
             const params = { page: currentPage, per_page: perPage };
             if (currentFilters.keyword) params.keyword = currentFilters.keyword;
@@ -287,6 +295,7 @@ export default function JobSearchPage() {
         } finally {
             if (!controller.signal.aborted) {
                 setLoading(false);
+                setRefreshing(false);
             }
         }
     }, [isMobile, user, perPage]);
@@ -833,6 +842,35 @@ export default function JobSearchPage() {
                         {loading ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                                 {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton" style={{ height: 120, borderRadius: 'var(--radius-lg)' }} />)}
+                            </div>
+                        ) : refreshing ? (
+                            // 再取得中: 既存データをそのまま表示し、上部にスピナーのみ表示
+                            <div style={{ position: 'relative' }}>
+                                <div style={{
+                                    position: 'sticky', top: 0, zIndex: 10,
+                                    display: 'flex', alignItems: 'center', gap: 'var(--space-xs)',
+                                    padding: '6px var(--space-sm)',
+                                    background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)',
+                                    borderRadius: 'var(--radius-md)',
+                                    marginBottom: 'var(--space-sm)',
+                                    fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)',
+                                }}>
+                                    <div style={{ width: 14, height: 14, border: '2px solid var(--color-border)', borderTopColor: 'var(--color-accent)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                                    更新中...
+                                </div>
+                                <div style={{ opacity: 0.5, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                                    {jobs.map(job => (
+                                        <JobListCard
+                                            key={job.id}
+                                            job={job}
+                                            isSelected={selectedJobId === job.id}
+                                            isSaved={savedJobs.includes(job.id)}
+                                            isApplied={appliedJobIds.includes(job.id)}
+                                            onToggleSave={() => {}}
+                                            onClick={() => {}}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                         ) : jobs.length === 0 ? (
                             <div className="card" style={{ padding: 'var(--space-xl)' }}>
