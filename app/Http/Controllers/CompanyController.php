@@ -21,7 +21,7 @@ class CompanyController extends Controller
             return response()->json(['message' => '企業情報は既に登録されています。'], 422);
         }
 
-        $validated = $request->validate([
+        $request->validate([
             'company_name' => ['required', 'string', 'max:255'],
             'representative_name' => ['required', 'string', 'max:255'],
             'company_type' => ['required', 'in:direct_employer,recruitment_agency'],
@@ -30,20 +30,37 @@ class CompanyController extends Controller
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
             'permit_number' => ['required_if:company_type,recruitment_agency', 'nullable', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
+            'license_document' => ['required_if:company_type,recruitment_agency', 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ]);
 
-        $company = Company::create(array_merge($validated, [
+        $company = Company::create([
             'user_id' => $request->user()->id,
+            'company_name' => $request->company_name,
+            'representative_name' => $request->representative_name,
+            'company_type' => $request->company_type,
+            'description' => $request->description,
+            'website' => $request->website,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'permit_number' => $request->permit_number,
             'verification_status' => 'pending',
             'quality_score' => 1.0,
-        ]));
+        ]);
+
+        if ($request->hasFile('license_document')) {
+            $path = $request->file('license_document')->store('licenses', 'public');
+            $company->update([
+                'license_document_path' => $path,
+                'license_verified' => false,
+            ]);
+        }
 
         $request->user()->update([
             'company_id' => $company->id,
             'company_role' => 'owner',
         ]);
 
-        return response()->json(['company' => $company], 201);
+        return response()->json(['company' => $company->fresh()], 201);
     }
 
     /**

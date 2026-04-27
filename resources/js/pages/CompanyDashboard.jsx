@@ -671,6 +671,7 @@ export default function CompanyDashboard() {
 }
 
 function DirectEmployerDashboard() {
+    const { user, updateUser } = useAuth();
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
     const [rankingScore, setRankingScore] = useState(0);
@@ -682,6 +683,7 @@ function DirectEmployerDashboard() {
         company_name: '', representative_name: '', company_type: 'direct_employer', description: '',
         website: '', phone: '', address: '', permit_number: '',
     });
+    const [licenseFile, setLicenseFile] = useState(null);
     const [saving, setSaving] = useState(false);
     const toast = useToast();
     const navigate = useNavigate();
@@ -706,12 +708,25 @@ function DirectEmployerDashboard() {
         e.preventDefault();
         setSaving(true);
         try {
-            const res = await api.post('/company', registerForm);
-            setCompany(res.data.company);
+            const formData = new FormData();
+            Object.entries(registerForm).forEach(([key, val]) => {
+                if (val !== '' && val != null) formData.append(key, val);
+            });
+            if (licenseFile) formData.append('license_document', licenseFile);
+
+            const res = await api.post('/company', formData);
+            const newCompany = res.data.company;
+            setCompany(newCompany);
             setRankingScore(0);
             setShowRegister(false);
+            // userオブジェクトを更新してCompanyDashboardが正しくルーティングするようにする
+            updateUser({ ...user, company: newCompany, company_id: newCompany.id });
         } catch (err) {
-            toast.error(err.response?.data?.message || '登録に失敗しました');
+            const errors = err.response?.data?.errors;
+            const msg = errors
+                ? Object.values(errors).flat().join(' / ')
+                : err.response?.data?.message || '登録に失敗しました';
+            toast.error(msg);
         } finally {
             setSaving(false);
         }
@@ -760,12 +775,31 @@ function DirectEmployerDashboard() {
                                 </select>
                             </div>
                             {registerForm.company_type === 'recruitment_agency' && (
-                                <div className="form-group">
-                                    <label className="form-label">許可番号 *</label>
-                                    <input className="form-input" required value={registerForm.permit_number}
-                                        onChange={e => setRegisterForm({...registerForm, permit_number: e.target.value})}
-                                        placeholder="例: 13-ユ-123456" />
-                                </div>
+                                <>
+                                    <div className="form-group">
+                                        <label className="form-label">職業紹介事業許可番号 *</label>
+                                        <input className="form-input" required value={registerForm.permit_number}
+                                            onChange={e => setRegisterForm({...registerForm, permit_number: e.target.value})}
+                                            placeholder="例: 13-ユ-123456" />
+                                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                                            厚生労働大臣から発行された許可番号を入力してください
+                                        </p>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">職業紹介事業許可証（画像・PDF） *</label>
+                                        <input
+                                            className="form-input"
+                                            type="file"
+                                            required
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            onChange={e => setLicenseFile(e.target.files[0] || null)}
+                                            style={{ padding: 'var(--space-sm)' }}
+                                        />
+                                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                                            PDF, JPG, PNG形式 / 最大10MB。許可番号と照合して審査します。
+                                        </p>
+                                    </div>
+                                </>
                             )}
                             <div className="form-group">
                                 <label className="form-label">企業概要</label>
