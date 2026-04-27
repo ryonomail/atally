@@ -7,23 +7,33 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // pg_trgm: LIKE '%keyword%' をインデックスで高速化（50〜100倍）
-        DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+        // pg_trgm extension — may already exist or require superuser; skip silently on failure
+        try {
+            DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+        } catch (\Throwable $e) {
+            // Extension may already exist or require superuser — continue without it
+        }
 
-        // title に GIN trigram インデックス（キーワード検索の主対象）
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm ON jobs USING GIN (title gin_trgm_ops)');
+        // GIN trigram indexes — skip if pg_trgm unavailable
+        try {
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm ON jobs USING GIN (title gin_trgm_ops)');
+        } catch (\Throwable $e) {
+            // pg_trgm not available; index skipped
+        }
 
-        // location に GIN trigram インデックス（LIKE '%都道府県%' の高速化）
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_jobs_location_trgm ON jobs USING GIN (location gin_trgm_ops)');
+        try {
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_jobs_location_trgm ON jobs USING GIN (location gin_trgm_ops)');
+        } catch (\Throwable $e) {
+            // pg_trgm not available; index skipped
+        }
 
-        // feature_tags JSONB に GIN インデックス（whereJsonContains の高速化）
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_jobs_feature_tags_gin ON jobs USING GIN (feature_tags)');
+        // feature_tags は json 型（jsonb ではない）のため GIN インデックス不可 → スキップ
     }
 
     public function down(): void
     {
         DB::statement('DROP INDEX IF EXISTS idx_jobs_title_trgm');
         DB::statement('DROP INDEX IF EXISTS idx_jobs_location_trgm');
-        DB::statement('DROP INDEX IF EXISTS idx_jobs_feature_tags_gin');
+        // idx_jobs_feature_tags_gin は作成されていないためスキップ
     }
 };
