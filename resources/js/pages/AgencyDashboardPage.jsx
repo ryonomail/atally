@@ -10,7 +10,7 @@ const TABS = [
     { key: 'sent', label: '送った紹介' },
     { key: 'jobs', label: '求人一覧' },
     { key: 'companies', label: '企業一覧' },
-    { key: 'license', label: 'ライセンス' },
+    { key: 'license', label: '許可証' },
 ];
 
 /* ============================================
@@ -102,10 +102,10 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
 
     return (
         <div>
-            {/* ライセンス状態 */}
+            {/* 許可証状態 */}
             <div className="card" style={{ marginBottom: 'var(--space-lg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <p style={{ fontWeight: 600, marginBottom: 'var(--space-xs)' }}>ライセンス認証状態</p>
+                    <p style={{ fontWeight: 600, marginBottom: 'var(--space-xs)' }}>職業紹介事業許可証</p>
                     <span style={{
                         display: 'inline-block', padding: '2px 12px', borderRadius: 'var(--radius-md)',
                         fontSize: 'var(--font-size-xs)', fontWeight: 600,
@@ -120,7 +120,7 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
                 {!licenseVerified && (
                     <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)' }}
                         onClick={() => onTabChange('license')}>
-                        {licenseDocSubmitted ? '審査状況を確認' : 'ライセンスを提出する'}
+                        {licenseDocSubmitted ? '審査状況を確認' : '許可証を提出する'}
                     </button>
                 )}
             </div>
@@ -411,7 +411,7 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!file) {
-            setError('ライセンス書類を選択してください');
+            setError('職業紹介事業許可証を選択してください');
             return;
         }
         if (!permit.trim()) {
@@ -426,12 +426,12 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
             formData.append('license_document', file);
             formData.append('permit_number', permit.trim());
             await api.post('/agency/license', formData);
-            setSuccess('ライセンス書類を提出しました。審査完了までお待ちください。');
+            setSuccess('職業紹介事業許可証を提出しました。審査完了までお待ちください。');
             setFile(null);
             setPermit('');
             if (onLicenseSubmitted) onLicenseSubmitted();
         } catch (err) {
-            setError(err.response?.data?.message || 'ライセンス提出に失敗しました');
+            setError(err.response?.data?.message || '許可証の提出に失敗しました');
         } finally {
             setSubmitting(false);
         }
@@ -441,7 +441,7 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
         <div style={{ maxWidth: 600 }}>
             {/* 現在のステータス */}
             <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <h3 style={{ marginBottom: 'var(--space-md)' }}>ライセンス認証状態</h3>
+                <h3 style={{ marginBottom: 'var(--space-md)' }}>職業紹介事業許可証の認証状態</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
                     {licenseVerified ? (
                         <span style={{
@@ -478,9 +478,9 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
             {/* アップロードフォーム */}
             {!licenseVerified && (
                 <div className="card">
-                    <h3 style={{ marginBottom: 'var(--space-md)' }}>ライセンス書類の提出</h3>
+                    <h3 style={{ marginBottom: 'var(--space-md)' }}>職業紹介事業許可証の提出</h3>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
-                        人材紹介業の許可証を提出してください。審査完了後、ライセンスが認証されます。
+                        厚生労働大臣発行の職業紹介事業許可証を提出してください。審査完了後に認証されます。
                     </p>
 
                     {success && (
@@ -516,7 +516,7 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">ライセンス書類</label>
+                            <label className="form-label">職業紹介事業許可証（画像・PDF）</label>
                             <input
                                 className="form-input"
                                 type="file"
@@ -529,7 +529,7 @@ function LicenseTab({ licenseVerified, permitNumber, licenseDocSubmitted, verifi
                             </p>
                         </div>
                         <button type="submit" className="btn btn-primary" disabled={submitting}>
-                            {submitting ? '送信中...' : 'ライセンスを提出'}
+                            {submitting ? '送信中...' : '許可証を提出する'}
                         </button>
                     </form>
                 </div>
@@ -856,7 +856,7 @@ export default function AgencyDashboardPage() {
 
     if (fetchError) return (
         <div className="page container animate-fade-in">
-            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-xl)' }}>人材紹介ダッシュボード</h1>
+            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-xl)' }}>管理画面（人材紹介）</h1>
             <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: '#dc2626' }}>
                 <p style={{ marginBottom: 'var(--space-md)' }}>{fetchError}</p>
                 <button className="btn btn-primary" onClick={() => { setLoading(true); setFetchError(''); fetchDashboard(); }}>
@@ -865,6 +865,40 @@ export default function AgencyDashboardPage() {
             </div>
         </div>
     );
+
+    // 許可証未提出の場合は提出画面を優先表示（審査完了前に必須）
+    if (!licenseDocSubmitted && !licenseVerified) {
+        return (
+            <div className="page container animate-fade-in">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
+                    <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0 }}>管理画面（人材紹介）</h1>
+                </div>
+                <div className="card" style={{
+                    maxWidth: 620,
+                    borderLeft: '4px solid #f59e0b',
+                    marginBottom: 'var(--space-xl)',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
+                        <span style={{ fontSize: '2rem', lineHeight: 1 }}>📋</span>
+                        <div>
+                            <h3 style={{ margin: '0 0 var(--space-xs)' }}>職業紹介事業許可証のご提出をお願いします</h3>
+                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
+                                企業審査を進めるには、厚生労働大臣発行の<strong>職業紹介事業許可証</strong>のアップロードが必要です。
+                                提出後、運営が内容を確認します。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <LicenseTab
+                    licenseVerified={false}
+                    permitNumber={permitNumber}
+                    licenseDocSubmitted={false}
+                    verificationStatus={verificationStatus}
+                    onLicenseSubmitted={fetchDashboard}
+                />
+            </div>
+        );
+    }
 
     const renderTab = () => {
         switch (activeTab) {
