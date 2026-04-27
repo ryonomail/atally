@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    // CONCURRENTLY はトランザクション内で実行できないため無効化
+    public $withinTransaction = false;
+
     public function up(): void
     {
         // pg_trgm: LIKE '%keyword%' をインデックスで高速化（50〜100倍）
