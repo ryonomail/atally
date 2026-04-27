@@ -7,11 +7,22 @@ use Illuminate\Support\Facades\Route;
 Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
 
+// /agency/* → /company へのサーバーサイド301リダイレクト（SEO: クライアントサイドリダイレクトを置き換え）
+Route::redirect('/agency', '/company', 301);
+Route::redirect('/agency/job-database', '/company', 301);
+Route::redirect('/agency/clients', '/company', 301);
+Route::redirect('/agency/bulk-upload', '/company/bulk-upload', 301);
+Route::get('/agency/{any}', fn() => redirect('/company', 301))->where('any', '.*');
+
 // 求人詳細ページ: サーバーサイドでメタ情報を埋め込み（Google しごと検索 + SNSシェア対応）
 Route::get('/jobs/{id}', function ($id) {
-    $job = \App\Models\Job::with('company:id,company_name,website')->find($id);
+    try {
+        $job = \App\Models\Job::with('company:id,company_name,website')->find($id);
+    } catch (\Throwable $e) {
+        return response(view('app'), 500);
+    }
 
-    if (!$job || $job->status->value !== 'active') {
+    if (!$job || ($job->status?->value ?? '') !== 'active') {
         return response(view('app'), 404);
     }
 
@@ -84,9 +95,13 @@ Route::get('/jobs/{id}', function ($id) {
 
 // 企業プロフィール: サーバーサイドメタ
 Route::get('/companies/{id}', function ($id) {
-    $company = \App\Models\Company::find($id);
+    try {
+        $company = \App\Models\Company::find($id);
+    } catch (\Throwable $e) {
+        return response(view('app'), 500);
+    }
 
-    if (!$company || $company->verification_status->value !== 'verified') {
+    if (!$company || ($company->verification_status?->value ?? '') !== 'verified') {
         return response(view('app'), 404);
     }
 
