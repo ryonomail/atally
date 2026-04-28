@@ -426,9 +426,9 @@ class AgencyController extends Controller
         $rows = [];
         while (($row = fgetcsv($handle)) !== false) {
             $rows[] = $row;
-            if (count($rows) > 102) { // ヘッダー + 100件 + 余裕分
+            if (count($rows) > 1001) { // ヘッダー + 999件 + 余裕分
                 fclose($handle);
-                return response()->json(['message' => '一括アップロードは100件までです'], 422);
+                return response()->json(['message' => '一括アップロードは999件までです'], 422);
             }
         }
         fclose($handle);
@@ -482,9 +482,9 @@ class AgencyController extends Controller
         $errors = [];
         $dataRows = array_slice($rows, 1);
 
-        // 最大100件
-        if (count($dataRows) > 100) {
-            return response()->json(['message' => '一括アップロードは100件までです'], 422);
+        // 最大999件
+        if (count($dataRows) > 999) {
+            return response()->json(['message' => '一括アップロードは999件までです'], 422);
         }
 
         foreach ($dataRows as $i => $row) {
