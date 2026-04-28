@@ -42,9 +42,10 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-    // FormData の場合は multipart/form-data を明示設定（axiosが自動でboundaryを付与する）
+    // FormData の場合は Content-Type を削除し、axiosに boundary 付きで自動設定させる
+    // 手動で 'multipart/form-data' をセットすると boundary が欠落してサーバー側でパースできない
     if (config.data instanceof FormData) {
-        config.headers['Content-Type'] = 'multipart/form-data';
+        delete config.headers['Content-Type'];
     }
 
     // GETリクエスト & 非ログイン時のみキャッシュ適用
