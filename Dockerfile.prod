@@ -80,7 +80,10 @@ COPY --from=composer /app/vendor ./vendor
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
         storage/framework/views storage/app/public bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && mkdir -p /var/lib/nginx/tmp/client_body \
+    && chown -R www-data:www-data /var/lib/nginx/tmp \
+    && chmod -R 775 /var/lib/nginx/tmp
 
 # Nginx 設定
 COPY docker/nginx.conf /etc/nginx/nginx.conf
