@@ -1,0 +1,16 @@
+FROM php:8.3-fpm-alpine
+
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    && install-php-extensions \
+        pdo_pgsql \
+        gd \
+        zip \
+        bcmath \
+        pcntl \
+        redis \
+        opcache \
+    && rm -rf /tmp/* /var/cache/apk/*

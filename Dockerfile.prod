@@ -32,24 +32,9 @@ RUN composer install \
 # ============================================================
 # Stage 3: 本番ランタイム（Nginx + PHP-FPM）
 # ============================================================
-FROM php:8.3-fpm-alpine
-
-# php-extension-installer
-COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-
-# システム依存 + PHPエクステンション
-RUN apk add --no-cache \
-    nginx \
-    supervisor \
-    && install-php-extensions \
-        pdo_pgsql \
-        gd \
-        zip \
-        bcmath \
-        pcntl \
-        redis \
-        opcache \
-    && rm -rf /tmp/* /var/cache/apk/*
+# GitHub Actions がビルド済みのベースイメージを使う（Render のビルド時間短縮）
+ARG BASE_IMAGE=php:8.3-fpm-alpine
+FROM ${BASE_IMAGE}
 
 # PHP 設定
 RUN printf 'upload_max_filesize = 20M\npost_max_size = 25M\nmemory_limit = 256M\n' \
