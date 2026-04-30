@@ -616,12 +616,20 @@ class AgencyController extends Controller
     {
         $company = Auth::user()->company;
 
+        if (!$company) {
+            return response()->json(['message' => '企業情報が登録されていません。先に企業情報を登録してください。'], 422);
+        }
+
         $request->validate([
             'license_document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB
             'permit_number' => 'required|string|max:50',
         ]);
 
         $path = $request->file('license_document')->store('licenses', 'public');
+
+        if ($path === false) {
+            return response()->json(['message' => 'ファイルの保存に失敗しました。しばらくしてから再度お試しください。'], 500);
+        }
 
         $company->update([
             'company_type' => 'recruitment_agency',
@@ -642,7 +650,7 @@ class AgencyController extends Controller
     public function dashboard(Request $request)
     {
         $company = Auth::user()->company;
-        if (!$company->isAgency()) {
+        if (!$company || !$company->isAgency()) {
             return response()->json(['message' => '人材紹介会社のみ利用可能です'], 403);
         }
 
