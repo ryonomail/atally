@@ -662,8 +662,23 @@ function OverviewStatsSection() {
    メインダッシュボード
    ──────────────────────────────────────────── */
 export default function CompanyDashboard() {
-    const { user } = useAuth();
-    if (user?.company?.company_type === 'recruitment_agency') {
+    const { user, updateUser } = useAuth();
+    const [resolvedType, setResolvedType] = useState(user?.company?.company_type ?? null);
+
+    useEffect(() => {
+        // user.company が未ロード（登録直後など）の場合はAPIから会社情報を取得してルーティングを確定する
+        if (!user?.company) {
+            api.get('/company').then(res => {
+                const company = res.data?.company;
+                if (company) {
+                    updateUser({ ...user, company, company_id: company.id });
+                    setResolvedType(company.company_type);
+                }
+            }).catch(() => {});
+        }
+    }, []);
+
+    if (resolvedType === 'recruitment_agency') {
         return <AgencyDashboardPage />;
     }
 

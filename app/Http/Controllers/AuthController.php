@@ -64,7 +64,7 @@ class AuthController extends Controller
         $this->sendVerificationCode($user->email);
 
         return response()->json([
-            'user' => $user->load('profile'),
+            'user' => $user->load(['profile', 'company']),
             'token' => $token,
             'requires_email_verification' => true,
         ], 201);

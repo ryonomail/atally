@@ -29,8 +29,8 @@ class CompanyController extends Controller
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'permit_number' => ['required_if:company_type,recruitment_agency', 'nullable', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
-            'license_document' => ['required_if:company_type,recruitment_agency', 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'permit_number' => ['required_if:company_type,recruitment_agency', 'string', 'max:50'],
+            'license_document' => ['required_if:company_type,recruitment_agency', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ]);
 
         $company = Company::create([
