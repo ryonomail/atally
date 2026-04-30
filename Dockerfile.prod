@@ -38,12 +38,11 @@ FROM php:8.3-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    libpq-dev \
+    postgresql-dev \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
-    libzip-dev \
-    icu-dev
+    libzip-dev
 
 # PHP バンドル拡張（docker-php-ext-install は標準ツールで高速）
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
