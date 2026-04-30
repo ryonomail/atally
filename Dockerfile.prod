@@ -58,15 +58,13 @@ RUN printf 'upload_max_filesize = 20M\npost_max_size = 25M\nmemory_limit = 256M\
 # OPcache 本番設定（コンパイル済みバイトコードをメモリにキャッシュ → リクエストごとのPHPコンパイルを排除）
 RUN printf '\
 opcache.enable=1\n\
-opcache.memory_consumption=128\n\
-opcache.interned_strings_buffer=16\n\
-opcache.max_accelerated_files=20000\n\
+opcache.memory_consumption=64\n\
+opcache.interned_strings_buffer=8\n\
+opcache.max_accelerated_files=10000\n\
 opcache.revalidate_freq=0\n\
 opcache.validate_timestamps=0\n\
 opcache.save_comments=1\n\
 opcache.enable_cli=0\n\
-opcache.jit=tracing\n\
-opcache.jit_buffer_size=64M\n\
 ' > /usr/local/etc/php/conf.d/opcache.ini
 
 WORKDIR /var/www/html
