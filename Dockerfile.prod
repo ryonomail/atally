@@ -34,22 +34,30 @@ RUN composer install \
 # ============================================================
 FROM php:8.3-fpm-alpine
 
-# php-extension-installer（PHPエクステンションを確実にインストールするツール）
-COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-
-# システム依存 + PHPエクステンション
+# システム依存ライブラリ
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    && install-php-extensions \
+    libpq-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+    icu-dev
+
+# PHP バンドル拡張（docker-php-ext-install は標準ツールで高速）
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
         pdo_pgsql \
         gd \
         zip \
         bcmath \
         pcntl \
-        redis \
-        opcache \
-    && rm -rf /tmp/* /var/cache/apk/*
+        opcache
+
+# redis（PECL）
+RUN pecl install redis && docker-php-ext-enable redis \
+    && rm -rf /tmp/pear /var/cache/apk/*
 
 # PHP 設定
 RUN printf 'upload_max_filesize = 20M\npost_max_size = 25M\nmemory_limit = 256M\n' \
