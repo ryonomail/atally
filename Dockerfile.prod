@@ -33,8 +33,7 @@ RUN composer install \
 # Stage 3: 本番ランタイム（Nginx + PHP-FPM）
 # ============================================================
 # GitHub Actions がビルド済みのベースイメージを使う（Render のビルド時間短縮）
-ARG BASE_IMAGE=php:8.3-fpm-alpine
-FROM ${BASE_IMAGE}
+FROM ghcr.io/ryonomail/atally-base:latest
 
 # PHP 設定
 RUN printf 'upload_max_filesize = 20M\npost_max_size = 25M\nmemory_limit = 256M\n' \
