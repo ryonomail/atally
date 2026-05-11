@@ -58,14 +58,10 @@ php artisan storage:link 2>/dev/null || true
 # パーミッション
 chown -R www-data:www-data storage bootstrap/cache || true
 
-echo "=== Testing nginx config ==="
-nginx -t 2>&1 || true
-
-echo "=== nginx version ==="
-nginx -v 2>&1 || true
-
-echo "=== nginx.conf listen directive ==="
-grep "listen" /etc/nginx/nginx.conf || true
+# nginx 一時ディレクトリを実行時に作成（/tmp はコンテナ起動時にリセットされるため）
+mkdir -p /var/lib/nginx/tmp/client_body
+chown -R www-data:www-data /var/lib/nginx/tmp
+chmod -R 775 /var/lib/nginx/tmp
 
 echo "=== Starting Supervisor ==="
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
