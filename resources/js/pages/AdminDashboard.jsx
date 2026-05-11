@@ -852,11 +852,75 @@ function JobsTab({ initialData }) {
 /* ============================================
    ライセンス審査タブ
    ============================================ */
+function LicenseFileModal({ path, onClose }) {
+    const url = `/storage/${path}`;
+    const ext = path.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+
+    React.useEffect(() => {
+        const onKey = e => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [onClose]);
+
+    return (
+        <div
+            onClick={onClose}
+            style={{
+                position: 'fixed', inset: 0, zIndex: 1000,
+                background: 'rgba(0,0,0,0.7)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 'var(--space-lg)',
+            }}
+        >
+            <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                    background: 'var(--color-bg-surface)',
+                    borderRadius: 'var(--radius-lg)',
+                    width: '100%', maxWidth: 860,
+                    maxHeight: '90vh',
+                    display: 'flex', flexDirection: 'column',
+                    overflow: 'hidden',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                }}
+            >
+                <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: 'var(--space-md) var(--space-lg)',
+                    borderBottom: '1px solid var(--color-border)',
+                }}>
+                    <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>提出書類プレビュー</span>
+                    <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
+                        <a href={url} download target="_blank" rel="noopener noreferrer"
+                            style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-accent)', textDecoration: 'none' }}>
+                            ダウンロード
+                        </a>
+                        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, lineHeight: 1, color: 'var(--color-text-muted)', padding: '0 4px' }}>×</button>
+                    </div>
+                </div>
+                <div style={{ flex: 1, overflow: 'auto', padding: isImage ? 'var(--space-lg)' : 0, display: 'flex', justifyContent: 'center', alignItems: isImage ? 'flex-start' : 'stretch' }}>
+                    {isImage ? (
+                        <img src={url} alt="提出書類" style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)', display: 'block' }} />
+                    ) : (
+                        <iframe
+                            src={url}
+                            title="提出書類"
+                            style={{ width: '100%', height: '75vh', border: 'none', display: 'block' }}
+                        />
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function LicensesTab({ initialData }) {
     const toast = useToast();
     const [agencies, setAgencies] = useState(initialData || []);
     const [loading, setLoading] = useState(!initialData);
     const [processing, setProcessing] = useState(null);
+    const [previewPath, setPreviewPath] = useState(null);
 
     useEffect(() => {
         if (initialData) return;
@@ -890,39 +954,58 @@ function LicensesTab({ initialData }) {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-            {agencies.map(a => (
-                <div key={a.id} className="card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ flex: 1 }}>
-                            <h3 style={{ marginBottom: 'var(--space-xs)' }}>{a.company_name}</h3>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
-                                {a.user && <p style={{ margin: '0 0 4px' }}>登録者: {a.user.name} ({a.user.email})</p>}
-                                {a.permit_number && <p style={{ margin: '0 0 4px' }}>許可番号: <strong>{a.permit_number}</strong></p>}
+        <>
+            {previewPath && <LicenseFileModal path={previewPath} onClose={() => setPreviewPath(null)} />}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                {agencies.map(a => (
+                    <div key={a.id} className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
+                            <div style={{ flex: 1 }}>
+                                <h3 style={{ marginBottom: 'var(--space-xs)' }}>{a.company_name}</h3>
+                                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                                    {a.user && <p style={{ margin: '0 0 4px' }}>登録者: {a.user.name} ({a.user.email})</p>}
+                                    {a.permit_number && <p style={{ margin: '0 0 4px' }}>許可番号: <strong>{a.permit_number}</strong></p>}
+                                    {a.created_at && <p style={{ margin: '0 0 4px' }}>申請日: {new Date(a.created_at).toLocaleDateString('ja-JP')}</p>}
+                                </div>
                                 {a.license_document_path && (
-                                    <p style={{ margin: 0 }}>
-                                        提出書類: <a href={`/storage/${a.license_document_path}`} target="_blank" rel="noopener noreferrer"
-                                            style={{ color: 'var(--color-text-accent)' }}>書類を確認</a>
-                                    </p>
+                                    <button
+                                        onClick={() => setPreviewPath(a.license_document_path)}
+                                        style={{
+                                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                                            padding: '6px 14px',
+                                            background: 'var(--color-bg-muted)',
+                                            border: '1px solid var(--color-border)',
+                                            borderRadius: 'var(--radius-md)',
+                                            cursor: 'pointer',
+                                            fontSize: 'var(--font-size-sm)',
+                                            fontWeight: 500,
+                                            color: 'var(--color-text-primary)',
+                                        }}
+                                    >
+                                        📄 提出書類を確認
+                                    </button>
+                                )}
+                                {!a.license_document_path && (
+                                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>書類未提出</span>
                                 )}
                             </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                            <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)' }}
-                                disabled={processing === a.id}
-                                onClick={() => handleReview(a.id, true)}>
-                                承認
-                            </button>
-                            <button className="btn btn-danger" style={{ fontSize: 'var(--font-size-sm)' }}
-                                disabled={processing === a.id}
-                                onClick={() => handleReview(a.id, false)}>
-                                却下
-                            </button>
+                            <div style={{ display: 'flex', gap: 'var(--space-sm)', flexShrink: 0 }}>
+                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)' }}
+                                    disabled={processing === a.id}
+                                    onClick={() => handleReview(a.id, true)}>
+                                    承認
+                                </button>
+                                <button className="btn btn-danger" style={{ fontSize: 'var(--font-size-sm)' }}
+                                    disabled={processing === a.id}
+                                    onClick={() => handleReview(a.id, false)}>
+                                    却下
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
-        </div>
+                ))}
+            </div>
+        </>
     );
 }
 
