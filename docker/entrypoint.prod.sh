@@ -11,7 +11,7 @@ mkdir -p /var/log/supervisor /var/log/nginx
 # Renderの$PORTに合わせてnginxのポートを設定（デフォルト10000）
 APP_PORT=${PORT:-10000}
 echo "--- Using port: $APP_PORT ---"
-sed -i "s/listen 80;/listen ${APP_PORT};/" /etc/nginx/nginx.conf
+sed -i "s/listen 0.0.0.0:80;/listen 0.0.0.0:${APP_PORT};/" /etc/nginx/nginx.conf
 
 # REDIS_URLをパースして個別の環境変数に展開（Predis URL解析の問題を回避）
 if [ -n "${REDIS_URL}" ]; then
