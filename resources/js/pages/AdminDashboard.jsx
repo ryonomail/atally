@@ -1492,23 +1492,22 @@ export default function AdminDashboard() {
                 setStatsError(err.response?.data?.message || err.message || '読み込みエラー');
             }
         });
-        // 他タブのプリフェッチ（低優先: 遅延させてメモリ競合を避ける）
+        // 軽量なタブのみ遅延プリフェッチ（重い all-companies / all-jobs はタブ開時にオンデマンドで取得）
         setTimeout(() => {
-            api.get('/admin/jobseekers').then(r => setPrefetched(p => ({ ...p, jobseekers: r.data }))).catch(() => {});
-            api.get('/admin/companies/all').then(r => setPrefetched(p => ({ ...p, companies: r.data }))).catch(() => {});
-            api.get('/admin/jobs/all').then(r => setPrefetched(p => ({ ...p, jobs: r.data }))).catch(() => {});
             api.get('/admin/revenue').then(r => setPrefetched(p => ({ ...p, revenue: r.data }))).catch(() => {});
         }, 1500);
         setTimeout(() => {
             api.get('/admin/companies/pending').then(r => setPrefetched(p => ({ ...p, pendingCompanies: r.data }))).catch(() => {});
-            api.get('/admin/jobs/pending').then(r => setPrefetched(p => ({ ...p, pendingJobs: r.data }))).catch(() => {});
             api.get('/admin/licenses/pending').then(r => setPrefetched(p => ({ ...p, pendingLicenses: r.data }))).catch(() => {});
+        }, 2500);
+        setTimeout(() => {
+            api.get('/admin/jobs/pending').then(r => setPrefetched(p => ({ ...p, pendingJobs: r.data }))).catch(() => {});
             api.get('/admin/reports', { params: { status: 'open' } }).then(r => setPrefetched(p => ({ ...p, reports: r.data }))).catch(() => {});
-        }, 3000);
+        }, 4000);
         setTimeout(() => {
             api.get('/admin/audit-logs').then(r => setPrefetched(p => ({ ...p, auditLogs: r.data }))).catch(() => {});
             api.get('/admin/settings').then(r => setPrefetched(p => ({ ...p, settings: r.data }))).catch(() => {});
-        }, 4500);
+        }, 5500);
     }, []);
 
     const prefetchTab = (key) => {

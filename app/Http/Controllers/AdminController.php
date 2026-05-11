@@ -363,8 +363,9 @@ class AdminController extends Controller
     public function allCompanies(Request $request)
     {
         $cacheKey = 'admin_companies_all_' . $this->paramHash($request);
-        $result = Cache::remember($cacheKey, 120, function () use ($request) {
-            $query = Company::with('user:id,name,email,suspended_at')->withCount('jobs');
+        $result = Cache::remember($cacheKey, 300, function () use ($request) {
+            $query = Company::with('user:id,name,email,suspended_at')
+                ->withCount(['jobs' => fn($q) => $q->where('status', 'active')]);
             if ($request->filled('q')) {
                 $query->where('company_name', 'ilike', "%{$request->q}%");
             }
@@ -382,8 +383,8 @@ class AdminController extends Controller
     public function allJobs(Request $request)
     {
         $cacheKey = 'admin_jobs_all_' . $this->paramHash($request);
-        $result = Cache::remember($cacheKey, 120, function () use ($request) {
-            $query = Job::with(['company:id,company_name'])->withCount('applications');
+        $result = Cache::remember($cacheKey, 300, function () use ($request) {
+            $query = Job::with(['company:id,company_name']);
             if ($request->filled('q')) {
                 $query->where('title', 'ilike', "%{$request->q}%");
             }
