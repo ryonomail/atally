@@ -10,6 +10,7 @@ use App\Services\NgWordService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Stripe\Stripe;
@@ -642,6 +643,9 @@ class AgencyController extends Controller
             'permit_number' => $request->permit_number,
             'license_verified' => false,
         ]);
+
+        Cache::forget('admin_pending_licenses');
+        Cache::forget('admin_overview');
 
         return response()->json([
             'message' => 'ライセンス証をアップロードしました。運営の確認後、エージェント機能が利用可能になります。',

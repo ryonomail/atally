@@ -9,6 +9,7 @@ use App\Enums\VerificationStatus;
 use App\Services\BillingProtectionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CompanyController extends Controller
 {
@@ -53,6 +54,8 @@ class CompanyController extends Controller
                 'license_document_path' => $path,
                 'license_verified' => false,
             ]);
+            Cache::forget('admin_pending_licenses');
+            Cache::forget('admin_overview');
         }
 
         $request->user()->update([

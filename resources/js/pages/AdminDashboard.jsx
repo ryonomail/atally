@@ -922,11 +922,16 @@ function LicensesTab({ initialData }) {
     const [processing, setProcessing] = useState(null);
     const [previewPath, setPreviewPath] = useState(null);
 
-    useEffect(() => {
-        if (initialData) return;
+    const fetchLicenses = () => {
+        setLoading(true);
         api.get('/admin/licenses/pending').then(res => {
             setAgencies(res.data || []);
         }).finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        if (initialData) return;
+        fetchLicenses();
     }, []);
 
     const handleReview = async (companyId, approved) => {
@@ -948,7 +953,8 @@ function LicensesTab({ initialData }) {
     if (agencies.length === 0) {
         return (
             <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                ライセンス審査待ちの人材紹介会社はありません
+                <p>ライセンス審査待ちの人材紹介会社はありません</p>
+                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-sm)' }} onClick={fetchLicenses}>再読み込み</button>
             </div>
         );
     }
@@ -956,6 +962,11 @@ function LicensesTab({ initialData }) {
     return (
         <>
             {previewPath && <LicenseFileModal path={previewPath} onClose={() => setPreviewPath(null)} />}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-sm)' }}>
+                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)' }} onClick={fetchLicenses} disabled={loading}>
+                    {loading ? '読み込み中…' : '再読み込み'}
+                </button>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                 {agencies.map(a => (
                     <div key={a.id} className="card">
