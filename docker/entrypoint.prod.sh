@@ -58,5 +58,14 @@ php artisan storage:link 2>/dev/null || true
 # パーミッション
 chown -R www-data:www-data storage bootstrap/cache || true
 
+echo "=== Testing nginx config ==="
+nginx -t 2>&1 || true
+
+echo "=== nginx version ==="
+nginx -v 2>&1 || true
+
+echo "=== nginx.conf listen directive ==="
+grep "listen" /etc/nginx/nginx.conf || true
+
 echo "=== Starting Supervisor ==="
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
