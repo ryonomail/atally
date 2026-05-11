@@ -852,9 +852,8 @@ function JobsTab({ initialData }) {
 /* ============================================
    ライセンス審査タブ
    ============================================ */
-function LicenseFileModal({ path, onClose }) {
-    const url = `/storage/${path}`;
-    const ext = path.split('.').pop().toLowerCase();
+function LicenseFileModal({ url, path, onClose }) {
+    const ext = (path || url || '').split('.').pop().toLowerCase();
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
 
     React.useEffect(() => {
@@ -920,7 +919,7 @@ function LicensesTab({ initialData }) {
     const [agencies, setAgencies] = useState(initialData || []);
     const [loading, setLoading] = useState(!initialData);
     const [processing, setProcessing] = useState(null);
-    const [previewPath, setPreviewPath] = useState(null);
+    const [previewItem, setPreviewItem] = useState(null);
 
     const fetchLicenses = () => {
         setLoading(true);
@@ -961,7 +960,7 @@ function LicensesTab({ initialData }) {
 
     return (
         <>
-            {previewPath && <LicenseFileModal path={previewPath} onClose={() => setPreviewPath(null)} />}
+            {previewItem && <LicenseFileModal url={previewItem.url} path={previewItem.path} onClose={() => setPreviewItem(null)} />}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-sm)' }}>
                 <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)' }} onClick={fetchLicenses} disabled={loading}>
                     {loading ? '読み込み中…' : '再読み込み'}
@@ -980,7 +979,7 @@ function LicensesTab({ initialData }) {
                                 </div>
                                 {a.license_document_path && (
                                     <button
-                                        onClick={() => setPreviewPath(a.license_document_path)}
+                                        onClick={() => setPreviewItem({ path: a.license_document_path, url: a.license_document_url })}
                                         style={{
                                             display: 'inline-flex', alignItems: 'center', gap: 6,
                                             padding: '6px 14px',

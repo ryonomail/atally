@@ -15,6 +15,7 @@ use App\Services\GoogleIndexingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -296,7 +297,20 @@ class AdminController extends Controller
                 ->with('user:id,name,email')
                 ->orderBy('created_at', 'asc')
                 ->get()
-                ->each->makeVisible('license_document_path')
+                ->map(function ($company) {
+                    $company->makeVisible('license_document_path');
+                    if ($company->license_document_path) {
+                        try {
+                            $company->license_document_url = Storage::disk('s3')->temporaryUrl(
+                                $company->license_document_path,
+                                now()->addMinutes(90)
+                            );
+                        } catch (\Throwable $e) {
+                            $company->license_document_url = null;
+                        }
+                    }
+                    return $company;
+                })
                 ->toArray();
         });
         return response()->json($data);
