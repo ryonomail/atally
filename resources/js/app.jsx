@@ -34,6 +34,7 @@ const MyApplicationsPage     = lazy(() => import('./pages/MyApplicationsPage'));
 const MessagesListPage       = lazy(() => import('./pages/MessagesListPage'));
 const TermsPage              = lazy(() => import('./pages/TermsPage'));
 const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
+const LegalPage              = lazy(() => import('./pages/LegalPage'));
 const ForgotPasswordPage     = lazy(() => import('./pages/ForgotPasswordPage'));
 const VerifyEmailPage        = lazy(() => import('./pages/VerifyEmailPage'));
 const SettingsPage           = lazy(() => import('./pages/SettingsPage'));
@@ -199,6 +200,7 @@ function AppRoutes() {
                 <Route path="/companies/:id" element={<CompanyProfilePage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/legal" element={<LegalPage />} />
                 <Route path="/help" element={<HelpPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/for-companies" element={<ForCompaniesPage />} />
