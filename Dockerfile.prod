@@ -32,8 +32,21 @@ RUN composer install \
 # ============================================================
 # Stage 3: 本番ランタイム（Nginx + PHP-FPM）
 # ============================================================
-# GitHub Actions がビルド済みのベースイメージを使う（Render のビルド時間短縮）
-FROM ghcr.io/ryonomail/atally-base:latest
+FROM php:8.3-fpm-alpine
+
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    postgresql-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install -j$(nproc) pdo_pgsql gd zip bcmath pcntl opcache \
+ && pecl install redis \
+ && docker-php-ext-enable redis \
+ && rm -rf /tmp/pear /var/cache/apk/*
 
 # PHP 設定
 RUN printf 'upload_max_filesize = 20M\npost_max_size = 25M\nmemory_limit = 256M\n' \
