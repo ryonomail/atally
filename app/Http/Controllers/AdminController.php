@@ -296,6 +296,7 @@ class AdminController extends Controller
                 ->with('user:id,name,email')
                 ->orderBy('created_at', 'asc')
                 ->get()
+                ->each->makeVisible('license_document_path')
                 ->toArray();
         });
         return response()->json($data);
