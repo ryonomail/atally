@@ -58,10 +58,10 @@ php artisan storage:link 2>/dev/null || true
 # パーミッション
 chown -R www-data:www-data storage bootstrap/cache || true
 
-# nginx 一時ディレクトリを実行時に作成（/tmp はコンテナ起動時にリセットされるため）
-mkdir -p /var/lib/nginx/tmp/client_body
-chown -R www-data:www-data /var/lib/nginx/tmp
-chmod -R 775 /var/lib/nginx/tmp
+# nginx アップロード一時ディレクトリを実行時に作成
+mkdir -p /run/nginx/client_body
+chown -R www-data:www-data /run/nginx
+chmod -R 775 /run/nginx
 
 echo "=== Starting Supervisor ==="
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
