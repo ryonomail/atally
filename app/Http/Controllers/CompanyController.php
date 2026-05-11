@@ -49,7 +49,7 @@ class CompanyController extends Controller
         ]);
 
         if ($request->hasFile('license_document')) {
-            $path = $request->file('license_document')->store('licenses', 's3');
+            $path = $request->file('license_document')->store('licenses', 'public');
             $company->update([
                 'license_document_path' => $path,
                 'license_verified' => false,

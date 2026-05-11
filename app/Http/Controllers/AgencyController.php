@@ -627,7 +627,7 @@ class AgencyController extends Controller
         ]);
 
         try {
-            $path = $request->file('license_document')->store('licenses', 's3');
+            $path = $request->file('license_document')->store('licenses', 'public');
         } catch (\Throwable $e) {
             \Log::error('License upload failed', ['error' => $e->getMessage(), 'user' => Auth::id()]);
             return response()->json(['message' => 'ファイルの保存に失敗しました。しばらくしてから再度お試しください。'], 500);
