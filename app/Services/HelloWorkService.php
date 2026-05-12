@@ -288,32 +288,43 @@ class HelloWorkService
      * XML要素を jobs テーブル用の配列に変換
      *
      * ハローワーク求人情報提供サービス API v2.0 フィールド対応表:
-     *   kjno              = 求人番号
-     *   jgshmei           = 事業所名
-     *   sksu              = 職種
-     *   shigoto_ny        = 仕事内容
-     *   koyokeitai_n      = 雇用形態名
-     *   shgbsjusho1_n     = 就業場所（都道府県市区町村）
-     *   shgbsjusho2_n     = 就業場所（番地以降）
-     *   kjyukoymd         = 有効期限 (YYYY/MM/DD)
-     *   uktkymd_seireki   = 受付日 (YYYY/MM/DD)
-     *   khkykagen         = 基本給下限（月額）
-     *   khkyjgn           = 基本給上限（月額）
-     *   chgnkeitai_n      = 賃金形態名（時給・月給等）
-     *   chgnkeitai_kagen  = 賃金形態別下限
-     *   chgnkeitai_jgn    = 賃金形態別上限
-     *   kszk_jikan1_f     = 就業時間1（始）HH:MM
-     *   kszk_jikan1_t     = 就業時間1（終）HH:MM
-     *   kszk_jikan2_f     = 就業時間2（始）HH:MM
-     *   kszk_jikan2_t     = 就業時間2（終）HH:MM
-     *   kszk_jikan_bko    = 就業時間の備考
-     *   kyuujitsu_naiy    = 休日等
-     *   taiguu_naiy       = 待遇・福利厚生
-     *   boshuyoken_naiy   = 応募に必要な資格・経験
-     *   hoken_f1          = 雇用保険 (1=あり)
-     *   hoken_f2          = 労災保険 (1=あり)
-     *   hoken_f3          = 健康保険 (1=あり)
-     *   hoken_f4          = 厚生年金 (1=あり)
+     *   kjno                = 求人番号
+     *   jgshmei             = 事業所名
+     *   sksu                = 職種
+     *   shigoto_ny          = 仕事内容
+     *   biko                = 備考・特記事項
+     *   koyokeitai_n        = 雇用形態名
+     *   shgbsjusho1_n       = 就業場所（都道府県市区町村）
+     *   shgbsjusho2_n       = 就業場所（番地以降）
+     *   kjyukoymd           = 有効期限 (YYYY/MM/DD)
+     *   uktkymd_seireki     = 受付日 (YYYY/MM/DD)
+     *   khkykagen           = 基本給下限（月額）
+     *   khkyjgn             = 基本給上限（月額）
+     *   chgnkeitai_n        = 賃金形態名（時給・月給等）
+     *   chgnkeitai_kagen    = 賃金形態別下限
+     *   chgnkeitai_jgn      = 賃金形態別上限
+     *   kszk_jikan1_f/t     = 就業時間1（始/終）HH:MM
+     *   kszk_jikan2_f/t     = 就業時間2（始/終）HH:MM
+     *   kszk_jikan3_f/t     = 就業時間3（始/終）HH:MM
+     *   kszk_jikan_bko      = 就業時間の備考
+     *   jikan_gazan_f       = 時間外労働なし (1=なし)
+     *   jikan_gazan_tsuki   = 月平均時間外労働時間数
+     *   kyuujitsu_naiy      = 休日等
+     *   nenkan_kyujitsu     = 年間休日数
+     *   taiguu_naiy         = 待遇・福利厚生
+     *   boshuyoken_naiy     = 応募に必要な資格・経験
+     *   gakureki_bko        = 学歴
+     *   mensetsu_naiy       = 選考方法
+     *   kariagekin_kbn_n    = 退職金制度
+     *   shanai_kensyu_f     = 社内研修制度あり (1=あり)
+     *   kizyu_f             = 育児休業取得実績あり (1=あり)
+     *   boshu_ninzu         = 募集人数
+     *   age_ue              = 年齢上限
+     *   age_shita           = 年齢下限
+     *   hoken_f1            = 雇用保険 (1=あり)
+     *   hoken_f2            = 労災保険 (1=あり)
+     *   hoken_f3            = 健康保険 (1=あり)
+     *   hoken_f4            = 厚生年金 (1=あり)
      */
     private function mapXmlToJobData(\SimpleXMLElement $item): array
     {
@@ -338,10 +349,11 @@ class HelloWorkService
             $publishedAt = Carbon::createFromFormat('Y/m/d', $rawPublished)->startOfDay();
         }
 
-        // 就業時間
+        // 就業時間（3パターン対応）
         $workHours = $this->buildWorkHours(
             $get('kszk_jikan1_f'), $get('kszk_jikan1_t'),
             $get('kszk_jikan2_f'), $get('kszk_jikan2_t'),
+            $get('kszk_jikan3_f'), $get('kszk_jikan3_t'),
             $get('kszk_jikan_bko')
         );
 
@@ -362,39 +374,223 @@ class HelloWorkService
         if ($get('hoken_f3') === '1') $insurance[] = '健康保険';
         if ($get('hoken_f4') === '1') $insurance[] = '厚生年金';
 
-        // 待遇・福利厚生（テキスト → JSON配列の1要素として格納）
+        // 待遇・福利厚生
         $taiguuNaiy = $get('taiguu_naiy');
         $benefits = $taiguuNaiy ? [$taiguuNaiy] : null;
 
+        // 追加フィールド
+        $biko             = $get('biko');
+        $gakureki         = $get('gakureki_bko');
+        $mensetsuNaiy     = $get('mensetsu_naiy');
+        $kariagekinKbn    = $get('kariagekin_kbn_n');
+        $jikanGazanNashi  = $get('jikan_gazan_f');
+        $jikanGazanTsuki  = $get('jikan_gazan_tsuki');
+        $nenkanKyujitsu   = $get('nenkan_kyujitsu');
+        $shanaiKensyuF    = $get('shanai_kensyu_f');
+        $kizyuF           = $get('kizyu_f');
+        $holidays         = $get('kyuujitsu_naiy');
+
+        // 構造化された仕事内容
+        $description = $this->buildDescription(
+            $get('shigoto_ny'),
+            $biko,
+            $gakureki,
+            $mensetsuNaiy,
+            $jikanGazanNashi,
+            $jikanGazanTsuki,
+            $kariagekinKbn,
+            $nenkanKyujitsu
+        );
+
+        // 募集人数
+        $positionsAvailable = null;
+        $boshuNinzu = $get('boshu_ninzu');
+        if ($boshuNinzu && preg_match('/(\d+)/', $boshuNinzu, $m)) {
+            $positionsAvailable = (int) $m[1];
+        }
+
+        // 年齢条件
+        $ageUe    = $get('age_ue');
+        $ageShita = $get('age_shita');
+        $ageMin   = ($ageShita !== '' && ctype_digit($ageShita)) ? (int) $ageShita : null;
+        $ageMax   = ($ageUe    !== '' && ctype_digit($ageUe))    ? (int) $ageUe    : null;
+
+        // 特徴タグ自動生成
+        $featureTags = $this->buildFeatureTags(
+            $insurance, $holidays, $nenkanKyujitsu,
+            $jikanGazanNashi, $jikanGazanTsuki,
+            $shanaiKensyuF, $kizyuF, $kariagekinKbn, $taiguuNaiy
+        );
+
         return [
-            'hellowork_id'    => $get('kjno') ?: null,
-            'title'           => $get('sksu') ?: '職種未記載',
-            'description'     => $get('shigoto_ny') ?: '',
-            'requirements'    => $get('boshuyoken_naiy') ?: null,
-            'employment_type' => $this->normalizeEmploymentType($get('koyokeitai_n')),
-            'location'        => $locationRaw ?: null,
-            'prefecture'      => $prefecture,
-            'city'            => $city,
-            'office_address'  => $officeAddress,
-            'salary_min'      => $salaryMin,
-            'salary_max'      => $salaryMax,
-            'salary_type'     => $salaryType,
-            'work_hours'      => $workHours,
-            'holidays'        => $get('kyuujitsu_naiy') ?: null,
-            'benefits'        => $benefits ?: null,
-            'insurance'       => $insurance ?: null,
-            'expires_at'      => $expiresAt,
-            'published_at'    => $publishedAt,
-            '_company_name'   => $get('jgshmei'),
+            'hellowork_id'        => $get('kjno') ?: null,
+            'title'               => $get('sksu') ?: '職種未記載',
+            'description'         => $description,
+            'requirements'        => $get('boshuyoken_naiy') ?: null,
+            'employment_type'     => $this->normalizeEmploymentType($get('koyokeitai_n')),
+            'location'            => $locationRaw ?: null,
+            'prefecture'          => $prefecture,
+            'city'                => $city,
+            'office_address'      => $officeAddress,
+            'salary_min'          => $salaryMin,
+            'salary_max'          => $salaryMax,
+            'salary_type'         => $salaryType,
+            'work_hours'          => $workHours,
+            'holidays'            => $holidays ?: null,
+            'benefits'            => $benefits ?: null,
+            'insurance'           => $insurance ?: null,
+            'expires_at'          => $expiresAt,
+            'published_at'        => $publishedAt,
+            'positions_available' => $positionsAvailable,
+            'age_min'             => $ageMin,
+            'age_max'             => $ageMax,
+            'feature_tags'        => $featureTags ?: null,
+            '_company_name'       => $get('jgshmei'),
         ];
     }
 
-    private function buildWorkHours(string $f1, string $t1, string $f2, string $t2, string $bko): ?string
-    {
+    /**
+     * 複数フィールドをまとめて構造化された仕事内容テキストを生成
+     */
+    private function buildDescription(
+        string $shigotoNy,
+        string $biko,
+        string $gakureki,
+        string $mensetsuNaiy,
+        string $jikanGazanNashi,
+        string $jikanGazanTsuki,
+        string $kariagekinKbn,
+        string $nenkanKyujitsu
+    ): string {
+        $parts = [];
+
+        if ($shigotoNy) {
+            $parts[] = "【仕事内容】\n{$shigotoNy}";
+        }
+
+        if ($biko) {
+            $parts[] = "【特記事項・備考】\n{$biko}";
+        }
+
+        // 勤務条件の補足情報をまとめる
+        $conditions = [];
+        if ($nenkanKyujitsu !== '') {
+            $conditions[] = "年間休日：{$nenkanKyujitsu}日";
+        }
+        if ($jikanGazanNashi === '1') {
+            $conditions[] = '時間外労働：なし';
+        } elseif ($jikanGazanTsuki !== '') {
+            $conditions[] = "月平均時間外：{$jikanGazanTsuki}時間程度";
+        }
+        if ($kariagekinKbn !== '') {
+            $conditions[] = "退職金：{$kariagekinKbn}";
+        }
+        if ($conditions) {
+            $parts[] = "【勤務条件】\n" . implode('　／　', $conditions);
+        }
+
+        if ($gakureki) {
+            $parts[] = "【学歴】\n{$gakureki}";
+        }
+
+        if ($mensetsuNaiy) {
+            $parts[] = "【選考方法】\n{$mensetsuNaiy}";
+        }
+
+        return implode("\n\n", array_filter($parts));
+    }
+
+    /**
+     * 求人データから特徴タグを自動生成
+     */
+    private function buildFeatureTags(
+        array $insurance,
+        string $holidays,
+        string $nenkanKyujitsu,
+        string $jikanGazanNashi,
+        string $jikanGazanTsuki,
+        string $shanaiKensyuF,
+        string $kizyuF,
+        string $kariagekinKbn,
+        string $taiguuNaiy
+    ): array {
+        $tags = [];
+
+        // 社会保険
+        if (count($insurance) >= 4) {
+            $tags[] = '社保完備';
+        } elseif (count($insurance) > 0) {
+            $tags[] = '社会保険あり';
+        }
+
+        // 週休2日
+        if (str_contains($holidays, '完全週休2日') || str_contains($holidays, '完全週休二日')) {
+            $tags[] = '完全週休2日';
+        } elseif (str_contains($holidays, '週休2日') || str_contains($holidays, '週休二日')) {
+            $tags[] = '週休2日';
+        }
+
+        // 年間休日
+        $kyujitsuNum = (int) preg_replace('/[^\d]/', '', $nenkanKyujitsu);
+        if ($kyujitsuNum >= 120) {
+            $tags[] = '年間休日120日以上';
+        } elseif ($kyujitsuNum >= 105) {
+            $tags[] = '年間休日105日以上';
+        }
+
+        // 残業
+        if ($jikanGazanNashi === '1') {
+            $tags[] = '残業なし';
+        } elseif ($jikanGazanTsuki !== '') {
+            $overtime = (int) preg_replace('/[^\d]/', '', $jikanGazanTsuki);
+            if ($overtime > 0 && $overtime <= 20) {
+                $tags[] = '残業少なめ';
+            }
+        }
+
+        // 研修制度
+        if ($shanaiKensyuF === '1') {
+            $tags[] = '研修制度あり';
+        }
+
+        // 育児休業
+        if ($kizyuF === '1') {
+            $tags[] = '育休取得実績あり';
+        }
+
+        // 退職金
+        if ($kariagekinKbn !== '' && !str_contains($kariagekinKbn, 'なし')) {
+            $tags[] = '退職金制度あり';
+        }
+
+        // 福利厚生テキストからキーワード抽出
+        if (str_contains($taiguuNaiy, '交通費')) {
+            $tags[] = '交通費支給';
+        }
+        if (str_contains($taiguuNaiy, '住宅手当') || str_contains($taiguuNaiy, '家賃補助')) {
+            $tags[] = '住宅手当あり';
+        }
+        if (str_contains($taiguuNaiy, '食事') || str_contains($taiguuNaiy, '昼食')) {
+            $tags[] = '食事補助あり';
+        }
+        if (str_contains($taiguuNaiy, '制服') || str_contains($taiguuNaiy, '作業服')) {
+            $tags[] = '制服貸与';
+        }
+
+        return array_values(array_unique($tags));
+    }
+
+    private function buildWorkHours(
+        string $f1, string $t1,
+        string $f2, string $t2,
+        string $f3, string $t3,
+        string $bko
+    ): ?string {
         $parts = [];
         if ($f1 && $t1) $parts[] = "{$f1}〜{$t1}";
         if ($f2 && $t2) $parts[] = "{$f2}〜{$t2}";
-        if ($bko)       $parts[] = $bko;
+        if ($f3 && $t3) $parts[] = "{$f3}〜{$t3}";
+        if ($bko)        $parts[] = $bko;
         return $parts ? implode(' / ', $parts) : null;
     }
 
