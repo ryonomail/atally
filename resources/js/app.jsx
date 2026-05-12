@@ -7,15 +7,12 @@ import { ToastProvider } from './hooks/useToast';
 import Navbar from './components/Navbar';
 import api from './api';
 
-// ── 即時ロード（最初に表示される可能性が高いページ） ──────────────────
-import LandingPage   from './pages/LandingPage';
-import JobSearchPage from './pages/JobSearchPage';
-import JobDetailPage from './pages/JobDetailPage';
-import LoginPage     from './pages/LoginPage';
-import RegisterPage  from './pages/RegisterPage';
-
 // ── 遅延ロード（必要になるまでJSを読み込まない）────────────────────────
-// → ユーザーがそのページに遷移したときだけダウンロードされる
+const LandingPage    = lazy(() => import('./pages/LandingPage'));
+const JobSearchPage  = lazy(() => import('./pages/JobSearchPage'));
+const JobDetailPage  = lazy(() => import('./pages/JobDetailPage'));
+const LoginPage      = lazy(() => import('./pages/LoginPage'));
+const RegisterPage   = lazy(() => import('./pages/RegisterPage'));
 const GuestResumeEditorPage  = lazy(() => import('./pages/GuestResumeEditorPage'));
 const DashboardPage          = lazy(() => import('./pages/DashboardPage'));
 const ProfilePage            = lazy(() => import('./pages/ProfilePage'));

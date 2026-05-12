@@ -14,9 +14,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // React等のvendorを分離 → ブラウザが長期キャッシュ可能になる
         manualChunks: {
           "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-helmet": ["react-helmet-async"],
           "vendor-ui": ["dompurify"],
         },
       },
