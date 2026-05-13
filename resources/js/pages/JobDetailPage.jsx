@@ -523,11 +523,18 @@ export default function JobDetailPage() {
                                     background: 'rgba(0,112,185,0.08)', border: '1px solid rgba(0,112,185,0.25)',
                                     fontSize: 'var(--font-size-xs)', color: '#0070b9', fontWeight: 600,
                                 }}>
-                                    🏢 掲載元：ハローワーク
+                                    🏢 ハローワーク掲載求人
                                 </span>
-                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                                    お近くのハローワークまたは公式サイトからご応募ください
-                                </span>
+                                {job.hellowork_id && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>求人番号：</span>
+                                        <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: 1 }}>{job.hellowork_id}</span>
+                                        <button
+                                            onClick={() => navigator.clipboard.writeText(job.hellowork_id)}
+                                            style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: 4, padding: '1px 6px', fontSize: 10, cursor: 'pointer', color: 'var(--color-text-muted)' }}
+                                        >コピー</button>
+                                    </div>
+                                )}
                             </div>
                         ) : user?.role === 'jobseeker' ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
@@ -620,14 +627,17 @@ export default function JobDetailPage() {
 
                     {/* 特徴タグ */}
                     {job.feature_tags?.length > 0 && (
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 'var(--space-sm)' }}>
-                            {job.feature_tags.map(tag => (
-                                <span key={tag} style={{
-                                    padding: '2px 10px', borderRadius: 20, fontSize: 'var(--font-size-xs)',
-                                    background: 'rgba(200,149,46,0.08)', color: 'var(--color-accent)',
-                                    border: '1px solid rgba(200,149,46,0.2)',
-                                }}>{tag}</span>
-                            ))}
+                        <div style={{ marginTop: 'var(--space-sm)' }}>
+                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 6 }}>この求人の特徴</p>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {job.feature_tags.map(tag => (
+                                    <span key={tag} style={{
+                                        padding: '4px 12px', borderRadius: 20, fontSize: 'var(--font-size-xs)',
+                                        background: 'rgba(200,149,46,0.1)', color: 'var(--color-accent)',
+                                        border: '1px solid rgba(200,149,46,0.25)', fontWeight: 600,
+                                    }}>✓ {tag}</span>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -709,6 +719,62 @@ export default function JobDetailPage() {
                     </div>
                 )}
 
+                {/* ハローワーク求人：応募方法ガイド */}
+                {job.source === 'hellowork' && (
+                    <div className="card" style={{
+                        marginBottom: 'var(--space-md)', padding: 'var(--space-xl)',
+                        background: 'rgba(0,112,185,0.04)', border: '1px solid rgba(0,112,185,0.2)',
+                    }}>
+                        <SectionHeader icon="📌" title="この求人への応募方法" />
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)', lineHeight: 1.7 }}>
+                            ハローワーク掲載求人は、お近くのハローワーク（公共職業安定所）窓口で紹介状を受け取ったうえで応募します。
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {[
+                                { step: '1', text: '下の求人番号を控える' },
+                                { step: '2', text: '最寄りのハローワークに行く（事前にハローワーク求職登録が必要）' },
+                                { step: '3', text: '窓口で求人番号を伝え、紹介状を受け取る' },
+                                { step: '4', text: '紹介状を持参して企業に応募・面接' },
+                            ].map(({ step, text }) => (
+                                <div key={step} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                                    <span style={{
+                                        flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
+                                        background: '#0070b9', color: '#fff',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: 12, fontWeight: 700,
+                                    }}>{step}</span>
+                                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{text}</span>
+                                </div>
+                            ))}
+                        </div>
+                        {job.hellowork_id && (
+                            <div style={{
+                                marginTop: 'var(--space-lg)', padding: 'var(--space-md)',
+                                background: '#fff', borderRadius: 'var(--radius-md)',
+                                border: '1px solid rgba(0,112,185,0.3)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-md)',
+                            }}>
+                                <div>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 4px' }}>求人番号（照会番号）</p>
+                                    <p style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: '#0070b9', letterSpacing: 2, margin: 0 }}>{job.hellowork_id}</p>
+                                </div>
+                                <button
+                                    onClick={() => navigator.clipboard.writeText(job.hellowork_id)}
+                                    className="btn btn-secondary"
+                                    style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}
+                                >
+                                    番号をコピー
+                                </button>
+                            </div>
+                        )}
+                        {job.expires_at && (
+                            <p style={{ marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                ⏳ 掲載期限：{new Date(job.expires_at).toLocaleDateString('ja-JP')}
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* 仕事内容 */}
                 <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
                     <SectionHeader icon="📋" title="仕事内容" />
@@ -770,6 +836,14 @@ export default function JobDetailPage() {
                     {job.location_scope_of_change && <InfoRow label="勤務地変更の範囲" value={job.location_scope_of_change} />}
                     {job.dormitory && <InfoRow label="寮" value={job.dormitory} />}
                     {job.smoking_policy && <InfoRow label="受動喫煙対策" value={job.smoking_policy} />}
+                    {(job.age_min || job.age_max) && (
+                        <InfoRow label="応募年齢" value={
+                            job.age_min && job.age_max ? `${job.age_min}歳〜${job.age_max}歳`
+                            : job.age_min ? `${job.age_min}歳以上`
+                            : `${job.age_max}歳以下`
+                        } />
+                    )}
+                    {job.positions_available && <InfoRow label="募集人数" value={`${job.positions_available}名`} />}
                 </div>
 
                 {/* 試用期間 */}
