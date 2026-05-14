@@ -8,11 +8,14 @@ import { formatSalary } from '../utils/salary';
 function SectionHeader({ icon, title }) {
     return (
         <h3 style={{
-            fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)',
-            color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: 8,
-            paddingBottom: 'var(--space-xs)', borderBottom: '2px solid var(--color-accent)',
+            fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 0,
+            color: '#fff',
+            background: '#2c3e50',
+            padding: '10px 16px',
+            display: 'flex', alignItems: 'center', gap: 8,
+            borderRadius: 0,
         }}>
-            <span style={{ fontSize: 16 }}>{icon}</span> {title}
+            <span style={{ fontSize: 15 }}>{icon}</span> {title}
         </h3>
     );
 }
@@ -20,9 +23,26 @@ function SectionHeader({ icon, title }) {
 function InfoRow({ label, value }) {
     if (!value) return null;
     return (
-        <div style={{ display: 'flex', gap: 'var(--space-md)', padding: 'var(--space-sm) 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-            <span style={{ flex: '0 0 120px', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontWeight: 600 }}>{label}</span>
-            <span style={{ flex: 1, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{value}</span>
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{
+                flex: '0 0 130px', background: '#f5f6f7', padding: '10px 14px',
+                borderRight: '1px solid #e5e7eb',
+                fontSize: 'var(--font-size-sm)', color: '#555', fontWeight: 600,
+                display: 'flex', alignItems: 'flex-start',
+            }}>{label}</div>
+            <div style={{
+                flex: 1, padding: '10px 14px',
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)',
+                whiteSpace: 'pre-wrap', lineHeight: 1.7,
+            }}>{value}</div>
+        </div>
+    );
+}
+
+function InfoTable({ children }) {
+    return (
+        <div style={{ border: '1px solid #e5e7eb', borderBottom: 'none', borderRadius: 0 }}>
+            {children}
         </div>
     );
 }
@@ -721,214 +741,220 @@ export default function JobDetailPage() {
 
                 {/* ハローワーク求人：応募方法ガイド */}
                 {job.source === 'hellowork' && (
-                    <div className="card" style={{
-                        marginBottom: 'var(--space-md)', padding: 'var(--space-xl)',
-                        background: 'rgba(0,112,185,0.04)', border: '1px solid rgba(0,112,185,0.2)',
-                    }}>
-                        <SectionHeader icon="📌" title="この求人への応募方法" />
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)', lineHeight: 1.7 }}>
-                            ハローワーク掲載求人は、お近くのハローワーク（公共職業安定所）窓口で紹介状を受け取ったうえで応募します。
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {[
-                                { step: '1', text: '下の求人番号を控える' },
-                                { step: '2', text: '最寄りのハローワークに行く（事前にハローワーク求職登録が必要）' },
-                                { step: '3', text: '窓口で求人番号を伝え、紹介状を受け取る' },
-                                { step: '4', text: '紹介状を持参して企業に応募・面接' },
-                            ].map(({ step, text }) => (
-                                <div key={step} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                                    <span style={{
-                                        flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
-                                        background: '#0070b9', color: '#fff',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: 12, fontWeight: 700,
-                                    }}>{step}</span>
-                                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{text}</span>
-                                </div>
-                            ))}
-                        </div>
-                        {job.hellowork_id && (
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
+                        <SectionHeader icon="📌" title="応募方法（ハローワーク経由）" />
+                        <div style={{ padding: 'var(--space-lg) var(--space-xl)' }}>
+                            {/* 求人番号 + 紹介期限 */}
                             <div style={{
-                                marginTop: 'var(--space-lg)', padding: 'var(--space-md)',
-                                background: '#fff', borderRadius: 'var(--radius-md)',
-                                border: '1px solid rgba(0,112,185,0.3)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-md)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                flexWrap: 'wrap', gap: 12,
+                                padding: '14px 18px', marginBottom: 20,
+                                background: '#f0f7ff', border: '1px solid #b3d4f0', borderRadius: 4,
                             }}>
                                 <div>
-                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 4px' }}>求人番号（照会番号）</p>
-                                    <p style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: '#0070b9', letterSpacing: 2, margin: 0 }}>{job.hellowork_id}</p>
+                                    <p style={{ fontSize: 11, color: '#666', margin: '0 0 3px' }}>求人番号（照会番号）</p>
+                                    <p style={{ fontSize: 20, fontWeight: 700, color: '#0070b9', letterSpacing: 2, margin: 0, fontFamily: 'monospace' }}>
+                                        {job.hellowork_id || '—'}
+                                    </p>
                                 </div>
-                                <button
-                                    onClick={() => navigator.clipboard.writeText(job.hellowork_id)}
-                                    className="btn btn-secondary"
-                                    style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}
-                                >
-                                    番号をコピー
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                    {job.expires_at && (
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ fontSize: 11, color: '#666', margin: '0 0 3px' }}>紹介期限日</p>
+                                            <p style={{ fontSize: 14, fontWeight: 700, color: '#c0392b', margin: 0 }}>
+                                                {new Date(job.expires_at).toLocaleDateString('ja-JP')}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {job.hellowork_id && (
+                                        <button
+                                            onClick={() => navigator.clipboard.writeText(job.hellowork_id)}
+                                            style={{
+                                                padding: '6px 14px', border: '1px solid #0070b9', borderRadius: 3,
+                                                background: '#fff', color: '#0070b9', fontSize: 12,
+                                                cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap',
+                                            }}
+                                        >番号をコピー</button>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                        {job.expires_at && (
-                            <p style={{ marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                                ⏳ 掲載期限：{new Date(job.expires_at).toLocaleDateString('ja-JP')}
-                            </p>
-                        )}
+
+                            {/* 横並びステップフロー */}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, overflowX: 'auto', paddingBottom: 4 }}>
+                                {[
+                                    { num: '①', label: '求人番号を\n控える' },
+                                    { num: '②', label: 'ハローワークに\n求職登録' },
+                                    { num: '③', label: '窓口で番号を\n伝える' },
+                                    { num: '④', label: '紹介状を\n受け取る' },
+                                    { num: '⑤', label: '企業へ\n応募・面接' },
+                                ].map(({ num, label }, i, arr) => (
+                                    <React.Fragment key={num}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 90, flex: 1 }}>
+                                            <div style={{
+                                                width: 44, height: 44, borderRadius: '50%',
+                                                background: '#2c3e50', color: '#fff',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: 16, fontWeight: 700, marginBottom: 8,
+                                            }}>{num}</div>
+                                            <p style={{ fontSize: 11, color: '#444', textAlign: 'center', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>{label}</p>
+                                        </div>
+                                        {i < arr.length - 1 && (
+                                            <div style={{ fontSize: 20, color: '#aaa', paddingTop: 12, flexShrink: 0 }}>›</div>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
 
                 {/* 仕事内容 */}
-                <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                     <SectionHeader icon="📋" title="仕事内容" />
-                    <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
-                        {job.description}
-                    </p>
-                    {job.scope_of_change && (
-                        <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                            <InfoRow label="変更の範囲" value={job.scope_of_change} />
-                        </div>
-                    )}
+                    <div style={{ padding: 'var(--space-lg) var(--space-xl)' }}>
+                        <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
+                            {job.description}
+                        </p>
+                        {job.scope_of_change && (
+                            <div style={{ marginTop: 'var(--space-md)', borderTop: '1px solid #e5e7eb', paddingTop: 'var(--space-md)' }}>
+                                <InfoTable><InfoRow label="変更の範囲" value={job.scope_of_change} /></InfoTable>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* 応募要件 */}
                 {(job.requirements || job.preferred_qualifications) && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                         <SectionHeader icon="✅" title="応募要件" />
-                        {job.requirements && (
-                            <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
-                                {job.requirements}
-                            </p>
-                        )}
-                        {job.preferred_qualifications && (
-                            <div style={{ marginTop: 'var(--space-md)' }}>
-                                <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>歓迎条件</p>
-                                <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
-                                    {job.preferred_qualifications}
+                        <div style={{ padding: 'var(--space-lg) var(--space-xl)' }}>
+                            {job.requirements && (
+                                <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, marginBottom: job.preferred_qualifications ? 'var(--space-lg)' : 0 }}>
+                                    {job.requirements}
                                 </p>
-                            </div>
-                        )}
+                            )}
+                            {job.preferred_qualifications && (
+                                <>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#555', marginBottom: 4 }}>歓迎条件</p>
+                                    <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
+                                        {job.preferred_qualifications}
+                                    </p>
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
 
                 {/* 給与・待遇 */}
-                <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                     <SectionHeader icon="💰" title="給与・待遇" />
-                    <InfoRow label="給与" value={job.salary_details || formatSalary(job) || null} />
-                    <InfoRow label="昇給" value={job.raise_frequency} />
-                    <InfoRow label="賞与" value={job.bonus} />
-                    <InfoRow label="手当" value={job.allowances} />
-                    <InfoRow label="福利厚生" value={benefitsText} />
-                    <InfoRow label="社会保険" value={insuranceText} />
+                    <InfoTable>
+                        <InfoRow label="給与" value={job.salary_details || formatSalary(job) || null} />
+                        <InfoRow label="昇給" value={job.raise_frequency} />
+                        <InfoRow label="賞与" value={job.bonus} />
+                        <InfoRow label="手当" value={job.allowances} />
+                        <InfoRow label="福利厚生" value={benefitsText} />
+                        <InfoRow label="社会保険" value={insuranceText} />
+                    </InfoTable>
                 </div>
 
                 {/* 勤務条件 */}
-                <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                     <SectionHeader icon="🏢" title="勤務条件" />
-                    <InfoRow label="勤務時間" value={job.work_hours} />
-                    <InfoRow label="残業" value={job.overtime_average} />
-                    <InfoRow label="休日・休暇" value={job.holidays} />
-                    <InfoRow label="休暇詳細" value={job.holiday_details} />
-                    <InfoRow label="リモート" value={job.remote_policy} />
-                    <InfoRow label="勤務地" value={job.location} />
-                    {job.office_address && <InfoRow label="詳細住所" value={job.office_address} />}
-                    {job.nearest_station && <InfoRow label="最寄り駅" value={job.nearest_station} />}
-                    {job.access_info && <InfoRow label="アクセス" value={job.access_info} />}
-                    {job.transfer_policy && <InfoRow label="転勤" value={job.transfer_policy} />}
-                    {job.contract_period && <InfoRow label="契約期間" value={job.contract_period} />}
-                    {job.location_scope_of_change && <InfoRow label="勤務地変更の範囲" value={job.location_scope_of_change} />}
-                    {job.dormitory && <InfoRow label="寮" value={job.dormitory} />}
-                    {job.smoking_policy && <InfoRow label="受動喫煙対策" value={job.smoking_policy} />}
-                    {(job.age_min || job.age_max) && (
-                        <InfoRow label="応募年齢" value={
-                            job.age_min && job.age_max ? `${job.age_min}歳〜${job.age_max}歳`
-                            : job.age_min ? `${job.age_min}歳以上`
-                            : `${job.age_max}歳以下`
-                        } />
-                    )}
-                    {job.positions_available && <InfoRow label="募集人数" value={`${job.positions_available}名`} />}
+                    <InfoTable>
+                        <InfoRow label="勤務時間" value={job.work_hours} />
+                        <InfoRow label="残業" value={job.overtime_average} />
+                        <InfoRow label="休日・休暇" value={job.holidays} />
+                        <InfoRow label="休暇詳細" value={job.holiday_details} />
+                        <InfoRow label="リモート" value={job.remote_policy} />
+                        <InfoRow label="勤務地" value={job.location} />
+                        {job.office_address && <InfoRow label="詳細住所" value={job.office_address} />}
+                        {job.nearest_station && <InfoRow label="最寄り駅" value={job.nearest_station} />}
+                        {job.access_info && <InfoRow label="アクセス" value={job.access_info} />}
+                        {job.transfer_policy && <InfoRow label="転勤" value={job.transfer_policy} />}
+                        {job.contract_period && <InfoRow label="契約期間" value={job.contract_period} />}
+                        {job.location_scope_of_change && <InfoRow label="勤務地変更の範囲" value={job.location_scope_of_change} />}
+                        {job.dormitory && <InfoRow label="寮" value={job.dormitory} />}
+                        {job.smoking_policy && <InfoRow label="受動喫煙対策" value={job.smoking_policy} />}
+                        {(job.age_min || job.age_max) && (
+                            <InfoRow label="応募年齢" value={
+                                job.age_min && job.age_max ? `${job.age_min}歳〜${job.age_max}歳`
+                                : job.age_min ? `${job.age_min}歳以上`
+                                : `${job.age_max}歳以下`
+                            } />
+                        )}
+                        {job.positions_available && <InfoRow label="募集人数" value={`${job.positions_available}名`} />}
+                    </InfoTable>
                 </div>
 
                 {/* 試用期間 */}
                 {job.probation_period && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                         <SectionHeader icon="📝" title="試用期間" />
-                        <InfoRow label="期間" value={job.probation_period} />
-                        <InfoRow label="条件" value={job.probation_conditions} />
+                        <InfoTable>
+                            <InfoRow label="期間" value={job.probation_period} />
+                            <InfoRow label="条件" value={job.probation_conditions} />
+                        </InfoTable>
                     </div>
                 )}
 
                 {/* 職場環境・社風 */}
                 {(job.work_environment || job.company_culture) && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                         <SectionHeader icon="👥" title="職場環境・社風" />
-                        {job.work_environment && (
-                            <>
-                                <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>チーム構成</p>
-                                <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, marginBottom: 'var(--space-lg)' }}>
-                                    {job.work_environment}
-                                </p>
-                            </>
-                        )}
-                        {job.company_culture && (
-                            <>
-                                <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>社風・カルチャー</p>
-                                <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
-                                    {job.company_culture}
-                                </p>
-                            </>
-                        )}
+                        <InfoTable>
+                            {job.work_environment && <InfoRow label="チーム構成" value={job.work_environment} />}
+                            {job.company_culture && <InfoRow label="社風・カルチャー" value={job.company_culture} />}
+                        </InfoTable>
                     </div>
                 )}
 
                 {/* 選考について */}
                 {(job.selection_process || job.required_documents || job.estimated_timeline) && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                         <SectionHeader icon="📊" title="選考について" />
-                        {job.selection_process && (
-                            <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, marginBottom: 'var(--space-md)' }}>
-                                {job.selection_process}
-                            </p>
-                        )}
-                        <InfoRow label="必要書類" value={job.required_documents} />
-                        <InfoRow label="選考期間" value={job.estimated_timeline} />
+                        <InfoTable>
+                            {job.selection_process && <InfoRow label="選考フロー" value={job.selection_process} />}
+                            <InfoRow label="必要書類" value={job.required_documents} />
+                            <InfoRow label="選考期間" value={job.estimated_timeline} />
+                        </InfoTable>
                     </div>
                 )}
 
                 {/* 企業情報（人材紹介の場合は紹介先・紹介元両方表示） */}
                 {job.is_agency_job && job.client_company ? (
                     <>
-                        {/* 紹介先企業（求人元） */}
-                        <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                        <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                             <SectionHeader icon="🏢" title="求人企業（紹介先）" />
-                            <InfoRow label="会社名" value={job.client_company.name} />
-                            <InfoRow label="業界" value={job.client_company.industry} />
-                            <InfoRow label="従業員数" value={job.client_company.employees} />
-                            <InfoRow label="所在地" value={job.client_company.address} />
-                            {job.client_company.description && (
-                                <div style={{ marginTop: 'var(--space-md)' }}>
-                                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>企業概要</p>
-                                    <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)', margin: 0 }}>
-                                        {job.client_company.description}
-                                    </p>
-                                </div>
-                            )}
+                            <InfoTable>
+                                <InfoRow label="会社名" value={job.client_company.name} />
+                                <InfoRow label="業界" value={job.client_company.industry} />
+                                <InfoRow label="従業員数" value={job.client_company.employees} />
+                                <InfoRow label="所在地" value={job.client_company.address} />
+                                {job.client_company.description && <InfoRow label="企業概要" value={job.client_company.description} />}
+                            </InfoTable>
                         </div>
-                        {/* 紹介元（人材紹介会社） */}
-                        <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)', background: 'var(--color-bg-surface)' }}>
+                        <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                             <SectionHeader icon="🤝" title="紹介会社" />
-                            <InfoRow label="会社名" value={job.agency_company?.name} />
-                            <InfoRow label="許可番号" value={job.agency_company?.permit_number} />
-                            <InfoRow label="所在地" value={job.agency_company?.address} />
-                            <InfoRow label="電話番号" value={job.agency_company?.phone} />
-                            <InfoRow label="HP" value={job.agency_company?.website} />
+                            <InfoTable>
+                                <InfoRow label="会社名" value={job.agency_company?.name} />
+                                <InfoRow label="許可番号" value={job.agency_company?.permit_number} />
+                                <InfoRow label="所在地" value={job.agency_company?.address} />
+                                <InfoRow label="電話番号" value={job.agency_company?.phone} />
+                                <InfoRow label="HP" value={job.agency_company?.website} />
+                            </InfoTable>
                         </div>
                     </>
                 ) : (job.number_of_employees || job.founded_year || job.industry) && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                         <SectionHeader icon="🏛" title="企業情報" />
-                        <InfoRow label="会社名" value={job.company?.company_name} />
-                        <InfoRow label="業界" value={job.industry} />
-                        <InfoRow label="設立" value={job.founded_year} />
-                        <InfoRow label="従業員数" value={job.number_of_employees} />
-                        {job.company?.website && <InfoRow label="HP" value={job.company.website} />}
+                        <InfoTable>
+                            <InfoRow label="会社名" value={job.company?.company_name} />
+                            <InfoRow label="業界" value={job.industry} />
+                            <InfoRow label="設立" value={job.founded_year} />
+                            <InfoRow label="従業員数" value={job.number_of_employees} />
+                            {job.company?.website && <InfoRow label="HP" value={job.company.website} />}
+                        </InfoTable>
                     </div>
                 )}
 
