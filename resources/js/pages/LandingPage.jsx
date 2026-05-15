@@ -44,7 +44,7 @@ export default function LandingPage() {
         <div className="page">
             <SEO
                 title={null}
-                description="ぴったり合う仕事探し、はじめよう。Atallyはシンプルに使える求人マッチングプラットフォームです。"
+                description="登録不要・完全無料で履歴書が作れる求人サイト。47万件以上の求人掲載中（ハローワーク求人含む）。作成した履歴書でそのまま応募できます。ブラック求人ゼロ・職業安定法準拠。"
                 jsonLd={websiteJsonLd}
             />
 

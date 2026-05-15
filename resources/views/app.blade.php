@@ -10,8 +10,8 @@
 
     {{-- 動的メタ情報（SSR: クローラー向け） --}}
     @php
-        $title       = $seo['title']       ?? 'Atally - 次世代求人マッチングプラットフォーム';
-        $description = $seo['description'] ?? 'Atally（アタリー）は品質重視の求人マッチングプラットフォーム。求職者は無料で高機能な履歴書作成、企業は品質スコアで最適な採用を。';
+        $title       = $seo['title']       ?? '履歴書を無料で作って仕事を探す | Atally';
+        $description = $seo['description'] ?? '登録不要・完全無料で履歴書が作れる求人サイト。47万件以上の求人掲載中（ハローワーク求人含む）。作成した履歴書でそのまま応募できます。ブラック求人ゼロ・職業安定法準拠。';
         $canonical   = $seo['url']         ?? config('app.url') . request()->getPathInfo();
         $ogType      = $seo['type']        ?? 'website';
         $ogImage     = $seo['image']       ?? config('app.og_image');

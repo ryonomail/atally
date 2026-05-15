@@ -14,7 +14,89 @@ Route::redirect('/agency/clients', '/company', 301);
 Route::redirect('/agency/bulk-upload', '/company/bulk-upload', 301);
 Route::get('/agency/{any}', fn() => redirect('/company', 301))->where('any', '.*');
 
-// 求人一覧ページ: 都道府県・キーワード検索時のサーバーサイドSEO
+// ── 主要ページのサーバーサイドSEO ────────────────────────────────────────────────
+
+// トップページ
+Route::get('/', function () {
+    $baseUrl  = config('app.url');
+    $jobCount = \Illuminate\Support\Facades\Cache::remember('seo_total_jobs', 3600,
+        fn() => \App\Models\Job::where('status', 'active')->count());
+    $seo = [
+        'title'       => '履歴書を無料で作って仕事を探す | ' . number_format($jobCount) . '件掲載 | Atally',
+        'description' => '登録不要・完全無料で履歴書が作れる求人サイト。' . number_format($jobCount) . '件以上の求人掲載中（ハローワーク求人含む）。作成した履歴書でそのまま応募できます。ブラック求人ゼロ・職業安定法準拠。',
+        'url'         => $baseUrl . '/',
+        'jsonLd'      => [
+            '@context'       => 'https://schema.org',
+            '@type'          => 'WebSite',
+            'name'           => 'Atally',
+            'url'            => $baseUrl,
+            'description'    => '登録不要・完全無料で使える履歴書作成ツール付き求人サイト',
+            'potentialAction' => [
+                '@type'       => 'SearchAction',
+                'target'      => $baseUrl . '/jobs?keyword={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ],
+    ];
+    return view('app', compact('seo'));
+});
+
+// 無料登録ページ
+Route::get('/register', function () {
+    $baseUrl = config('app.url');
+    $seo = [
+        'title'       => '無料会員登録 | 履歴書管理・求人応募が使い放題 | Atally',
+        'description' => 'Atallyに無料登録すると、履歴書を何枚でも管理でき、47万件以上の求人にワンクリックで応募できます。Googleアカウントで30秒登録。クレジットカード不要。',
+        'url'         => $baseUrl . '/register',
+        'noindex'     => false,
+    ];
+    return view('app', compact('seo'));
+});
+
+// ログインページ
+Route::get('/login', function () {
+    $seo = [
+        'title'       => 'ログイン | Atally',
+        'description' => 'Atallyにログインして求人応募・履歴書管理・メッセージ機能を使いましょう。',
+        'url'         => config('app.url') . '/login',
+    ];
+    return view('app', compact('seo'));
+});
+
+// 企業向けランディングページ
+Route::get('/for-companies', function () {
+    $baseUrl = config('app.url');
+    $seo = [
+        'title'       => '企業・採用担当者の方へ | 成果報酬型・品質スコアで採用効率UP | Atally',
+        'description' => '採用担当者向け求人掲載サービス。品質スコアで優良企業を見える化。成果報酬型プランあり。47万件のハローワーク求人と同じプラットフォームで求職者にリーチ。まず無料で試せます。',
+        'url'         => $baseUrl . '/for-companies',
+    ];
+    return view('app', compact('seo'));
+});
+
+// 料金ページ
+Route::get('/pricing', function () {
+    $baseUrl = config('app.url');
+    $seo = [
+        'title'       => '料金プラン | 求人掲載・スカウト・応募管理 | Atally',
+        'description' => 'Atallyの料金プラン一覧。求人掲載・スカウト機能・応募管理など、企業規模に合わせたプランを用意。まずは無料プランでお試しいただけます。',
+        'url'         => $baseUrl . '/pricing',
+    ];
+    return view('app', compact('seo'));
+});
+
+// 人材紹介会社向けランディングページ
+Route::get('/for-agencies', function () {
+    $baseUrl = config('app.url');
+    $seo = [
+        'title'       => '人材紹介会社の方へ | 求人データベース・一括管理 | Atally',
+        'description' => '人材紹介会社向けサービス。求人データベースへのアクセス・候補者管理・クライアント管理を一元化。ハローワーク47万件の求人データも活用できます。',
+        'url'         => $baseUrl . '/for-agencies',
+    ];
+    return view('app', compact('seo'));
+});
+
+// ── 求人一覧ページ: 都道府県・キーワード検索時のサーバーサイドSEO
 Route::get('/jobs', function () {
     $prefecture = request()->query('prefecture', '');
     $keyword    = request()->query('keyword', '');
