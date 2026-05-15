@@ -14,26 +14,6 @@ Route::redirect('/agency/clients', '/company', 301);
 Route::redirect('/agency/bulk-upload', '/company/bulk-upload', 301);
 Route::get('/agency/{any}', fn() => redirect('/company', 301))->where('any', '.*');
 
-// ── 給与フォーマットヘルパー（JS の formatSalary と同一ロジック）──────────────────
-function fmtSalaryValue(int|float|null $v, bool $isSmallUnit): ?string {
-    if (!$v) return null;
-    if ($isSmallUnit || $v < 100000) return number_format((int)$v) . '円';
-    return round($v / 10000) . '万円';
-}
-function fmtSalaryPhp(\App\Models\Job $job): string {
-    $min  = $job->salary_min;
-    $max  = $job->salary_max;
-    $type = $job->salary_type ?? '';
-    if (!$min && !$max) return '';
-    $small = in_array($type, ['時給', '日給']);
-    $fmt   = fn($v) => fmtSalaryValue($v, $small);
-    if ($min && $max) $range = $fmt($min) . '〜' . $fmt($max);
-    elseif ($min)     $range = $fmt($min) . '〜';
-    else              $range = '〜' . $fmt($max);
-    $label = $type ?: (($min >= 1000000 || $max >= 1000000) ? '年収' : '');
-    return $label ? "{$label} {$range}" : $range;
-}
-
 // 求人一覧ページ: 都道府県・キーワード検索時のサーバーサイドSEO
 Route::get('/jobs', function () {
     $prefecture = request()->query('prefecture', '');
@@ -93,8 +73,20 @@ Route::get('/jobs/{id}', function ($id) {
     $defaultOgImage = config('app.og_image');
     $baseUrl        = config('app.url');
 
-    // meta description: 給与を正しくフォーマット + 仕事内容スニペット
-    $salaryText  = fmtSalaryPhp($job);
+    // meta description: 給与を正しくフォーマット（JS の formatSalary と同一ロジック）
+    $salaryMin  = $job->salary_min;
+    $salaryMax  = $job->salary_max;
+    $salaryType = $job->salary_type ?? '';
+    $salaryText = '';
+    if ($salaryMin || $salaryMax) {
+        $isSmall  = in_array($salaryType, ['時給', '日給']);
+        $fmtVal   = fn($v) => ($v ? ($isSmall || $v < 100000 ? number_format((int)$v) . '円' : round($v / 10000) . '万円') : null);
+        if ($salaryMin && $salaryMax) $salaryRange = $fmtVal($salaryMin) . '〜' . $fmtVal($salaryMax);
+        elseif ($salaryMin)           $salaryRange = $fmtVal($salaryMin) . '〜';
+        else                          $salaryRange = '〜' . $fmtVal($salaryMax);
+        $salaryLabel = $salaryType ?: (($salaryMin >= 1000000 || $salaryMax >= 1000000) ? '年収' : '');
+        $salaryText  = $salaryLabel ? "{$salaryLabel} {$salaryRange}" : $salaryRange;
+    }
     $descSnippet = '';
     if ($job->description) {
         $clean       = trim(preg_replace('/【[^】]*】\n?/', '', $job->description));
