@@ -31,3 +31,6 @@ Schedule::command('app:sync-hellowork-jobs')->dailyAt('07:00');
 
 // 4分ごと: 求人リストキャッシュをウォームアップ（TTL5分切れ前に再生成）
 Schedule::command('app:warm-jobs-cache')->everyFourMinutes();
+
+// 毎朝10時: 新着求人をX（旧Twitter）に自動投稿（最大5件/日）
+Schedule::command('app:post-jobs-to-x --limit=5')->dailyAt('10:00');

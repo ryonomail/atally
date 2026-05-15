@@ -616,11 +616,11 @@ export default function JobDetailPage() {
                             </div>
                         ) : !user && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
-                                <button className="btn btn-primary btn-lg" onClick={() => navigate('/register')}>
-                                    登録して応募する
+                                <button className="btn btn-primary btn-lg" onClick={() => navigate('/resumes/guest')}>
+                                    📝 履歴書を作って応募する
                                 </button>
                                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                    Googleアカウントで30秒 /{' '}
+                                    登録不要・無料 /{' '}
                                     <a href="/login" onClick={e => { e.preventDefault(); navigate('/login'); }} style={{ color: 'var(--color-text-accent)' }}>ログイン</a>
                                 </span>
                             </div>
@@ -1044,21 +1044,30 @@ export default function JobDetailPage() {
                 {!user && job.source !== 'hellowork' && (
                     <div className="card" style={{
                         padding: 'var(--space-xl)',
-                        background: 'linear-gradient(135deg, rgba(18,28,52,0.08) 0%, rgba(168,85,247,0.05) 100%)',
-                        border: '1px solid rgba(18,28,52,0.2)',
+                        background: 'linear-gradient(135deg, rgba(0,112,185,0.07) 0%, rgba(52,199,89,0.05) 100%)',
+                        border: '1px solid rgba(0,112,185,0.2)',
                         textAlign: 'center',
                     }}>
-                        <h3 style={{ marginBottom: 'var(--space-sm)' }}>この求人に応募しますか？</h3>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)', lineHeight: 1.7 }}>
-                            無料登録（30秒）するだけで応募できます。<br />
-                            Googleアカウントがあれば今すぐ始められます。
+                        <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📝</div>
+                        <h3 style={{ marginBottom: 'var(--space-sm)' }}>この求人に応募するには履歴書が必要です</h3>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)', lineHeight: 1.7 }}>
+                            Atallyでは登録不要・無料で履歴書が作成できます。<br />
+                            作成後そのままこの求人に応募できます。
                         </p>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+                            {['📝 履歴書を無料で作る', '✅ この求人に応募する'].map((step, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                                    {i > 0 && <span style={{ color: 'var(--color-border)' }}>→</span>}
+                                    <span style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '4px 10px' }}>{step}</span>
+                                </div>
+                            ))}
+                        </div>
                         <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <button className="btn btn-primary btn-lg" onClick={() => navigate('/register')}>
-                                無料登録して応募する
+                            <button className="btn btn-primary btn-lg" onClick={() => navigate('/resumes/guest')}>
+                                📝 履歴書を無料で作る
                             </button>
-                            <button className="btn btn-secondary btn-lg" onClick={() => navigate('/login')}>
-                                ログインして応募する
+                            <button className="btn btn-secondary" onClick={() => navigate('/login')}>
+                                ログインして応募
                             </button>
                         </div>
                     </div>

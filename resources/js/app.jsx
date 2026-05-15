@@ -1,6 +1,17 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Routes, Route, Navigate, Link, BrowserRouter, useLocation } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
+
+if (import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.init({
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        environment: import.meta.env.MODE,
+        tracesSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
+        integrations: [Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false })],
+    });
+}
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
@@ -45,6 +56,8 @@ const PricingPage            = lazy(() => import('./pages/PricingPage'));
 const ForCompaniesPage       = lazy(() => import('./pages/ForCompaniesPage'));
 const ForAgenciesPage        = lazy(() => import('./pages/ForAgenciesPage'));
 const AboutPage              = lazy(() => import('./pages/AboutPage'));
+const ColumnIndexPage        = lazy(() => import('./pages/ColumnIndexPage'));
+const ColumnPage             = lazy(() => import('./pages/ColumnPage'));
 const CompanyProfilePage     = lazy(() => import('./pages/CompanyProfilePage'));
 const OnboardingModal        = lazy(() => import('./components/OnboardingModal'));
 
@@ -218,6 +231,8 @@ function AppRoutes() {
                 <Route path="/for-companies" element={<ForCompaniesPage />} />
                 <Route path="/for-agencies" element={<ForAgenciesPage />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="/column" element={<ColumnIndexPage />} />
+                <Route path="/column/:slug" element={<ColumnPage />} />
                 <Route path="/403" element={<ForbiddenPage />} />
 
                 {/* 共通（全認証ユーザー） */}
@@ -297,6 +312,19 @@ function AppRoutes() {
                                 { to: '/for-agencies', label: '紹介会社向けサービス' },
                                 { to: '/pricing', label: '料金プラン' },
                                 { to: '/register?role=company', label: '紹介会社登録' },
+                            ].map(l => (
+                                <div key={l.to} style={{ marginBottom: 6 }}>
+                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                </div>
+                            ))}
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>お役立ちコラム</div>
+                            {[
+                                { to: '/column/rirekisho-kakikata', label: '履歴書の書き方' },
+                                { to: '/column/shibo-doki-kakikata', label: '志望動機の書き方' },
+                                { to: '/column/shokumukeirekisho-toha', label: '職務経歴書とは' },
+                                { to: '/column', label: 'コラム一覧' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
                                     <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>

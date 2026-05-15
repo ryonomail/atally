@@ -96,6 +96,36 @@ Route::get('/for-agencies', function () {
     return view('app', compact('seo'));
 });
 
+// コラム一覧ページ
+Route::get('/column', function () {
+    $seo = [
+        'title'       => '転職・就活お役立ちコラム | 履歴書・志望動機の書き方 | Atally',
+        'description' => '履歴書の書き方、志望動機の書き方、職務経歴書の作り方など転職・就活に役立つ情報を掲載。無料の履歴書作成ツールと合わせてご活用ください。',
+        'url'         => config('app.url') . '/column',
+    ];
+    return view('app', compact('seo'));
+});
+
+// コラム個別ページ（slug別サーバーサイドSEO）
+Route::get('/column/{slug}', function (string $slug) {
+    $meta = [
+        'rirekisho-kakikata'     => ['履歴書の書き方【2024年最新版】各項目の記入例・よくあるNG例も解説 | Atally', '履歴書の正しい書き方を各項目ごとに解説。学歴・職歴の書き方、志望動機・自己PRの例文、手書きvsPC比較、よくあるNG例まで網羅した完全ガイド。'],
+        'shibo-doki-kakikata'    => ['志望動機の書き方【例文10選】採用担当者の目線で徹底解説 | Atally', '採用担当者が見ている志望動機のポイントを解説。事務・営業・IT・介護など業界別の例文10選、NG例、転職者向けの書き方まで完全網羅。'],
+        'shokumukeirekisho-toha' => ['職務経歴書とは？履歴書との違い・書き方・テンプレート【2024年】 | Atally', '職務経歴書と履歴書の違いを分かりやすく解説。書くべき内容、編年体・機能別の選び方、事務・営業・エンジニア別のテンプレートも掲載。'],
+        'jiko-pr-kakikata'       => ['自己PRの書き方【例文8選】強みの見つけ方から構成まで完全ガイド | Atally', '自己PRの書き方をSTAR法で解説。強みの見つけ方、職種別例文8選、字数の目安、新卒と転職者の違いまで網羅した完全ガイド。'],
+        'rirekisho-shikaku'      => ['履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2024】 | Atally', '履歴書に書くべき資格・書かない方がいい資格を解説。業種別おすすめ資格、TOEICスコアの書き方、取得中の資格の扱い方まで詳しく解説。'],
+    ];
+
+    [$title, $desc] = $meta[$slug] ?? ['転職コラム | Atally', 'Atallyの転職・就活お役立ちコラム。'];
+
+    $seo = [
+        'title'       => $title,
+        'description' => $desc,
+        'url'         => config('app.url') . '/column/' . $slug,
+    ];
+    return view('app', compact('seo'));
+});
+
 // ── 求人一覧ページ: 都道府県・キーワード検索時のサーバーサイドSEO
 Route::get('/jobs', function () {
     $prefecture = request()->query('prefecture', '');
@@ -357,7 +387,13 @@ Route::get('/sitemap-static.xml', function () {
 
     foreach ([
         ['/', 'daily', '1.0'], ['/jobs', 'hourly', '0.9'], ['/register', 'monthly', '0.6'],
-        ['/login', 'monthly', '0.5'], ['/resumes/guest', 'monthly', '0.7'],
+        ['/login', 'monthly', '0.5'], ['/resumes/guest', 'monthly', '0.8'],
+        ['/column', 'weekly', '0.8'],
+        ['/column/rirekisho-kakikata', 'monthly', '0.9'],
+        ['/column/shibo-doki-kakikata', 'monthly', '0.9'],
+        ['/column/shokumukeirekisho-toha', 'monthly', '0.9'],
+        ['/column/jiko-pr-kakikata', 'monthly', '0.9'],
+        ['/column/rirekisho-shikaku', 'monthly', '0.8'],
         ['/terms', 'yearly', '0.3'], ['/privacy', 'yearly', '0.3'],
     ] as [$path, $freq, $pri]) {
         $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
