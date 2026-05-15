@@ -337,26 +337,41 @@ class JobController extends Controller
         }
 
         // 似ている求人（5分キャッシュ・重いJOINを切り離す）
-        $data['similar_jobs'] = Cache::remember('similar_jobs_v2_' . $job->id, 300, function () use ($job) {
-            // 関連度スコア: 職種カテゴリ一致(3pt) + 都道府県一致(2pt) + 雇用形態一致(1pt)
-            // 最低1点以上のものだけ取得し、スコア降順→daily_budget降順で5件返す
-            $score = DB::raw(
-                'CASE WHEN job_category_major = ' . DB::getPdo()->quote((string)($job->job_category_major ?? '')) . ' THEN 3 ELSE 0 END'
-                . ' + CASE WHEN prefecture = '    . DB::getPdo()->quote((string)($job->prefecture      ?? '')) . ' THEN 2 ELSE 0 END'
-                . ' + CASE WHEN employment_type = '. DB::getPdo()->quote((string)($job->employment_type ?? '')) . ' THEN 1 ELSE 0 END'
-                . ' AS relevance_score'
-            );
+        $data['similar_jobs'] = Cache::remember('similar_jobs_v3_' . $job->id, 300, function () use ($job) {
+            // タイトルから【】地名などを除去して先頭10文字をキーワードに使う
+            $cleanTitle  = trim(preg_replace('/【[^】]*】/', '', $job->title ?? ''));
+            $titleKw     = mb_substr($cleanTitle, 0, 10);
+            $prefecture  = $job->prefecture ?? '';
+            $empType     = $job->employment_type ?? '';
+            $catMajor    = $job->job_category_major ?? '';
 
+            // タイトルと都道府県のどちらも取れない場合はスキップ
+            if (!$titleKw && !$prefecture) {
+                return [];
+            }
+
+            // 関連度スコア:
+            //   タイトルキーワード一致 4pt（最重要・職種の近さ）
+            //   職種カテゴリ一致       3pt
+            //   都道府県一致           2pt
+            //   雇用形態一致           1pt
             return Job::with('company:id,company_name,quality_score')
-                ->select('jobs.*', $score)
+                ->selectRaw('jobs.*, (
+                    CASE WHEN title ILIKE ? THEN 4 ELSE 0 END
+                    + CASE WHEN job_category_major = ? AND job_category_major != \'\' THEN 3 ELSE 0 END
+                    + CASE WHEN prefecture = ? AND prefecture != \'\' THEN 2 ELSE 0 END
+                    + CASE WHEN employment_type = ? AND employment_type != \'\' THEN 1 ELSE 0 END
+                ) AS relevance_score',
+                    ['%' . $titleKw . '%', $catMajor, $prefecture, $empType]
+                )
                 ->where('jobs.id', '!=', $job->id)
                 ->where('jobs.status', 'active')
-                ->where(function ($q) use ($job) {
-                    if ($job->job_category_major) $q->orWhere('job_category_major', $job->job_category_major);
-                    if ($job->prefecture)         $q->orWhere('prefecture', $job->prefecture);
-                    if ($job->employment_type)    $q->orWhere('employment_type', $job->employment_type);
+                ->where(function ($q) use ($titleKw, $prefecture, $catMajor) {
+                    if ($titleKw)    $q->orWhere('title', 'ILIKE', '%' . $titleKw . '%');
+                    if ($catMajor)   $q->orWhere('job_category_major', $catMajor);
+                    if ($prefecture) $q->orWhere('prefecture', $prefecture);
                 })
-                ->orderByDesc('relevance_score')
+                ->orderByRaw('relevance_score DESC')
                 ->orderByDesc('daily_budget')
                 ->limit(5)
                 ->get()
