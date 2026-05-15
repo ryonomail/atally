@@ -1,10 +1,10 @@
 export const columns = {
   'rirekisho-kakikata': {
     slug: 'rirekisho-kakikata',
-    title: '履歴書の書き方【2024年最新版】各項目の記入例・よくあるNG例も解説',
-    metaDescription: '履歴書の書き方を項目別に徹底解説。学歴・職歴の正しい書き方、志望動機・自己PR欄の記入例、手書きとPC作成の違い、よくあるNG例まで。2024年最新版。',
-    publishedAt: '2024-06-01',
-    updatedAt: '2024-10-15',
+    title: '履歴書の書き方【2026年最新版】各項目の記入例・よくあるNG例も解説',
+    metaDescription: '履歴書の書き方を項目別に徹底解説。学歴・職歴の正しい書き方、志望動機・自己PR欄の記入例、手書きとPC作成の違い、よくあるNG例まで。2026年最新版。',
+    publishedAt: '2026-01-10',
+    updatedAt: '2026-05-15',
     readTime: 12,
     category: '履歴書の書き方',
     sections: [
@@ -108,8 +108,8 @@ export const columns = {
     slug: 'shibo-doki-kakikata',
     title: '志望動機の書き方【例文10選】採用担当者の目線で徹底解説',
     metaDescription: '志望動機の書き方を採用担当者目線で解説。構成の基本（Why→What→How）と業界別例文10選（事務・営業・IT・介護・飲食など）をすぐ使えるテンプレート付きで紹介。',
-    publishedAt: '2024-06-10',
-    updatedAt: '2024-10-20',
+    publishedAt: '2026-01-15',
+    updatedAt: '2026-05-15',
     readTime: 10,
     category: '志望動機・自己PR',
     sections: [
@@ -173,10 +173,10 @@ export const columns = {
 
   'shokumukeirekisho-toha': {
     slug: 'shokumukeirekisho-toha',
-    title: '職務経歴書とは？履歴書との違い・書き方・テンプレート【2024年】',
+    title: '職務経歴書とは？履歴書との違い・書き方・テンプレート【2026年】',
     metaDescription: '職務経歴書と履歴書の違いを解説。基本フォーマット（編年体・機能別）の使い分け、事務・営業・エンジニア職種別テンプレート、採用担当者に読まれるポイントを徹底説明。',
-    publishedAt: '2024-06-15',
-    updatedAt: '2024-10-25',
+    publishedAt: '2026-01-20',
+    updatedAt: '2026-05-15',
     readTime: 11,
     category: '職務経歴書',
     sections: [
@@ -253,8 +253,8 @@ export const columns = {
     slug: 'jiko-pr-kakikata',
     title: '自己PRの書き方【例文8選】強みの見つけ方から構成まで完全ガイド',
     metaDescription: '自己PRの書き方を完全解説。STAR法で強みを具体的に伝える構成と、職種別例文8選を収録。「強みが思いつかない」方向けに強み発見3ステップも紹介。',
-    publishedAt: '2024-07-01',
-    updatedAt: '2024-11-01',
+    publishedAt: '2026-02-01',
+    updatedAt: '2026-05-15',
     readTime: 9,
     category: '志望動機・自己PR',
     sections: [
@@ -323,10 +323,10 @@ export const columns = {
 
   'rirekisho-shikaku': {
     slug: 'rirekisho-shikaku',
-    title: '履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2024】',
-    metaDescription: '履歴書の資格欄の書き方を正式名称一覧で解説。TOEICスコア・取得中資格・免許の書き方、業種別に採用で評価される資格ランキング2024年版も収録。',
-    publishedAt: '2024-07-10',
-    updatedAt: '2024-11-05',
+    title: '履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2026】',
+    metaDescription: '履歴書の資格欄の書き方を正式名称一覧で解説。TOEICスコア・取得中資格・免許の書き方、業種別に採用で評価される資格ランキング2026年版も収録。',
+    publishedAt: '2026-02-10',
+    updatedAt: '2026-05-15',
     readTime: 8,
     category: '履歴書の書き方',
     sections: [
@@ -370,7 +370,7 @@ export const columns = {
       { type: 'box', content: 'TOEICスコアの目安：\n・600点台：業務上の英文メール読解が可能なレベル\n・700点台：多くの企業で「英語活用可能」と評価される\n・800点台：「英語ビジネス会話」レベルと見なされる\n・900点台：英語ネイティブに近い流暢さを示す\n\nスコアが2年以上前の場合は、可能であれば再受験して最新スコアを記載することを推奨します。' },
       { type: 'h2', content: '取得中の資格の書き方' },
       { type: 'p', content: '現在勉強中・受験待ちの資格も記入できます。ただし、必ず「取得見込み」「勉強中」と明記しましょう。' },
-      { type: 'example', content: '日商簿記検定2級　取得見込み（2024年2月受験予定）\n\nまたは\n\nITパスポート試験　現在取得に向けて勉強中' },
+      { type: 'example', content: '日商簿記検定2級　取得見込み（2026年6月受験予定）\n\nまたは\n\nITパスポート試験　現在取得に向けて勉強中' },
       { type: 'caution', content: '取得見込みの資格が不合格だった場合、内定後でも採用担当者に速やかに報告する必要があります。そのため「絶対に受かる自信がある」場合のみ記載するのが安全です。' },
       { type: 'h2', content: '免許・資格の記入順序' },
       { type: 'ol', items: [
@@ -380,7 +380,7 @@ export const columns = {
         '汎用的な民間資格・IT資格',
         '取得中のもの（最後に記入）',
       ] },
-      { type: 'h2', content: '業種別 採用で評価される資格ランキング2024' },
+      { type: 'h2', content: '業種別 採用で評価される資格ランキング2026' },
       { type: 'h3', content: '事務・経理系' },
       { type: 'table', headers: ['資格名', '評価ポイント'],
         rows: [
@@ -431,11 +431,11 @@ export const columns = {
 export const columnList = [
   {
     slug: 'rirekisho-kakikata',
-    title: '履歴書の書き方【2024年最新版】各項目の記入例・よくあるNG例も解説',
-    metaDescription: '履歴書の書き方を項目別に徹底解説。学歴・職歴の正しい書き方、志望動機・自己PR欄の記入例、手書きとPC作成の違い、よくあるNG例まで。2024年最新版。',
+    title: '履歴書の書き方【2026年最新版】各項目の記入例・よくあるNG例も解説',
+    metaDescription: '履歴書の書き方を項目別に徹底解説。学歴・職歴の正しい書き方、志望動機・自己PR欄の記入例、手書きとPC作成の違い、よくあるNG例まで。2026年最新版。',
     category: '履歴書の書き方',
     readTime: 12,
-    publishedAt: '2024-06-01',
+    publishedAt: '2026-01-10',
   },
   {
     slug: 'shibo-doki-kakikata',
@@ -443,15 +443,15 @@ export const columnList = [
     metaDescription: '志望動機の書き方を採用担当者目線で解説。構成の基本（Why→What→How）と業界別例文10選（事務・営業・IT・介護・飲食など）をすぐ使えるテンプレート付きで紹介。',
     category: '志望動機・自己PR',
     readTime: 10,
-    publishedAt: '2024-06-10',
+    publishedAt: '2026-01-15',
   },
   {
     slug: 'shokumukeirekisho-toha',
-    title: '職務経歴書とは？履歴書との違い・書き方・テンプレート【2024年】',
+    title: '職務経歴書とは？履歴書との違い・書き方・テンプレート【2026年】',
     metaDescription: '職務経歴書と履歴書の違いを解説。基本フォーマット（編年体・機能別）の使い分け、事務・営業・エンジニア職種別テンプレート、採用担当者に読まれるポイントを徹底説明。',
     category: '職務経歴書',
     readTime: 11,
-    publishedAt: '2024-06-15',
+    publishedAt: '2026-01-20',
   },
   {
     slug: 'jiko-pr-kakikata',
@@ -459,14 +459,14 @@ export const columnList = [
     metaDescription: '自己PRの書き方を完全解説。STAR法で強みを具体的に伝える構成と、職種別例文8選を収録。「強みが思いつかない」方向けに強み発見3ステップも紹介。',
     category: '志望動機・自己PR',
     readTime: 9,
-    publishedAt: '2024-07-01',
+    publishedAt: '2026-02-01',
   },
   {
     slug: 'rirekisho-shikaku',
-    title: '履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2024】',
-    metaDescription: '履歴書の資格欄の書き方を正式名称一覧で解説。TOEICスコア・取得中資格・免許の書き方、業種別に採用で評価される資格ランキング2024年版も収録。',
+    title: '履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2026】',
+    metaDescription: '履歴書の資格欄の書き方を正式名称一覧で解説。TOEICスコア・取得中資格・免許の書き方、業種別に採用で評価される資格ランキング2026年版も収録。',
     category: '履歴書の書き方',
     readTime: 8,
-    publishedAt: '2024-07-10',
+    publishedAt: '2026-02-10',
   },
 ];
