@@ -110,10 +110,10 @@ export default function GuestResumeEditorPage() {
                 </div>
             </div>
 
-            {/* 保存促進バナー */}
+            {/* バナー: 登録促進 + 求人探し導線 */}
             <div style={{
-                background: 'rgba(18,28,52,0.08)',
-                border: '1px solid rgba(18,28,52,0.2)',
+                background: 'linear-gradient(135deg, rgba(18,28,52,0.07) 0%, rgba(0,112,185,0.07) 100%)',
+                border: '1px solid rgba(0,112,185,0.2)',
                 borderRadius: 'var(--radius-md)',
                 padding: 'var(--space-md) var(--space-lg)',
                 marginBottom: 'var(--space-xl)',
@@ -123,12 +123,22 @@ export default function GuestResumeEditorPage() {
                 flexWrap: 'wrap',
                 gap: 'var(--space-sm)',
             }}>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                    💡 アカウント登録（無料）すると、複数の履歴書管理・求人への応募ができます
+                <div>
+                    <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 2 }}>
+                        履歴書ができたら、そのまま求人に応募できます
+                    </div>
+                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                        47万件以上の求人を掲載中 · 登録（無料）後すぐに応募可能
+                    </div>
                 </div>
-                <Link to="/register" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}>
-                    無料登録する
-                </Link>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    <Link to="/jobs" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}>
+                        求人を探す
+                    </Link>
+                    <Link to="/register" className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}>
+                        無料登録して応募する
+                    </Link>
+                </div>
             </div>
 
             {/* タブ */}
@@ -367,16 +377,26 @@ export default function GuestResumeEditorPage() {
                             ✕
                         </button>
 
-                        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-                            <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📄</div>
+                        <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: 'var(--space-sm)' }}>🎉</div>
                             <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-sm)' }}>
-                                入力内容を保存しますか？
+                                履歴書が完成しました！
                             </h2>
-                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7 }}>
-                                無料登録すると、この内容が保存され<br />
-                                求人への応募や複数の履歴書管理ができます。<br />
-                                <strong>入力内容はそのまま引き継がれます。</strong>
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginBottom: 'var(--space-md)' }}>
+                                無料登録すると、この履歴書が保存され<br />
+                                <strong>47万件の求人に何度でも使い回せます。</strong>
                             </p>
+                            {/* 登録メリット */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: 'rgba(52,199,89,0.07)', border: '1px solid rgba(52,199,89,0.2)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
+                                {[
+                                    '✅ 履歴書を何度でも使い回せる（毎回入力不要）',
+                                    '✅ 複数求人にワンクリックで応募できる',
+                                    '✅ 企業からのスカウトが届く',
+                                    '✅ 入力内容はそのまま引き継がれる',
+                                ].map((item, i) => (
+                                    <div key={i} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-primary)' }}>{item}</div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* SNS登録ボタン */}

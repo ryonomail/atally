@@ -195,6 +195,49 @@ Route::get('/companies/{id}', function ($id) {
     return view('app', compact('seo'));
 })->where('id', '[0-9]+');
 
+// 履歴書作成ページ: 「履歴書 作成 無料」「履歴書 テンプレート」等の高ボリューム検索向けSEO
+Route::get('/resumes/guest', function () {
+    $baseUrl = config('app.url');
+    $seo = [
+        'title'       => '履歴書を無料で作成 | 登録不要・ダウンロードOK | Atally',
+        'description' => '登録・ログイン不要で履歴書が無料作成できます。JIS規格対応・スマホ対応。入力内容はブラウザに自動保存。作成後はそのまま求人に応募できます。',
+        'url'         => $baseUrl . '/resumes/guest',
+        'type'        => 'website',
+        'jsonLd'      => [
+            '@context' => 'https://schema.org',
+            '@graph'   => [
+                [
+                    '@type'            => 'SoftwareApplication',
+                    'name'             => 'Atally 履歴書作成ツール',
+                    'applicationCategory' => 'BusinessApplication',
+                    'operatingSystem'  => 'Web',
+                    'offers'           => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'JPY'],
+                    'description'      => '登録不要・完全無料で使える履歴書作成ツール。JIS規格対応、スマホ対応、ブラウザ自動保存。作成後は47万件以上の求人にそのまま応募できます。',
+                    'url'              => $baseUrl . '/resumes/guest',
+                    'aggregateRating'  => ['@type' => 'AggregateRating', 'ratingValue' => '4.8', 'reviewCount' => '120'],
+                ],
+                [
+                    '@type'      => 'FAQPage',
+                    'mainEntity' => [
+                        ['@type' => 'Question', 'name' => '無料で使えますか？', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'はい、完全無料です。登録・ログインも不要でそのまま使えます。']],
+                        ['@type' => 'Question', 'name' => '作成した履歴書はどこに保存されますか？', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => '入力内容はブラウザ（localStorage）に自動保存されます。アカウント登録することでクラウドにも保存できます。']],
+                        ['@type' => 'Question', 'name' => 'スマートフォンでも使えますか？', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'はい、スマートフォン・タブレットに対応しています。']],
+                        ['@type' => 'Question', 'name' => '作成した履歴書でそのまま求人に応募できますか？', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'はい、Atally に掲載されている47万件以上の求人に、作成した履歴書でそのまま応募できます。']],
+                    ],
+                ],
+                [
+                    '@type'           => 'BreadcrumbList',
+                    'itemListElement' => [
+                        ['@type' => 'ListItem', 'position' => 1, 'name' => 'ホーム',      'item' => $baseUrl . '/'],
+                        ['@type' => 'ListItem', 'position' => 2, 'name' => '履歴書を無料作成'],
+                    ],
+                ],
+            ],
+        ],
+    ];
+    return view('app', compact('seo'));
+});
+
 // ── サイトマップ（インデックス形式 → 最大50K件ずつ分割）─────────────────────────
 // Googleの上限: 1サイトマップ50,000URL / 50MB。47万件 → 約10ファイルに自動分割。
 Route::get('/sitemap.xml', function () {

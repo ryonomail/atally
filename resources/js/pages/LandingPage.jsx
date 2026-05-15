@@ -207,15 +207,15 @@ export default function LandingPage() {
 
                     {/* CTA */}
                     <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <Link to="/jobs" className="btn btn-primary btn-lg">
-                            求人を探す →
-                        </Link>
-                        <Link to="/resumes/guest" className="btn btn-secondary btn-lg">
+                        <Link to="/resumes/guest" className="btn btn-primary btn-lg" style={{ gap: 8 }}>
                             📝 履歴書を無料で作る
+                        </Link>
+                        <Link to="/jobs" className="btn btn-secondary btn-lg">
+                            求人を探す →
                         </Link>
                     </div>
                     <p style={{ marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                        登録30秒（Google対応） · カード不要 · いつでも退会可
+                        登録不要・完全無料 · 作成後そのまま47万件の求人に応募できます
                     </p>
                 </div>
             </section>
