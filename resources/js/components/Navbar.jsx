@@ -353,6 +353,7 @@ function NavLinks({ user, logout, showAll = false }) {
 
             {!user && (
                 <>
+                    <li><Link to="/resumes/guest" className={`navbar-link ${hideMobile}`}>📝 履歴書を作る</Link></li>
                     <li><Link to="/login" className="navbar-link">ログイン</Link></li>
                     <li><Link to="/register" className="btn btn-primary">無料登録</Link></li>
                 </>
