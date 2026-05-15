@@ -337,45 +337,49 @@ class JobController extends Controller
         }
 
         // 似ている求人（5分キャッシュ・重いJOINを切り離す）
-        $data['similar_jobs'] = Cache::remember('similar_jobs_v3_' . $job->id, 300, function () use ($job) {
-            // タイトルから【】地名などを除去して先頭10文字をキーワードに使う
-            $cleanTitle  = trim(preg_replace('/【[^】]*】/', '', $job->title ?? ''));
-            $titleKw     = mb_substr($cleanTitle, 0, 10);
-            $prefecture  = $job->prefecture ?? '';
-            $empType     = $job->employment_type ?? '';
-            $catMajor    = $job->job_category_major ?? '';
+        $data['similar_jobs'] = Cache::remember('similar_jobs_v4_' . $job->id, 300, function () use ($job) {
+            $cleanTitle = trim(preg_replace('/【[^】]*】/', '', $job->title ?? ''));
+            $titleKw    = mb_substr($cleanTitle, 0, 10);
+            $prefecture = $job->prefecture ?? '';
 
-            // タイトルと都道府県のどちらも取れない場合はスキップ
-            if (!$titleKw && !$prefecture) {
+            if (!$prefecture && !$titleKw) {
                 return [];
             }
 
-            // 関連度スコア:
-            //   タイトルキーワード一致 4pt（最重要・職種の近さ）
-            //   職種カテゴリ一致       3pt
-            //   都道府県一致           2pt
-            //   雇用形態一致           1pt
-            return Job::with('company:id,company_name,quality_score')
-                ->selectRaw('jobs.*, (
-                    CASE WHEN title ILIKE ? THEN 4 ELSE 0 END
-                    + CASE WHEN job_category_major = ? AND job_category_major != \'\' THEN 3 ELSE 0 END
-                    + CASE WHEN prefecture = ? AND prefecture != \'\' THEN 2 ELSE 0 END
-                    + CASE WHEN employment_type = ? AND employment_type != \'\' THEN 1 ELSE 0 END
-                ) AS relevance_score',
-                    ['%' . $titleKw . '%', $catMajor, $prefecture, $empType]
-                )
+            $base = Job::with('company:id,company_name,quality_score')
                 ->where('jobs.id', '!=', $job->id)
-                ->where('jobs.status', 'active')
-                ->where(function ($q) use ($titleKw, $prefecture, $catMajor) {
-                    if ($titleKw)    $q->orWhere('title', 'ILIKE', '%' . $titleKw . '%');
-                    if ($catMajor)   $q->orWhere('job_category_major', $catMajor);
-                    if ($prefecture) $q->orWhere('prefecture', $prefecture);
-                })
-                ->orderByRaw('relevance_score DESC')
-                ->orderByDesc('daily_budget')
-                ->limit(5)
-                ->get()
-                ->toArray();
+                ->where('jobs.status', 'active');
+
+            // Step1: 同じ都道府県 → その中でタイトル類似度順
+            if ($prefecture) {
+                $results = (clone $base)
+                    ->where('prefecture', $prefecture)
+                    ->selectRaw('jobs.*, (CASE WHEN title ILIKE ? THEN 1 ELSE 0 END) AS title_match',
+                        ['%' . $titleKw . '%'])
+                    ->orderByRaw('title_match DESC')
+                    ->orderByDesc('daily_budget')
+                    ->limit(5)
+                    ->get();
+
+                if ($results->count() >= 3) {
+                    return $results->toArray();
+                }
+            }
+
+            // Step2: 同県で3件未満 → タイトルキーワードで他県から補完
+            if ($titleKw) {
+                return (clone $base)
+                    ->where('title', 'ILIKE', '%' . $titleKw . '%')
+                    ->selectRaw('jobs.*, (CASE WHEN prefecture = ? THEN 1 ELSE 0 END) AS pref_match',
+                        [$prefecture])
+                    ->orderByRaw('pref_match DESC')
+                    ->orderByDesc('daily_budget')
+                    ->limit(5)
+                    ->get()
+                    ->toArray();
+            }
+
+            return [];
         });
 
         if ($useCache) {
