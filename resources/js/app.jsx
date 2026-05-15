@@ -167,6 +167,20 @@ function ScrollToTop() {
     return null;
 }
 
+function GA4Tracker() {
+    const { pathname, search } = useLocation();
+    useEffect(() => {
+        if (typeof window.gtag === 'function' && window.__GA4_ID__) {
+            window.gtag('event', 'page_view', {
+                page_path: pathname + search,
+                page_title: document.title,
+                send_to: window.__GA4_ID__,
+            });
+        }
+    }, [pathname, search]);
+    return null;
+}
+
 function AppRoutes() {
     const { user } = useAuth();
     const homePath = getHomePath(user);
@@ -179,6 +193,7 @@ function AppRoutes() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <ScrollToTop />
+            <GA4Tracker />
             <OfflineBanner />
             <Navbar />
             <Suspense fallback={null}><MobileBottomNav /></Suspense>

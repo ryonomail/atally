@@ -49,10 +49,27 @@
 
     <script type="application/ld+json" nonce="{{ request()->attributes->get('csp_nonce') }}">{!! json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 
+    {{-- Google Search Console 所有権確認（GOOGLE_SITE_VERIFICATION が設定されている場合のみ） --}}
+    @if(config('services.google.site_verification'))
+    <meta name="google-site-verification" content="{{ config('services.google.site_verification') }}">
+    @endif
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script nonce="{{ request()->attributes->get('csp_nonce') }}">window.__STRIPE_KEY__ = "{{ config('services.stripe.key') }}";</script>
+
+    {{-- Google Analytics 4（GOOGLE_GA4_ID が設定されている場合のみ。SPAのページ遷移はReact側でトラッキング） --}}
+    @if(config('services.google.ga4_id'))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google.ga4_id') }}"></script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ config('services.google.ga4_id') }}', { send_page_view: false });
+        window.__GA4_ID__ = '{{ config('services.google.ga4_id') }}';
+    </script>
+    @endif
 
     {{-- Crisp チャットウィジェット（CRISP_WEBSITE_ID が設定されている場合のみ） --}}
     @if(config('services.crisp.website_id'))

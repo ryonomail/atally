@@ -12,9 +12,11 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_CALLBACK_URL', '/auth/google/callback'),
+        'client_id'           => env('GOOGLE_CLIENT_ID'),
+        'client_secret'       => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'            => env('GOOGLE_CALLBACK_URL', '/auth/google/callback'),
+        'ga4_id'              => env('GOOGLE_GA4_ID'),
+        'site_verification'   => env('GOOGLE_SITE_VERIFICATION'),
     ],
 
     'hellowork' => [

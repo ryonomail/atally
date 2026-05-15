@@ -336,11 +336,14 @@ class JobController extends Controller
             ];
         }
 
-        // 似ている求人（5分キャッシュ・重いJOINを切り離す）
-        $data['similar_jobs'] = Cache::remember('similar_jobs_v4_' . $job->id, 300, function () use ($job) {
-            $cleanTitle = trim(preg_replace('/【[^】]*】/', '', $job->title ?? ''));
-            $titleKw    = mb_substr($cleanTitle, 0, 10);
-            $prefecture = $job->prefecture ?? '';
+        // 似ている求人（5分キャッシュ）
+        // ハローワーク求人: 地域密着のため都道府県を最優先
+        // 一般求人: 職種カテゴリ→タイトル→雇用形態のスコアリング
+        $data['similar_jobs'] = Cache::remember('similar_jobs_v5_' . $job->id, 300, function () use ($job) {
+            $cleanTitle  = trim(preg_replace('/【[^】]*】/', '', $job->title ?? ''));
+            $titleKw     = mb_substr($cleanTitle, 0, 10);
+            $prefecture  = $job->prefecture ?? '';
+            $isHelloWork = ($job->source === 'hello_work');
 
             if (!$prefecture && !$titleKw) {
                 return [];
@@ -350,29 +353,53 @@ class JobController extends Controller
                 ->where('jobs.id', '!=', $job->id)
                 ->where('jobs.status', 'active');
 
-            // Step1: 同じ都道府県 → その中でタイトル類似度順
-            if ($prefecture) {
-                $results = (clone $base)
-                    ->where('prefecture', $prefecture)
-                    ->selectRaw('jobs.*, (CASE WHEN title ILIKE ? THEN 1 ELSE 0 END) AS title_match',
-                        ['%' . $titleKw . '%'])
-                    ->orderByRaw('title_match DESC')
-                    ->orderByDesc('daily_budget')
-                    ->limit(5)
-                    ->get();
+            if ($isHelloWork) {
+                // ── ハローワーク: 都道府県ファースト ──────────────────────────
+                if ($prefecture) {
+                    $results = (clone $base)
+                        ->where('prefecture', $prefecture)
+                        ->selectRaw('jobs.*, (CASE WHEN title ILIKE ? THEN 1 ELSE 0 END) AS title_match',
+                            ['%' . $titleKw . '%'])
+                        ->orderByRaw('title_match DESC')
+                        ->orderByDesc('daily_budget')
+                        ->limit(5)
+                        ->get();
 
-                if ($results->count() >= 3) {
-                    return $results->toArray();
+                    if ($results->count() >= 3) {
+                        return $results->toArray();
+                    }
                 }
-            }
+                if ($titleKw) {
+                    return (clone $base)
+                        ->where('title', 'ILIKE', '%' . $titleKw . '%')
+                        ->selectRaw('jobs.*, (CASE WHEN prefecture = ? THEN 1 ELSE 0 END) AS pref_match', [$prefecture])
+                        ->orderByRaw('pref_match DESC')
+                        ->orderByDesc('daily_budget')
+                        ->limit(5)
+                        ->get()
+                        ->toArray();
+                }
+            } else {
+                // ── 一般求人: 職種カテゴリ → タイトル → 雇用形態スコアリング ──
+                $catMajor   = $job->job_category_major ?? '';
+                $empType    = $job->employment_type ?? '';
 
-            // Step2: 同県で3件未満 → タイトルキーワードで他県から補完
-            if ($titleKw) {
+                $hasFilter = $catMajor || $titleKw || $empType;
+                if (!$hasFilter) return [];
+
                 return (clone $base)
-                    ->where('title', 'ILIKE', '%' . $titleKw . '%')
-                    ->selectRaw('jobs.*, (CASE WHEN prefecture = ? THEN 1 ELSE 0 END) AS pref_match',
-                        [$prefecture])
-                    ->orderByRaw('pref_match DESC')
+                    ->selectRaw('jobs.*, (
+                        CASE WHEN job_category_major = ? AND job_category_major != \'\' THEN 4 ELSE 0 END
+                        + CASE WHEN title ILIKE ? THEN 2 ELSE 0 END
+                        + CASE WHEN employment_type = ? AND employment_type != \'\' THEN 1 ELSE 0 END
+                        + CASE WHEN prefecture = ? AND prefecture != \'\' THEN 1 ELSE 0 END
+                    ) AS score', [$catMajor, '%' . $titleKw . '%', $empType, $prefecture])
+                    ->where(function ($q) use ($catMajor, $titleKw, $empType) {
+                        if ($catMajor) $q->orWhere('job_category_major', $catMajor);
+                        if ($titleKw)  $q->orWhere('title', 'ILIKE', '%' . $titleKw . '%');
+                        if ($empType)  $q->orWhere('employment_type', $empType);
+                    })
+                    ->orderByDesc('score')
                     ->orderByDesc('daily_budget')
                     ->limit(5)
                     ->get()

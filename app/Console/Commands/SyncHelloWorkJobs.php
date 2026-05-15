@@ -27,6 +27,20 @@ class SyncHelloWorkJobs extends Command
         $this->info("  非公開化: {$stats['deleted']}");
         $this->info("  エラー:   {$stats['errors']}");
 
+        // 新規/削除があった場合は Google・Bing にサイトマップ更新を通知
+        if ($stats['inserted'] > 0 || $stats['deleted'] > 0) {
+            $sitemapUrl = urlencode(config('app.url') . '/sitemap.xml');
+            foreach (['Google' => "https://www.google.com/ping?sitemap={$sitemapUrl}", 'Bing' => "https://www.bing.com/ping?sitemap={$sitemapUrl}"] as $engine => $url) {
+                try {
+                    $ctx = stream_context_create(['http' => ['timeout' => 5, 'ignore_errors' => true]]);
+                    @file_get_contents($url, false, $ctx);
+                    $this->info("  {$engine} サイトマップ通知: OK");
+                } catch (\Throwable) {
+                    $this->warn("  {$engine} サイトマップ通知: スキップ");
+                }
+            }
+        }
+
         return $stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
     }
 }
