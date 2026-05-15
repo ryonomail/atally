@@ -337,19 +337,30 @@ class JobController extends Controller
         }
 
         // 似ている求人（5分キャッシュ・重いJOINを切り離す）
-        $data['similar_jobs'] = Cache::remember('similar_jobs_' . $job->id, 300, function () use ($job) {
-            if (!$job->prefecture && !$job->employment_type) {
-                return [];
-            }
-            $query = Job::with('company:id,company_name,quality_score')
-                ->select('jobs.*')
+        $data['similar_jobs'] = Cache::remember('similar_jobs_v2_' . $job->id, 300, function () use ($job) {
+            // 関連度スコア: 職種カテゴリ一致(3pt) + 都道府県一致(2pt) + 雇用形態一致(1pt)
+            // 最低1点以上のものだけ取得し、スコア降順→daily_budget降順で5件返す
+            $score = DB::raw(
+                'CASE WHEN job_category_major = ' . DB::getPdo()->quote((string)($job->job_category_major ?? '')) . ' THEN 3 ELSE 0 END'
+                . ' + CASE WHEN prefecture = '    . DB::getPdo()->quote((string)($job->prefecture      ?? '')) . ' THEN 2 ELSE 0 END'
+                . ' + CASE WHEN employment_type = '. DB::getPdo()->quote((string)($job->employment_type ?? '')) . ' THEN 1 ELSE 0 END'
+                . ' AS relevance_score'
+            );
+
+            return Job::with('company:id,company_name,quality_score')
+                ->select('jobs.*', $score)
                 ->where('jobs.id', '!=', $job->id)
-                ->where('jobs.status', 'active');
-
-            if ($job->prefecture)      $query->where('prefecture', $job->prefecture);
-            if ($job->employment_type) $query->where('employment_type', $job->employment_type);
-
-            return $query->orderByDesc('daily_budget')->limit(5)->get()->toArray();
+                ->where('jobs.status', 'active')
+                ->where(function ($q) use ($job) {
+                    if ($job->job_category_major) $q->orWhere('job_category_major', $job->job_category_major);
+                    if ($job->prefecture)         $q->orWhere('prefecture', $job->prefecture);
+                    if ($job->employment_type)    $q->orWhere('employment_type', $job->employment_type);
+                })
+                ->orderByDesc('relevance_score')
+                ->orderByDesc('daily_budget')
+                ->limit(5)
+                ->get()
+                ->toArray();
         });
 
         if ($useCache) {
