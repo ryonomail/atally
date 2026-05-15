@@ -1090,7 +1090,7 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
                     fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', lineHeight: 1.5,
                     display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     margin: 0,
-                }}>{job.description}</p>
+                }}>{job.description.replace(/【[^】]+】\n?/g, '').trim()}</p>
             )}
         </div>
     );
@@ -1290,7 +1290,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 <div style={{ marginBottom: 'var(--space-xl)' }}>
                     <SectionHeader icon="📋" title="仕事内容" />
                     <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)' }}>
-                        {job.description}
+                        {job.description?.replace(/【[^】]+】\n?/g, '').trim()}
                     </p>
                     {job.scope_of_change && (
                         <InfoRow label="変更の範囲" value={job.scope_of_change} />

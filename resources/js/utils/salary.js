@@ -1,5 +1,5 @@
 function fmtValue(value, isSmallUnit) {
-    if (!value && value !== 0) return null;
+    if (!value) return null;
     if (isSmallUnit || value < 100000) return `${Number(value).toLocaleString()}円`;
     return `${Math.round(value / 10000)}万円`;
 }

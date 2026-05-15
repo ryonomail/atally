@@ -449,12 +449,19 @@ export default function JobDetailPage() {
     if (!job) return null;
 
     // SEO: JSON-LD JobPosting (Google しごと検索対応)
+    const salaryUnitMap = { '時給': 'HOUR', '日給': 'DAY', '月給': 'MONTH', '年収': 'YEAR' };
+    const salaryUnit = salaryUnitMap[job.salary_type] || 'MONTH';
     const jobJsonLd = {
         '@context': 'https://schema.org/',
         '@type': 'JobPosting',
         title: job.title,
-        description: job.description?.substring(0, 5000) || '',
+        description: (() => {
+            const raw = job.description || '';
+            // 【】ヘッダーを除去してプレーンテキストに
+            return raw.replace(/【[^】]+】\n?/g, '').trim().substring(0, 5000) || job.title;
+        })(),
         datePosted: job.published_at || job.created_at,
+        validThrough: job.expires_at || undefined,
         employmentType: (() => {
             const map = { '正社員': 'FULL_TIME', '契約社員': 'CONTRACTOR', 'パート': 'PART_TIME', '派遣': 'TEMPORARY', '業務委託': 'OTHER', 'インターン': 'INTERN' };
             return map[job.employment_type] || 'OTHER';
@@ -468,7 +475,8 @@ export default function JobDetailPage() {
             '@type': 'Place',
             address: {
                 '@type': 'PostalAddress',
-                addressRegion: job.location || '',
+                addressRegion: job.prefecture || job.location || '',
+                addressLocality: job.city || undefined,
                 addressCountry: 'JP',
             },
         },
@@ -480,14 +488,26 @@ export default function JobDetailPage() {
                     '@type': 'QuantitativeValue',
                     ...(job.salary_min ? { minValue: job.salary_min } : {}),
                     ...(job.salary_max ? { maxValue: job.salary_max } : {}),
-                    unitText: 'YEAR',
+                    unitText: salaryUnit,
                 },
             },
         } : {}),
     };
 
     const seoTitle = `${job.title} - ${job.company?.company_name || ''}`;
-    const seoDesc = `${job.company?.company_name || ''}の${job.title}。${job.location || ''}${job.employment_type ? ' / ' + job.employment_type : ''}${job.salary_min ? ' / 年収' + Math.round(job.salary_min / 10000) + '万円〜' : ''}`;
+    const seoDesc = (() => {
+        const parts = [job.company?.company_name, job.title].filter(Boolean).join('の') + '。';
+        const info = [
+            job.location,
+            job.employment_type,
+            formatSalary(job),
+            job.work_hours,
+            job.holidays?.split(/[、,]/)[0],
+        ].filter(Boolean).join(' / ');
+        const bodyRaw = (job.description || '').replace(/【[^】]+】\n?/g, '').trim();
+        const body = bodyRaw.substring(0, 80);
+        return (parts + (info ? info + '。' : '') + body).substring(0, 160);
+    })();
 
     const insuranceText = Array.isArray(job.insurance) ? job.insurance.join(' / ') : job.insurance;
     const benefitsText = (() => {

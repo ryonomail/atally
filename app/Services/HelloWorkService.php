@@ -640,7 +640,8 @@ class HelloWorkService
     private function parseSalary(string $value): ?int
     {
         $num = preg_replace('/[^\d]/', '', $value);
-        return $num !== '' ? (int) $num : null;
+        $int = ($num !== '') ? (int) $num : null;
+        return ($int && $int > 0) ? $int : null;
     }
 
     /**
