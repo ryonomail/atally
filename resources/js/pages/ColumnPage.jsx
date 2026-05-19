@@ -69,8 +69,7 @@ function YearLookup() {
             )}
 
             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--space-sm)', lineHeight: 1.6 }}>
-                ※ 4月2日以降生まれ（通常）の場合。早生まれ（1月1日〜4月1日）の方は1年前後することがあります。<br />
-                元号換算：令和＝2018＋年、平成＝1988＋年、昭和＝1925＋年
+                ※ 4月2日以降生まれ（通常）の場合。早生まれ（1月1日〜4月1日）の方は1年前後することがあります。
             </p>
         </div>
     );
