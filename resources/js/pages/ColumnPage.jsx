@@ -110,7 +110,7 @@ function Section({ section }) {
             </div>
         );
         case 'box': return (
-            <div style={{ background: 'rgba(0,112,185,0.06)', border: '1px solid rgba(0,112,185,0.2)', borderRadius: 'var(--radius-md)', padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8 }}>
+            <div style={{ background: 'rgba(0,112,185,0.06)', border: '1px solid rgba(0,112,185,0.2)', borderRadius: 'var(--radius-md)', padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                 {section.content}
             </div>
         );
