@@ -109,19 +109,63 @@ Route::get('/column', function () {
 // コラム個別ページ（slug別サーバーサイドSEO）
 Route::get('/column/{slug}', function (string $slug) {
     $meta = [
-        'rirekisho-kakikata'     => ['履歴書の書き方【2024年最新版】各項目の記入例・よくあるNG例も解説 | Atally', '履歴書の正しい書き方を各項目ごとに解説。学歴・職歴の書き方、志望動機・自己PRの例文、手書きvsPC比較、よくあるNG例まで網羅した完全ガイド。'],
-        'shibo-doki-kakikata'    => ['志望動機の書き方【例文10選】採用担当者の目線で徹底解説 | Atally', '採用担当者が見ている志望動機のポイントを解説。事務・営業・IT・介護など業界別の例文10選、NG例、転職者向けの書き方まで完全網羅。'],
-        'shokumukeirekisho-toha' => ['職務経歴書とは？履歴書との違い・書き方・テンプレート【2024年】 | Atally', '職務経歴書と履歴書の違いを分かりやすく解説。書くべき内容、編年体・機能別の選び方、事務・営業・エンジニア別のテンプレートも掲載。'],
-        'jiko-pr-kakikata'       => ['自己PRの書き方【例文8選】強みの見つけ方から構成まで完全ガイド | Atally', '自己PRの書き方をSTAR法で解説。強みの見つけ方、職種別例文8選、字数の目安、新卒と転職者の違いまで網羅した完全ガイド。'],
-        'rirekisho-shikaku'      => ['履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2024】 | Atally', '履歴書に書くべき資格・書かない方がいい資格を解説。業種別おすすめ資格、TOEICスコアの書き方、取得中の資格の扱い方まで詳しく解説。'],
+        'rirekisho-kakikata'     => [
+            'title'       => '履歴書の書き方【2026年最新版】各項目の記入例・よくあるNG例も解説 | Atally',
+            'description' => '履歴書の正しい書き方を各項目ごとに解説。学歴・職歴の書き方、志望動機・自己PRの例文、手書きvsPC比較、よくあるNG例まで網羅した完全ガイド。',
+            'published'   => '2026-01-10T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'shibo-doki-kakikata'    => [
+            'title'       => '志望動機の書き方【例文10選】採用担当者の目線で徹底解説 | Atally',
+            'description' => '採用担当者が見ている志望動機のポイントを解説。事務・営業・IT・介護など業界別の例文10選、NG例、転職者向けの書き方まで完全網羅。',
+            'published'   => '2026-01-15T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'shokumukeirekisho-toha' => [
+            'title'       => '職務経歴書とは？履歴書との違い・書き方・テンプレート【2026年】 | Atally',
+            'description' => '職務経歴書と履歴書の違いを分かりやすく解説。書くべき内容、編年体・機能別の選び方、事務・営業・エンジニア別のテンプレートも掲載。',
+            'published'   => '2026-01-20T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'jiko-pr-kakikata'       => [
+            'title'       => '自己PRの書き方【例文8選】強みの見つけ方から構成まで完全ガイド | Atally',
+            'description' => '自己PRの書き方をSTAR法で解説。強みの見つけ方、職種別例文8選、字数の目安、新卒と転職者の違いまで網羅した完全ガイド。',
+            'published'   => '2026-02-01T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'rirekisho-shikaku'      => [
+            'title'       => '履歴書に書ける資格・書き方一覧【採用に効く資格ランキング2026】 | Atally',
+            'description' => '履歴書に書くべき資格・書かない方がいい資格を解説。業種別おすすめ資格、TOEICスコアの書き方、取得中の資格の扱い方まで詳しく解説。',
+            'published'   => '2026-02-10T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
     ];
 
-    [$title, $desc] = $meta[$slug] ?? ['転職コラム | Atally', 'Atallyの転職・就活お役立ちコラム。'];
+    $m = $meta[$slug] ?? null;
+    $title = $m['title']       ?? '転職コラム | Atally';
+    $desc  = $m['description'] ?? 'Atallyの転職・就活お役立ちコラム。';
+    $url   = config('app.url') . '/column/' . $slug;
+
+    $jsonLd = [
+        '@context'         => 'https://schema.org',
+        '@type'            => 'Article',
+        'headline'         => $title,
+        'description'      => $desc,
+        'url'              => $url,
+        'datePublished'    => $m['published'] ?? '2026-01-01T00:00:00+09:00',
+        'dateModified'     => $m['modified']  ?? '2026-05-19T00:00:00+09:00',
+        'author'           => ['@type' => 'Organization', 'name' => 'Atally編集部', 'url' => config('app.url')],
+        'publisher'        => ['@type' => 'Organization', 'name' => 'Atally', 'url' => config('app.url')],
+        'inLanguage'       => 'ja',
+        'isPartOf'         => ['@type' => 'WebSite', 'name' => 'Atally', 'url' => config('app.url')],
+    ];
 
     $seo = [
         'title'       => $title,
         'description' => $desc,
-        'url'         => config('app.url') . '/column/' . $slug,
+        'url'         => $url,
+        'type'        => 'article',
+        'jsonLd'      => $jsonLd,
     ];
     return view('app', compact('seo'));
 });
