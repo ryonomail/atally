@@ -123,7 +123,7 @@ function Section({ section }) {
         case 'caution': return (
             <div style={{ background: '#fff5f5', border: '1px solid #fed7d7', borderRadius: 'var(--radius-md)', padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
                 <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#c53030', marginBottom: 'var(--space-xs)' }}>⚠️ 注意</div>
-                <div style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8, fontSize: 'var(--font-size-sm)' }}>{section.content}</div>
+                <div style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8, fontSize: 'var(--font-size-sm)', whiteSpace: 'pre-wrap' }}>{section.content}</div>
             </div>
         );
         case 'faq': return (
