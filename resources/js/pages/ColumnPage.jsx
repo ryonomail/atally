@@ -1,7 +1,80 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { columns, columnList } from '../data/columns';
+
+function getWareki(year) {
+    if (year >= 2019) return `令和${year - 2018}年`;
+    if (year >= 1989) return `平成${year - 1988}年`;
+    if (year >= 1926) return `昭和${year - 1925}年`;
+    return `${year}年`;
+}
+
+function YearLookup() {
+    const [birthYear, setBirthYear] = useState('');
+    const years = [];
+    for (let y = 1975; y <= 2010; y++) years.push(y);
+
+    const milestones = birthYear ? [
+        { label: '小学校卒業', year: Number(birthYear) + 13 },
+        { label: '中学校卒業', year: Number(birthYear) + 16 },
+        { label: '高校卒業', year: Number(birthYear) + 19 },
+        { label: '短大卒業（2年制）', year: Number(birthYear) + 21 },
+        { label: '大学卒業（4年制）', year: Number(birthYear) + 23 },
+        { label: '大学院修了（修士2年）', year: Number(birthYear) + 25 },
+    ] : [];
+
+    return (
+        <div style={{ marginBottom: 'var(--space-lg)' }}>
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-xs)' }}>
+                    生まれ年を選んでください
+                </label>
+                <select
+                    value={birthYear}
+                    onChange={e => setBirthYear(e.target.value)}
+                    style={{
+                        width: '100%', maxWidth: 280, padding: '10px 14px',
+                        border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--font-size-sm)', background: 'white',
+                        cursor: 'pointer', appearance: 'auto',
+                    }}
+                >
+                    <option value="">── 選択してください ──</option>
+                    {years.map(y => (
+                        <option key={y} value={y}>{y}年（{getWareki(y)}）</option>
+                    ))}
+                </select>
+            </div>
+
+            {milestones.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-sm)' }}>
+                    {milestones.map(({ label, year }) => (
+                        <div key={label} style={{
+                            background: 'rgba(0,112,185,0.05)', border: '1px solid rgba(0,112,185,0.2)',
+                            borderRadius: 'var(--radius-md)', padding: '12px 16px',
+                        }}>
+                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 4 }}>{label}</div>
+                            <div style={{ fontWeight: 700, fontSize: 'var(--font-size-md)', color: '#0070b9' }}>{year}年</div>
+                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>（{getWareki(year)}）</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {!birthYear && (
+                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', padding: '16px', background: '#f5f6f7', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                    生まれ年を選ぶと、各節目の卒業・修了年度が表示されます
+                </div>
+            )}
+
+            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--space-sm)', lineHeight: 1.6 }}>
+                ※ 4月2日以降生まれ（通常）の場合。早生まれ（1月1日〜4月1日）の方は1年前後することがあります。<br />
+                元号換算：令和＝2018＋年、平成＝1988＋年、昭和＝1925＋年
+            </p>
+        </div>
+    );
+}
 
 function Section({ section }) {
     const base = { lineHeight: 1.85, marginBottom: 'var(--space-lg)' };
@@ -68,6 +141,7 @@ function Section({ section }) {
                 ))}
             </div>
         );
+        case 'year-lookup': return <YearLookup />;
         default: return null;
     }
 }
