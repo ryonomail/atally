@@ -515,9 +515,16 @@ export default function AgencyBulkUploadPage() {
                         </div>
                     )}
 
-                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={!file || uploading}>
-                        {uploading ? 'アップロード中...' : 'アップロードして一括登録'}
-                    </button>
+                    <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                        <button type="submit" className="btn btn-primary btn-lg" style={{ flex: 1 }} disabled={!file || uploading}>
+                            {uploading ? 'アップロード中...' : 'アップロードして一括登録'}
+                        </button>
+                        {file && !uploading && (
+                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleReUpload}>
+                                キャンセル
+                            </button>
+                        )}
+                    </div>
                 </form>
             </div>
 
