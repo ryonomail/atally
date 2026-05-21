@@ -407,11 +407,6 @@ class AgencyController extends Controller
             return response()->json(['message' => '人材紹介会社のみ利用可能です'], 403);
         }
 
-        // 課金チェック
-        if (($company->daily_budget ?? 0) <= 0) {
-            return response()->json(['message' => '求人掲載には課金が必要です。予算を設定してください。'], 403);
-        }
-
         $request->validate([
             'file' => 'required|file|mimes:csv,txt|max:20480', // 20MB max
         ]);
