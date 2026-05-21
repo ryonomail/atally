@@ -397,66 +397,81 @@ Route::get('/resumes/guest', function () {
 // ── サイトマップ（インデックス形式 → 最大50K件ずつ分割）─────────────────────────
 // Googleの上限: 1サイトマップ50,000URL / 50MB。47万件 → 約10ファイルに自動分割。
 Route::get('/sitemap.xml', function () {
-    $baseUrl   = config('app.url');
-    $totalJobs = \App\Models\Job::where('status', 'active')->count();
-    $jobPages  = max(1, (int) ceil($totalJobs / 50000));
-    $now       = now()->toAtomString();
+    try {
+        $baseUrl   = config('app.url');
+        $totalJobs = \App\Models\Job::where('status', 'active')->count();
+        $jobPages  = max(1, (int) ceil($totalJobs / 50000));
+        $now       = now()->toAtomString();
 
-    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-    $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
-    $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-static.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
-    for ($i = 1; $i <= $jobPages; $i++) {
-        $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-jobs-{$i}.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-static.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
+        for ($i = 1; $i <= $jobPages; $i++) {
+            $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-jobs-{$i}.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
+        }
+        $xml .= '</sitemapindex>';
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('sitemap.xml error', ['error' => $e->getMessage()]);
+        $baseUrl = config('app.url');
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+             . '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n"
+             . "  <sitemap><loc>{$baseUrl}/sitemap-static.xml</loc></sitemap>\n"
+             . '</sitemapindex>';
     }
-    $xml .= '</sitemapindex>';
 
     return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
 });
 
 // 静的ページ + 都道府県ランディング + 企業ページ
 Route::get('/sitemap-static.xml', function () {
-    $baseUrl = config('app.url');
-    $prefectures = [
-        '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県',
-        '茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県',
-        '新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県',
-        '静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県',
-        '奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県',
-        '徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県',
-        '熊本県','大分県','宮崎県','鹿児島県','沖縄県',
-    ];
+    try {
+        $baseUrl = config('app.url');
+        $prefectures = [
+            '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県',
+            '茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県',
+            '新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県',
+            '静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県',
+            '奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県',
+            '徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県',
+            '熊本県','大分県','宮崎県','鹿児島県','沖縄県',
+        ];
 
-    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
-    foreach ([
-        ['/', 'daily', '1.0'], ['/jobs', 'hourly', '0.9'], ['/register', 'monthly', '0.6'],
-        ['/login', 'monthly', '0.5'], ['/resumes/guest', 'monthly', '0.8'],
-        ['/column', 'weekly', '0.8'],
-        ['/column/rirekisho-kakikata', 'monthly', '0.9'],
-        ['/column/shibo-doki-kakikata', 'monthly', '0.9'],
-        ['/column/shokumukeirekisho-toha', 'monthly', '0.9'],
-        ['/column/jiko-pr-kakikata', 'monthly', '0.9'],
-        ['/column/rirekisho-shikaku', 'monthly', '0.8'],
-        ['/terms', 'yearly', '0.3'], ['/privacy', 'yearly', '0.3'],
-    ] as [$path, $freq, $pri]) {
-        $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
+        foreach ([
+            ['/', 'daily', '1.0'], ['/jobs', 'hourly', '0.9'], ['/register', 'monthly', '0.6'],
+            ['/login', 'monthly', '0.5'], ['/resumes/guest', 'monthly', '0.8'],
+            ['/column', 'weekly', '0.8'],
+            ['/column/rirekisho-kakikata', 'monthly', '0.9'],
+            ['/column/shibo-doki-kakikata', 'monthly', '0.9'],
+            ['/column/shokumukeirekisho-toha', 'monthly', '0.9'],
+            ['/column/jiko-pr-kakikata', 'monthly', '0.9'],
+            ['/column/rirekisho-shikaku', 'monthly', '0.8'],
+            ['/terms', 'yearly', '0.3'], ['/privacy', 'yearly', '0.3'],
+        ] as [$path, $freq, $pri]) {
+            $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
+        }
+
+        foreach ($prefectures as $pref) {
+            $url = $baseUrl . '/jobs?prefecture=' . urlencode($pref);
+            $xml .= "  <url><loc>{$url}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n";
+        }
+
+        \App\Models\Company::where('verification_status', 'verified')
+            ->select('id', 'updated_at')->orderBy('id')
+            ->cursor()->each(function ($c) use (&$xml, $baseUrl) {
+                $xml .= "  <url><loc>{$baseUrl}/companies/{$c->id}</loc>";
+                if ($c->updated_at) $xml .= "<lastmod>{$c->updated_at->toAtomString()}</lastmod>";
+                $xml .= "<changefreq>weekly</changefreq><priority>0.6</priority></url>\n";
+            });
+
+        $xml .= '</urlset>';
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('sitemap-static.xml error', ['error' => $e->getMessage()]);
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+             . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
     }
-
-    foreach ($prefectures as $pref) {
-        $url = $baseUrl . '/jobs?prefecture=' . urlencode($pref);
-        $xml .= "  <url><loc>{$url}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n";
-    }
-
-    \App\Models\Company::where('verification_status', 'verified')
-        ->select('id', 'updated_at')->orderBy('id')
-        ->cursor()->each(function ($c) use (&$xml, $baseUrl) {
-            $xml .= "  <url><loc>{$baseUrl}/companies/{$c->id}</loc>";
-            if ($c->updated_at) $xml .= "<lastmod>{$c->updated_at->toAtomString()}</lastmod>";
-            $xml .= "<changefreq>weekly</changefreq><priority>0.6</priority></url>\n";
-        });
-
-    $xml .= '</urlset>';
 
     return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
 });

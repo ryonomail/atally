@@ -16,6 +16,7 @@
     "laravel/socialite": "^5.25",
     "laravel/tinker": "^2.9",
     "predis/predis": "^2.0",
+    "sentry/sentry-laravel": "^4.0",
     "stripe/stripe-php": "^15.0"
   },
   "require-dev": {

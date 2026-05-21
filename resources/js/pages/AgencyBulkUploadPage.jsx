@@ -214,7 +214,7 @@ export default function AgencyBulkUploadPage() {
                 <h3 style={{ marginBottom: 'var(--space-md)' }}>CSVフォーマット</h3>
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
                     CSVファイルの1行目はヘッダー行です。<strong>title</strong> と <strong>description</strong> は必須です。<br />
-                    必要なカラムだけ含めればOKです。最大100件まで一括登録できます（5MB以下）。
+                    必要なカラムだけ含めればOKです。最大5,000件まで一括登録できます（20MB以下）。
                 </p>
 
                 <details style={{ marginBottom: 'var(--space-md)' }}>
@@ -332,7 +332,7 @@ export default function AgencyBulkUploadPage() {
                                 <>
                                     <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📁</div>
                                     <p style={{ color: 'var(--color-text-secondary)' }}>クリックしてCSVファイルを選択</p>
-                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>CSV / TXT（最大5MB）</p>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>CSV / TXT（最大20MB・5,000件まで）</p>
                                 </>
                             )}
                         </div>

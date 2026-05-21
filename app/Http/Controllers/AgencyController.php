@@ -413,36 +413,31 @@ class AgencyController extends Controller
         }
 
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:5120', // 5MB max
+            'file' => 'required|file|mimes:csv,txt|max:20480', // 20MB max
         ]);
+
+        // 5000件 × 処理時間を考慮してタイムアウトを延長
+        set_time_limit(300);
 
         $file = $request->file('file');
 
-        // file() はファイル全体をメモリに読み込むため fgetcsv() ストリームで代替
         $handle = fopen($file->getRealPath(), 'r');
         if ($handle === false) {
             return response()->json(['message' => 'CSVファイルの読み込みに失敗しました。'], 422);
         }
 
-        $rows = [];
-        while (($row = fgetcsv($handle)) !== false) {
-            $rows[] = $row;
-            if (count($rows) > 1001) { // ヘッダー + 999件 + 余裕分
-                fclose($handle);
-                return response()->json(['message' => '一括アップロードは999件までです'], 422);
-            }
-        }
-        fclose($handle);
-
-        if (count($rows) < 2) {
+        // ヘッダー行を先読み
+        $headerRow = fgetcsv($handle);
+        if ($headerRow === false) {
+            fclose($handle);
             return response()->json(['message' => 'CSVにデータ行がありません'], 422);
         }
+        $headers = array_map('trim', $headerRow);
 
-        // ヘッダー行
-        $headers = array_map('trim', $rows[0]);
         $requiredHeaders = ['title', 'description'];
         foreach ($requiredHeaders as $h) {
             if (!in_array($h, $headers)) {
+                fclose($handle);
                 return response()->json(['message' => "必須カラム '{$h}' がCSVヘッダーにありません"], 422);
             }
         }
@@ -481,15 +476,16 @@ class AgencyController extends Controller
 
         $created = [];
         $errors = [];
-        $dataRows = array_slice($rows, 1);
+        $rowIndex = 0;
 
-        // 最大999件
-        if (count($dataRows) > 999) {
-            return response()->json(['message' => '一括アップロードは999件までです'], 422);
-        }
-
-        foreach ($dataRows as $i => $row) {
-            $lineNum = $i + 2;
+        // ストリームで1行ずつ処理（全行をメモリに溜めない）
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowIndex++;
+            if ($rowIndex > 5000) {
+                fclose($handle);
+                return response()->json(['message' => '一括アップロードは5,000件までです'], 422);
+            }
+            $lineNum = $rowIndex + 1;
 
             if (count($row) !== count($headers)) {
                 $errors[] = "行{$lineNum}: カラム数が一致しません";
@@ -601,6 +597,7 @@ class AgencyController extends Controller
                 $errors[] = "行{$lineNum}: " . $e->getMessage();
             }
         }
+        fclose($handle);
 
         return response()->json([
             'created_count' => count($created),
