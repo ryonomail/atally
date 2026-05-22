@@ -651,13 +651,11 @@ export default function JobDetailPage() {
                         {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
                         {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}
                         {job.location && <span className="badge badge-info">📍 {job.location}</span>}
-                        {(job.salary_min || job.salary_max) && (
-                            <span className="badge badge-success">
-                                💰 {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
-                                {job.salary_min && job.salary_max ? '〜' : ''}
-                                {job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}
-                            </span>
-                        )}
+                        <span className="badge badge-success">
+                            {(job.salary_min || job.salary_max)
+                                ? `💰 ${job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}${job.salary_min && job.salary_max ? '〜' : ''}${job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}`
+                                : '💰 給与非公開'}
+                        </span>
                         {job.positions_available && <span className="badge badge-info">採用{job.positions_available}名</span>}
                         {job.work_hours && <span className="badge badge-info">🕐 {job.work_hours}</span>}
                         {job.overtime_average && <span className="badge badge-info">⏱ 残業{job.overtime_average}</span>}
@@ -869,7 +867,7 @@ export default function JobDetailPage() {
                 <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                     <SectionHeader icon="💰" title="給与・待遇" />
                     <InfoTable>
-                        <InfoRow label="給与" value={job.salary_details || formatSalary(job) || null} />
+                        <InfoRow label="給与" value={job.salary_details || formatSalary(job) || '非公開'} />
                         <InfoRow label="昇給" value={job.raise_frequency} />
                         <InfoRow label="賞与" value={job.bonus} />
                         <InfoRow label="手当" value={job.allowances} />

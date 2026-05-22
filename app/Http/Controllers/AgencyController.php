@@ -499,12 +499,13 @@ class AgencyController extends Controller
             return $headerMap[$h] ?? $h;
         }, $headerRow);
 
-        $requiredHeaders = ['title', 'description'];
-        foreach ($requiredHeaders as $h) {
-            if (!in_array($h, $headers)) {
-                fclose($handle);
-                return response()->json(['message' => "必須カラム「求人タイトル（title）」と「仕事内容（description）」が必要です"], 422);
-            }
+        $requiredHeaders = ['title', 'description', 'prefecture', 'employment_type'];
+        $missingHeaders = array_diff($requiredHeaders, $headers);
+        if (!empty($missingHeaders)) {
+            fclose($handle);
+            $labelMap = ['title' => '求人タイトル', 'description' => '仕事内容', 'prefecture' => '都道府県', 'employment_type' => '雇用形態'];
+            $missing = implode('」「', array_map(fn($h) => $labelMap[$h] ?? $h, $missingHeaders));
+            return response()->json(['message' => "必須カラムが見つかりません: 「{$missing}」"], 422);
         }
 
         $allowedFields = [
@@ -564,7 +565,15 @@ class AgencyController extends Controller
             $filtered = array_intersect_key($data, array_flip($allowedFields));
 
             if (empty($filtered['title']) || empty($filtered['description'])) {
-                $errors[] = "行{$lineNum}: title と description は必須です";
+                $errors[] = "行{$lineNum}: 求人タイトルと仕事内容は必須です";
+                continue;
+            }
+            if (empty($filtered['prefecture'])) {
+                $errors[] = "行{$lineNum}: 都道府県は必須です";
+                continue;
+            }
+            if (empty($filtered['employment_type'])) {
+                $errors[] = "行{$lineNum}: 雇用形態は必須です";
                 continue;
             }
 
