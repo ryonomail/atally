@@ -22,6 +22,7 @@ export default function VerifyEmailPage() {
         try {
             await api.post('/verify-email', { email, code });
             localStorage.removeItem('atally_return_job');
+            localStorage.removeItem('guest_resume_draft');
             navigate(returnJob ? `/jobs/${returnJob}` : '/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || '確認に失敗しました。');

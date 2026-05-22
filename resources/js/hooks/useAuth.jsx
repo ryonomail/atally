@@ -75,6 +75,8 @@ export function AuthProvider({ children }) {
         } finally {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user');
+            localStorage.removeItem('guest_resume_draft');
+            localStorage.removeItem('atally_return_job');
             setUser(null);
         }
     };
