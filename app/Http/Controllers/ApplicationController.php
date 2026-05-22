@@ -37,10 +37,7 @@ class ApplicationController extends Controller
     // 企業: 求人ごとの応募者一覧
     public function jobApplications(Job $job)
     {
-        $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('manage', $job);
 
         $applications = Application::with(['user.profile'])
             ->where('job_id', $job->id)
@@ -53,10 +50,7 @@ class ApplicationController extends Controller
     // 企業: 応募者CSVエクスポート
     public function exportApplicationsCsv(Job $job)
     {
-        $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('manage', $job);
 
         $applications = Application::with(['user.profile'])
             ->where('job_id', $job->id)
@@ -88,7 +82,6 @@ class ApplicationController extends Controller
     // 求職者: 応募する
     public function apply(Request $request, Job $job)
     {
-        // 公開中の求人のみ応募可能
         if (!in_array($job->status->value, ['active'])) {
             return response()->json(['message' => 'この求人は現在応募を受け付けていません'], 422);
         }
@@ -99,7 +92,6 @@ class ApplicationController extends Controller
 
         $user = Auth::user();
 
-        // 重複応募チェック（DBユニーク制約に到達する前に明示的なエラーを返す）
         $alreadyApplied = Application::where('job_id', $job->id)
             ->where('user_id', $user->id)
             ->exists();
@@ -108,7 +100,6 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'この求人にはすでに応募済みです。'], 422);
         }
 
-        // 履歴書情報の凍結
         $resume = Resume::where('id', $request->resume_id)
             ->where('user_id', $user->id)
             ->with('profile')
@@ -134,7 +125,6 @@ class ApplicationController extends Controller
             'note' => '応募しました',
         ]);
 
-        // 企業に応募通知メール
         $companyUser = $job->company->user;
         if ($companyUser) {
             $companyUser->notify(new \App\Notifications\NewApplicationNotification($application));
@@ -158,19 +148,13 @@ class ApplicationController extends Controller
             'user_id' => 'required|exists:users,id',
         ]);
 
-        $company = Auth::user()->company;
         $job = Job::findOrFail($request->job_id);
+        $this->authorize('manage', $job);
 
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
-        // 有料掲載中（アクティブ求人あり）の企業のみスカウト可能
         if (!$job->isActive()) {
             return response()->json(['message' => 'スカウトを送るには、対象の求人がアクティブ（掲載中）である必要があります。'], 403);
         }
 
-        // スカウト受信を許可していない求職者への送信を禁止（プライバシー保護）
         $scoutEnabled = \App\Models\UserProfile::where('user_id', $request->user_id)
             ->whereHas('resumes', fn($q) => $q->where('scout_enabled', true))
             ->exists();
@@ -178,7 +162,6 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'このユーザーはスカウト受信を無効にしています。'], 422);
         }
 
-        // 初期段階ではスナップショットは空、受諾後に埋める
         $application = Application::create([
             'job_id' => $job->id,
             'user_id' => $request->user_id,
@@ -187,7 +170,6 @@ class ApplicationController extends Controller
             'type' => 'scout',
         ]);
 
-        // 求職者にスカウト通知メール
         $targetUser = \App\Models\User::find($request->user_id);
         if ($targetUser) {
             $targetUser->notify(new \App\Notifications\ScoutReceivedNotification($application));
@@ -206,10 +188,9 @@ class ApplicationController extends Controller
     // 求職者: スカウトを受諾
     public function acceptScout(Request $request, Application $application)
     {
+        $this->authorize('manageScout', $application);
+
         $user = Auth::user();
-        if ($application->user_id !== $user->id || $application->type !== 'scout') {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $request->validate([
             'resume_id' => 'required|exists:resumes,id',
@@ -236,10 +217,7 @@ class ApplicationController extends Controller
     // 求職者: スカウトを辞退
     public function declineScout(Application $application)
     {
-        $user = Auth::user();
-        if ($application->user_id !== $user->id || $application->type !== 'scout') {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('manageScout', $application);
 
         $application->update(['status' => 'rejected']);
 
@@ -254,7 +232,6 @@ class ApplicationController extends Controller
             'note' => 'nullable|string|max:500',
         ];
 
-        // 不採用時の追加バリデーション
         if ($request->status === 'rejected') {
             $rules['rejection_reason'] = 'nullable|string|in:experience_mismatch,skill_mismatch,salary_mismatch,position_filled,other';
             $rules['rejection_feedback'] = 'nullable|string|max:2000';
@@ -262,29 +239,21 @@ class ApplicationController extends Controller
 
         $request->validate($rules);
 
-        // 企業・求職者のどちらが操作しているのか + 所有権チェック
         $user = Auth::user();
 
-        if ($user->role->value === 'jobseeker') {
-            // 求職者: 自分の応募のみ、かつ辞退・承諾のみ許可
-            if ($application->user_id !== $user->id) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
+        if ($user->isJobSeeker()) {
+            $this->authorize('view', $application);
             if (!in_array($request->status, ['withdrawn', 'accepted'])) {
                 return response()->json(['message' => 'Forbidden'], 403);
             }
-        } elseif ($user->role->value === 'company') {
-            // 企業: 自社の求人に紐づく応募のみ
-            if ($application->job->company_id !== $user->company_id) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
+        } elseif ($user->isCompany()) {
+            $this->authorize('updateStatus', $application);
         } elseif ($user->role->value !== 'admin') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $updateData = ['status' => $request->status];
 
-        // 不採用時に理由・フィードバックを保存
         if ($request->status === 'rejected') {
             $updateData['rejection_reason'] = $request->rejection_reason;
             $updateData['rejection_feedback'] = $request->rejection_feedback;
@@ -292,8 +261,7 @@ class ApplicationController extends Controller
 
         $application->update($updateData);
 
-        // 企業側のアクション → 求人の last_company_action_at を更新
-        if ($user->role === 'company') {
+        if ($user->isCompany()) {
             $application->job?->update(['last_company_action_at' => now()]);
         }
 
@@ -304,7 +272,6 @@ class ApplicationController extends Controller
             'note' => $request->note,
         ]);
 
-        // ステータス変更通知
         $statusLabels = [
             'under_review' => '書類選考中',
             'interviewing' => '面接中',
@@ -317,8 +284,7 @@ class ApplicationController extends Controller
         $label = $statusLabels[$request->status] ?? $request->status;
         $jobTitle = $application->job->title ?? '求人';
 
-        if ($user->role === 'company' || $user->role === 'admin') {
-            // 企業がステータス変更 → 求職者に通知
+        if ($user->isCompany() || $user->role->value === 'admin') {
             InAppNotification::notify(
                 $application->user_id,
                 'application',
@@ -327,7 +293,6 @@ class ApplicationController extends Controller
                 '/applications'
             );
         } else {
-            // 求職者が辞退/承諾 → 企業に通知
             $companyUser = $application->job->company->user ?? null;
             if ($companyUser) {
                 InAppNotification::notify(
@@ -359,7 +324,6 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // 自社の求人に紐づく応募のみ更新可能か検証
         $companyJobIds = Job::where('company_id', $company->id)->pluck('id');
 
         $applications = Application::whereIn('id', $request->application_ids)
@@ -374,7 +338,6 @@ class ApplicationController extends Controller
             ->whereIn('job_id', $companyJobIds)
             ->update(['status' => $request->status]);
 
-        // ステータス履歴を一括作成
         $now = now();
         $histories = $applications->map(fn ($app) => [
             'application_id' => $app->id,
@@ -394,18 +357,7 @@ class ApplicationController extends Controller
     // 応募のタイムライン（ステータス履歴）
     public function timeline(Application $application)
     {
-        $user = Auth::user();
-
-        // 求職者は自分の応募のみ、企業は自社求人の応募のみ閲覧可能
-        if ($user->role === 'jobseeker' && $application->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-        if ($user->role === 'company') {
-            $company = $user->company;
-            if (!$company || $application->job->company_id !== $company->id) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
-        }
+        $this->authorize('view', $application);
 
         $histories = $application->statusHistories()
             ->orderBy('changed_at', 'asc')

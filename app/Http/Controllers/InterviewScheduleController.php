@@ -4,17 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\InterviewSchedule;
 use App\Models\Application;
-use App\Enums\UserRole;
 use Illuminate\Http\Request;
 
 class InterviewScheduleController extends Controller
 {
-    /**
-     * 面接日程一覧
-     */
     public function index(Request $request, Application $application)
     {
-        $this->authorizeApplication($request, $application);
+        $this->authorize('view', $application);
 
         $schedules = $application->interviewSchedules()
             ->orderBy('scheduled_at', 'asc')
@@ -23,12 +19,9 @@ class InterviewScheduleController extends Controller
         return response()->json(['schedules' => $schedules]);
     }
 
-    /**
-     * 面接日程作成（企業のみ）
-     */
     public function store(Request $request, Application $application)
     {
-        $this->authorizeCompanyOwnsApplication($request, $application);
+        $this->authorize('updateStatus', $application);
 
         $validated = $request->validate([
             'scheduled_at' => ['required', 'date', 'after:now'],
@@ -45,12 +38,9 @@ class InterviewScheduleController extends Controller
         return response()->json(['schedule' => $schedule], 201);
     }
 
-    /**
-     * 面接日程更新（企業のみ）
-     */
     public function update(Request $request, InterviewSchedule $schedule)
     {
-        $this->authorizeCompanyOwnsSchedule($request, $schedule);
+        $this->authorize('manage', $schedule);
 
         $validated = $request->validate([
             'scheduled_at' => ['sometimes', 'date', 'after:now'],
@@ -69,12 +59,9 @@ class InterviewScheduleController extends Controller
         return response()->json(['schedule' => $schedule->fresh()]);
     }
 
-    /**
-     * iCalダウンロード（応募者または企業のみ）
-     */
     public function exportIcal(Request $request, InterviewSchedule $schedule)
     {
-        $this->authorizeSchedule($request, $schedule);
+        $this->authorize('view', $schedule);
 
         $app = $schedule->application()->with(['job.company', 'user'])->first();
         $jobTitle = $app?->job?->title ?? '面接';
@@ -104,18 +91,11 @@ class InterviewScheduleController extends Controller
         ]);
     }
 
-    /**
-     * 面接日程確定（求職者のみ）
-     */
     public function confirm(Request $request, InterviewSchedule $schedule)
     {
-        $user = $request->user();
+        $this->authorize('view', $schedule);
 
-        if ($user->role !== UserRole::JobSeeker) {
-            abort(403, 'Unauthorized');
-        }
-
-        if ($schedule->application->user_id !== $user->id) {
+        if (!$request->user()->isJobSeeker()) {
             abort(403, 'Unauthorized');
         }
 
@@ -130,74 +110,11 @@ class InterviewScheduleController extends Controller
         ]);
     }
 
-    // ---------------------------------------------------------------
-    // 認可ヘルパー
-    // ---------------------------------------------------------------
-
-    /**
-     * 応募に対して求職者または企業のどちらかであることを確認
-     */
-    private function authorizeApplication(Request $request, Application $application): void
-    {
-        $user = $request->user();
-
-        if ($user->role === UserRole::JobSeeker) {
-            if ($application->user_id !== $user->id) {
-                abort(403, 'Unauthorized');
-            }
-        } elseif ($user->role === UserRole::Company) {
-            if ($application->job->company_id !== $user->company_id) {
-                abort(403, 'Unauthorized');
-            }
-        } else {
-            abort(403, 'Unauthorized');
-        }
-    }
-
-    /**
-     * 企業が応募の求人を所有していることを確認
-     */
-    private function authorizeCompanyOwnsApplication(Request $request, Application $application): void
-    {
-        $user = $request->user();
-
-        if ($user->role !== UserRole::Company) {
-            abort(403, 'Unauthorized');
-        }
-
-        if ($application->job->company_id !== $user->company_id) {
-            abort(403, 'Unauthorized');
-        }
-    }
-
-    /**
-     * スケジュールに対して求職者または企業のどちらかであることを確認
-     */
-    private function authorizeSchedule(Request $request, InterviewSchedule $schedule): void
-    {
-        $this->authorizeApplication($request, $schedule->application);
-    }
-
-    /**
-     * 企業がスケジュールの求人を所有していることを確認
-     */
-    private function authorizeCompanyOwnsSchedule(Request $request, InterviewSchedule $schedule): void
-    {
-        $this->authorizeCompanyOwnsApplication($request, $schedule->application);
-    }
-
-    /**
-     * iCalendarのTEXT値をエスケープ
-     */
     private function escapeIcal(string $value): string
     {
-        // バックスラッシュ → \\
         $value = str_replace('\\', '\\\\', $value);
-        // セミコロン → \;
         $value = str_replace(';', '\\;', $value);
-        // カンマ → \,
         $value = str_replace(',', '\\,', $value);
-        // 改行 → \n（CRLFインジェクション防止）
         $value = str_replace(["\r\n", "\r", "\n"], '\\n', $value);
 
         return $value;

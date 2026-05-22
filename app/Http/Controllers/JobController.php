@@ -652,10 +652,8 @@ class JobController extends Controller
     // 企業: 求人複製
     public function duplicate(Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $exclude = ['id', 'created_at', 'updated_at', 'status', 'ng_word_flagged',
                      'scheduled_publish_at', 'expires_at', 'views_count', 'applications_count'];
@@ -697,10 +695,8 @@ class JobController extends Controller
     // 企業: 求人更新
     public function update(Request $request, Job $job, NgWordService $ngWordService)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $request->validate([
             // 職業安定法 必須項目
@@ -1056,10 +1052,8 @@ class JobController extends Controller
     // 企業: ペルソナ取得
     public function getPersona(Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         // 課金チェック（求人の日額予算 > 0）
         if (($job->daily_budget ?? 0) <= 0) {
@@ -1073,10 +1067,8 @@ class JobController extends Controller
     // 企業: ペルソナ保存
     public function savePersona(Request $request, Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         if (($job->daily_budget ?? 0) <= 0) {
             return response()->json(['message' => 'ペルソナ設定は有料プランの機能です。この求人の日額予算を設定してください。'], 403);
@@ -1140,10 +1132,8 @@ class JobController extends Controller
     // 企業: ペルソナ削除
     public function deletePersona(Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         JobPersona::where('job_id', $job->id)->delete();
 
@@ -1288,10 +1278,8 @@ class JobController extends Controller
     // 企業: 求人削除（ソフトデリート — 課金記録を保持）
     public function destroy(Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         // 公開中の求人は削除不可（課金逃れ防止）
         if ($job->status->value === 'active') {
@@ -1314,10 +1302,8 @@ class JobController extends Controller
     // 企業: 求人写真アップロード（最大5枚）
     public function uploadPhoto(Request $request, Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         // 有料チェック（求人の日額予算 > 0）
         if (($job->daily_budget ?? 0) <= 0) {
@@ -1350,10 +1336,8 @@ class JobController extends Controller
     // 企業: 求人写真削除
     public function deletePhoto(Job $job, JobPhoto $photo)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         if ($photo->job_id !== $job->id) {
             return response()->json(['message' => 'Not found'], 404);
@@ -1368,10 +1352,8 @@ class JobController extends Controller
     // 企業: 求人写真一覧
     public function photos(Job $job)
     {
+        $this->authorize('manage', $job);
         $company = Auth::user()->company;
-        if ($job->company_id !== $company->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         return response()->json($job->photos);
     }

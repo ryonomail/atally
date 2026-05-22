@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 
 class ResumeController extends Controller
 {
-    /**
-     * 履歴書一覧
-     */
     public function index(Request $request)
     {
         $resumes = $request->user()->resumes()
@@ -20,9 +17,6 @@ class ResumeController extends Controller
         return response()->json(['resumes' => $resumes]);
     }
 
-    /**
-     * 親プロフィールから子履歴書を作成
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -44,7 +38,6 @@ class ResumeController extends Controller
 
         $type = $validated['type'] ?? 'resume';
 
-        // CV作成時、プロフィールのデータをcontentに自動セット
         if ($type === 'cv' && empty($validated['content'])) {
             $validated['content'] = [
                 'career_summary' => $profile->self_pr ?? '',
@@ -69,24 +62,18 @@ class ResumeController extends Controller
         ], 201);
     }
 
-    /**
-     * 履歴書詳細
-     */
     public function show(Request $request, Resume $resume)
     {
-        $this->authorizeResume($request, $resume);
+        $this->authorize('manage', $resume);
 
         return response()->json([
             'resume' => $resume->load('profile'),
         ]);
     }
 
-    /**
-     * 履歴書更新
-     */
     public function update(Request $request, Resume $resume)
     {
-        $this->authorizeResume($request, $resume);
+        $this->authorize('manage', $resume);
 
         $validated = $request->validate([
             'title' => ['nullable', 'string', 'max:255'],
@@ -100,14 +87,12 @@ class ResumeController extends Controller
             'scout_enabled' => ['nullable', 'boolean'],
         ]);
 
-        // 空文字は null に変換
         foreach (['motivation', 'desired_salary', 'desired_location', 'available_date'] as $field) {
             if (array_key_exists($field, $validated) && $validated[$field] === '') {
                 $validated[$field] = null;
             }
         }
 
-        // デフォルト設定の場合、他のデフォルトを解除
         if (isset($validated['is_default']) && $validated['is_default']) {
             $request->user()->resumes()
                 ->where('id', '!=', $resume->id)
@@ -121,23 +106,17 @@ class ResumeController extends Controller
         ]);
     }
 
-    /**
-     * 履歴書削除
-     */
     public function destroy(Request $request, Resume $resume)
     {
-        $this->authorizeResume($request, $resume);
+        $this->authorize('manage', $resume);
         $resume->delete();
 
         return response()->json(['message' => '削除しました。']);
     }
 
-    /**
-     * 履歴書から職務経歴書を作成
-     */
     public function toCv(Request $request, Resume $resume)
     {
-        $this->authorizeResume($request, $resume);
+        $this->authorize('manage', $resume);
 
         $profile = $resume->profile;
 
@@ -166,12 +145,9 @@ class ResumeController extends Controller
         ], 201);
     }
 
-    /**
-     * 履歴書を複製
-     */
     public function duplicate(Request $request, Resume $resume)
     {
-        $this->authorizeResume($request, $resume);
+        $this->authorize('manage', $resume);
 
         $newResume = $resume->replicate();
         $newResume->title = $resume->title . ' (コピー)';
@@ -183,23 +159,13 @@ class ResumeController extends Controller
         ], 201);
     }
 
-    /**
-     * スナップショットデータ取得（PDFプレビュー用）
-     */
     public function preview(Request $request, Resume $resume)
     {
-        $this->authorizeResume($request, $resume);
+        $this->authorize('manage', $resume);
         $resume->load('profile');
 
         return response()->json([
             'snapshot' => $resume->toSnapshotData(),
         ]);
-    }
-
-    private function authorizeResume(Request $request, Resume $resume): void
-    {
-        if ($resume->user_id !== $request->user()->id) {
-            abort(403, 'この履歴書にアクセスする権限がありません。');
-        }
     }
 }
