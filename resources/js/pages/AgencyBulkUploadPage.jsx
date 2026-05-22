@@ -2,9 +2,9 @@ import React, { useState, useRef } from 'react';
 import api from '../api';
 import { useAuth } from '../hooks/useAuth';
 
-const CSV_TEMPLATE = 'title,description,requirements,salary_min,salary_max,salary_type,salary_details,raise_frequency,bonus,location,office_address,employment_type,work_hours,remote_policy,overtime_average,contract_period,holidays,holiday_details,allowances,probation_period,probation_conditions,selection_process,required_documents,estimated_timeline,company_culture,work_environment,number_of_employees,founded_year,industry,appeal_points,notes,allow_referral,referral_fee_type,referral_fee,referral_conditions,persona_age_min,persona_age_max,persona_experience_min,persona_experience_max,persona_target_skills,persona_target_locations,persona_target_job_types,persona_target_employment_status,persona_target_education,persona_target_industries,persona_target_salary_min,persona_target_salary_max,persona_target_certifications,persona_target_management_experience,persona_max_company_changes,persona_personality_traits,persona_ng_conditions,persona_ideal_candidate_description,persona_boost_factor\n"Webエンジニア","Reactを用いたフロントエンド開発を担当。新規機能の設計・実装・コードレビューまで幅広く携わっていただきます。","React経験3年以上、TypeScript実務経験",5000000,8000000,"年収","月給制（固定残業20h含む）","年1回（4月）","年2回（6月・12月）","東京都渋谷区","渋谷駅徒歩5分","正社員","9:00〜18:00（フレックス制あり）","フルリモート可","月10時間程度","期間の定めなし","完全週休2日制（土日祝）","年末年始・夏季休暇・慶弔休暇","交通費全額支給、住宅手当","3ヶ月","本採用と同条件","書類選考→一次面接→最終面接","履歴書・職務経歴書","2週間程度","フラットな組織、1on1面談あり","モダンな開発環境、最新MacBook支給","50名","2020","IT・Web","自社プロダクト開発に集中できる環境","未経験の方も歓迎",true,"percentage",30,"成果報酬型。入社後3ヶ月の返金規定あり",25,35,3,10,"React;TypeScript;Laravel","東京都;神奈川県","フロントエンド;バックエンド","在職中;離職中","大卒以上","IT・Web;SaaS","5000000","8000000","TOEIC700点以上;AWS認定","あり",3,"主体性;チームワーク","短期離職が多い方","モダンな技術スタックに興味があり、チームで協力して開発を進められる方",1.5';
+const CSV_TEMPLATE = '求人タイトル,仕事内容,応募要件,職種カテゴリ（大）,職種カテゴリ（小）,採用区分,給与下限（円）,給与上限（円）,給与形態,給与補足,昇給,賞与,都道府県,市区町村,勤務地,詳細住所,最寄り駅,アクセス,転勤の有無,雇用形態,勤務時間,リモート,残業時間,契約期間,休日,休日詳細,手当,試用期間,試用期間条件,選考フロー,必要書類,選考期間,社風,職場環境,従業員数,設立年,業種,アピールポイント,備考,紹介許可,手数料タイプ,手数料,紹介条件,ペルソナ_対象年齢下限,ペルソナ_対象年齢上限,ペルソナ_経験年数下限,ペルソナ_経験年数上限,ペルソナ_求めるスキル,ペルソナ_対象勤務地,ペルソナ_対象職種,ペルソナ_就業状態,ペルソナ_学歴条件,ペルソナ_対象業界,ペルソナ_希望年収下限,ペルソナ_希望年収上限,ペルソナ_求める資格,ペルソナ_マネジメント経験,ペルソナ_最大転職回数,ペルソナ_人物像,ペルソナ_NG条件,ペルソナ_理想の候補者,ペルソナ_ブースト係数\n"Webエンジニア","Reactを用いたフロントエンド開発を担当。新規機能の設計・実装・コードレビューまで幅広く携わっていただきます。","React経験3年以上、TypeScript実務経験","IT・Web・通信","Webエンジニア","中途",5000000,8000000,"年収","月給制（固定残業20h含む）","年1回（4月）","年2回（6月・12月）","東京都","渋谷区","東京都渋谷区","渋谷駅徒歩5分","JR山手線 渋谷駅","渋谷駅 徒歩5分","転勤なし","正社員","9:00〜18:00（フレックス制あり）","フルリモート可","月10時間程度","期間の定めなし","完全週休2日制（土日祝）","年末年始・夏季休暇・慶弔休暇","交通費全額支給、住宅手当","3ヶ月","本採用と同条件","書類選考→一次面接→最終面接","履歴書・職務経歴書","2週間程度","フラットな組織、1on1面談あり","モダンな開発環境、最新MacBook支給","50名","2020","IT・Web","自社プロダクト開発に集中できる環境","未経験の方も歓迎",true,"percentage",30,"成果報酬型。入社後3ヶ月の返金規定あり",25,35,3,10,"React;TypeScript;Laravel","東京都;神奈川県","フロントエンド;バックエンド","在職中;離職中","大卒以上","IT・Web;SaaS","5000000","8000000","TOEIC700点以上;AWS認定","あり",3,"主体性;チームワーク","短期離職が多い方","モダンな技術スタックに興味があり、チームで協力して開発を進められる方",1.5';
 
-const REQUIRED_FIELDS = ['title', 'description'];
+const REQUIRED_FIELDS = ['求人タイトル', '仕事内容', 'title', 'description'];
 
 /**
  * Simple CSV parser that handles quoted fields with commas and newlines.
@@ -233,9 +233,12 @@ export default function AgencyBulkUploadPage() {
                             </thead>
                             <tbody>
                                 {[
-                                    ['基本情報', 'title', '求人タイトル ★必須', 'Webエンジニア'],
-                                    ['', 'description', '仕事内容 ★必須', 'Reactを用いた開発...'],
-                                    ['', 'requirements', '応募要件', 'React経験3年以上'],
+                                    ['基本情報', '求人タイトル', '求人タイトル ★必須', 'Webエンジニア'],
+                                    ['', '仕事内容', '仕事内容 ★必須', 'Reactを用いた開発...'],
+                                    ['', '応募要件', '応募要件', 'React経験3年以上'],
+                                    ['', '職種カテゴリ（大）', '職種カテゴリ（大分類）', 'IT・Web・通信'],
+                                    ['', '職種カテゴリ（小）', '職種カテゴリ（小分類）', 'Webエンジニア'],
+                                    ['', '採用区分', '中途 / 新卒 / 中途・新卒', '中途'],
                                     ['給与', 'salary_min', '下限年収（円）', '5000000'],
                                     ['', 'salary_max', '上限年収（円）', '8000000'],
                                     ['', 'salary_type', '給与形態', '年収 / 月給 / 時給'],

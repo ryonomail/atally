@@ -427,19 +427,90 @@ class AgencyController extends Controller
             fclose($handle);
             return response()->json(['message' => 'CSVにデータ行がありません'], 422);
         }
-        $headers = array_map('trim', $headerRow);
+        // 日本語ヘッダー → 英語フィールド名マッピング（後方互換: 英語ヘッダーもそのまま動く）
+        $headerMap = [
+            '求人タイトル'          => 'title',
+            '仕事内容'              => 'description',
+            '応募要件'              => 'requirements',
+            '職種カテゴリ（大）'    => 'job_category_major',
+            '職種カテゴリ（小）'    => 'job_category_minor',
+            '採用区分'              => 'application_type',
+            '給与下限（円）'        => 'salary_min',
+            '給与上限（円）'        => 'salary_max',
+            '給与形態'              => 'salary_type',
+            '給与補足'              => 'salary_details',
+            '昇給'                  => 'raise_frequency',
+            '賞与'                  => 'bonus',
+            '都道府県'              => 'prefecture',
+            '市区町村'              => 'city',
+            '勤務地'                => 'location',
+            '詳細住所'              => 'office_address',
+            '最寄り駅'              => 'nearest_station',
+            'アクセス'              => 'access_info',
+            '転勤の有無'            => 'transfer_policy',
+            '雇用形態'              => 'employment_type',
+            '勤務時間'              => 'work_hours',
+            'リモート'              => 'remote_policy',
+            '残業時間'              => 'overtime_average',
+            '契約期間'              => 'contract_period',
+            '休日'                  => 'holidays',
+            '休日詳細'              => 'holiday_details',
+            '手当'                  => 'allowances',
+            '試用期間'              => 'probation_period',
+            '試用期間条件'          => 'probation_conditions',
+            '選考フロー'            => 'selection_process',
+            '必要書類'              => 'required_documents',
+            '選考期間'              => 'estimated_timeline',
+            '社風'                  => 'company_culture',
+            '職場環境'              => 'work_environment',
+            '従業員数'              => 'number_of_employees',
+            '設立年'                => 'founded_year',
+            '業種'                  => 'industry',
+            'アピールポイント'      => 'appeal_points',
+            '備考'                  => 'notes',
+            '紹介許可'              => 'allow_referral',
+            '手数料タイプ'          => 'referral_fee_type',
+            '手数料'                => 'referral_fee',
+            '紹介条件'              => 'referral_conditions',
+            'ペルソナ_対象年齢下限'       => 'persona_age_min',
+            'ペルソナ_対象年齢上限'       => 'persona_age_max',
+            'ペルソナ_経験年数下限'       => 'persona_experience_min',
+            'ペルソナ_経験年数上限'       => 'persona_experience_max',
+            'ペルソナ_求めるスキル'       => 'persona_target_skills',
+            'ペルソナ_対象勤務地'         => 'persona_target_locations',
+            'ペルソナ_対象職種'           => 'persona_target_job_types',
+            'ペルソナ_就業状態'           => 'persona_target_employment_status',
+            'ペルソナ_学歴条件'           => 'persona_target_education',
+            'ペルソナ_対象業界'           => 'persona_target_industries',
+            'ペルソナ_希望年収下限'       => 'persona_target_salary_min',
+            'ペルソナ_希望年収上限'       => 'persona_target_salary_max',
+            'ペルソナ_求める資格'         => 'persona_target_certifications',
+            'ペルソナ_マネジメント経験'   => 'persona_target_management_experience',
+            'ペルソナ_最大転職回数'       => 'persona_max_company_changes',
+            'ペルソナ_人物像'             => 'persona_personality_traits',
+            'ペルソナ_NG条件'             => 'persona_ng_conditions',
+            'ペルソナ_理想の候補者'       => 'persona_ideal_candidate_description',
+            'ペルソナ_ブースト係数'       => 'persona_boost_factor',
+        ];
+
+        // 日本語ヘッダーを英語フィールド名に変換（英語はそのまま通す）
+        $headers = array_map(function ($h) use ($headerMap) {
+            $h = trim($h);
+            return $headerMap[$h] ?? $h;
+        }, $headerRow);
 
         $requiredHeaders = ['title', 'description'];
         foreach ($requiredHeaders as $h) {
             if (!in_array($h, $headers)) {
                 fclose($handle);
-                return response()->json(['message' => "必須カラム '{$h}' がCSVヘッダーにありません"], 422);
+                return response()->json(['message' => "必須カラム「求人タイトル（title）」と「仕事内容（description）」が必要です"], 422);
             }
         }
 
         $allowedFields = [
             // 基本情報
             'title', 'description', 'requirements',
+            'job_category_major', 'job_category_minor', 'application_type',
             // 給与
             'salary_min', 'salary_max', 'salary_type', 'salary_details', 'raise_frequency', 'bonus',
             // 勤務条件
