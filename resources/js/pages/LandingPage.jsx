@@ -210,9 +210,6 @@ export default function LandingPage() {
                         <Link to="/resumes/guest" className="btn btn-primary btn-lg" style={{ gap: 8 }}>
                             📝 履歴書を無料で作る
                         </Link>
-                        <Link to="/jobs" className="btn btn-secondary btn-lg">
-                            求人を探す →
-                        </Link>
                     </div>
                     <p style={{ marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                         登録不要・完全無料 · 作成後そのまま47万件の求人に応募できます

@@ -409,43 +409,12 @@ export default function GuestResumeEditorPage() {
                             </div>
                         </div>
 
-                        {/* SNS登録ボタン */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
-                            <SnsButton
-                                icon="G"
-                                color="#4285F4"
-                                label="Googleで登録（30秒）"
-                                href="/auth/google/redirect"
-                                comingSoon
-                            />
-                            <SnsButton
-                                icon=""
-                                color="#06C755"
-                                label="LINEで登録"
-                                href="/auth/line/redirect"
-                                comingSoon
-                            />
-                            <SnsButton
-                                icon=""
-                                color="#000000"
-                                label="Appleで登録"
-                                href="/auth/apple/redirect"
-                                comingSoon
-                            />
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
-                            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-                            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>またはメールで登録</span>
-                            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-                        </div>
-
                         <Link
                             to="/register"
-                            className="btn btn-secondary"
+                            className="btn btn-primary btn-lg"
                             style={{ display: 'block', textAlign: 'center', width: '100%', marginBottom: 'var(--space-md)' }}
                         >
-                            メールアドレスで登録
+                            無料登録して応募する
                         </Link>
 
                         <p style={{ textAlign: 'center', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
@@ -459,41 +428,3 @@ export default function GuestResumeEditorPage() {
     );
 }
 
-function SnsButton({ icon, color, label, href, comingSoon }) {
-    const content = (
-        <div style={{
-            display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
-            padding: 'var(--space-sm) var(--space-lg)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--color-bg-surface)',
-            cursor: comingSoon ? 'not-allowed' : 'pointer',
-            opacity: comingSoon ? 0.6 : 1,
-            transition: 'all var(--transition-fast)',
-            position: 'relative',
-        }}>
-            <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: color, display: 'flex', alignItems: 'center',
-                justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14,
-                flexShrink: 0,
-            }}>
-                {icon}
-            </div>
-            <span style={{ flex: 1, fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{label}</span>
-            {comingSoon && (
-                <span style={{
-                    fontSize: 10, padding: '2px 6px',
-                    background: 'rgba(245,158,11,0.15)',
-                    color: '#d97706', borderRadius: 'var(--radius-sm)',
-                    fontWeight: 600,
-                }}>
-                    近日公開
-                </span>
-            )}
-        </div>
-    );
-
-    if (comingSoon) return <div>{content}</div>;
-    return <a href={href} style={{ textDecoration: 'none', color: 'inherit' }}>{content}</a>;
-}
