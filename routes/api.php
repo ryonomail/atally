@@ -152,7 +152,6 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/payment/method', [PaymentController::class , 'getPaymentMethod']);
             Route::delete('/payment/method', [PaymentController::class , 'deletePaymentMethod']);
             Route::get('/payment/check', [PaymentController::class , 'checkPaymentReady']);
-            Route::post('/payment/charge-job-activation', [PaymentController::class , 'chargeJobActivation']);
 
             // エージェント: 審査前も利用可能（ダッシュボード・ライセンス提出）
             Route::post('/agency/license', [AgencyController::class , 'uploadLicense']);

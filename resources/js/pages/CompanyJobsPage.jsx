@@ -413,7 +413,7 @@ export default function CompanyJobsPage() {
             (!editingJob || editingJob.status !== 'active');
         const budget = parseFloat(form.daily_budget) || 0;
 
-        if (isActivating && budget >= 50) {
+        if (isActivating && budget >= 500) {
             const confirmed = await new Promise((resolve) => {
                 setConfirmDialog({
                     title: '求人を公開・決済確認',
