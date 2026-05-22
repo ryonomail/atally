@@ -61,8 +61,8 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
     Route::post('/logout', [AuthController::class , 'logout']);
     Route::get('/me', [AuthController::class , 'me']);
 
-    // 通報（スパム防止: 5回/分）
-    Route::middleware('throttle:5,1')->post('/reports', [ReportController::class , 'store']);
+    // 通報（スパム防止: 5回/分）— MVP期間中は無効化（管理者が手動対応）
+    // Route::middleware('throttle:5,1')->post('/reports', [ReportController::class , 'store']);
 
     // 設定（全認証ユーザー共通）
     Route::put('/settings/password', [SettingsController::class , 'updatePassword']);
@@ -110,18 +110,19 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/my-applications', [ApplicationController::class , 'myApplications']);
             Route::get('/my-applications/job-ids', [ApplicationController::class , 'myApplicationJobIds']);
             Route::post('/jobs/{job}/apply', [ApplicationController::class , 'apply']);
-            Route::post('/applications/{application}/accept-scout', [ApplicationController::class , 'acceptScout']);
-            Route::post('/applications/{application}/decline-scout', [ApplicationController::class , 'declineScout']);
+            // MVP期間中は無効化（スカウト機能は後フェーズ）
+            // Route::post('/applications/{application}/accept-scout', [ApplicationController::class , 'acceptScout']);
+            // Route::post('/applications/{application}/decline-scout', [ApplicationController::class , 'declineScout']);
 
             // 求人保存（ブックマーク）
             Route::get('/saved-jobs', [SavedJobController::class , 'index']);
             Route::post('/saved-jobs/{job}', [SavedJobController::class , 'store']);
             Route::delete('/saved-jobs/{job}', [SavedJobController::class , 'destroy']);
 
-            // 求人アラート
-            Route::get('/job-alerts', [JobAlertController::class , 'index']);
-            Route::post('/job-alerts', [JobAlertController::class , 'store']);
-            Route::delete('/job-alerts/{alert}', [JobAlertController::class , 'destroy']);
+            // 求人アラート — MVP期間中は無効化（後フェーズ）
+            // Route::get('/job-alerts', [JobAlertController::class , 'index']);
+            // Route::post('/job-alerts', [JobAlertController::class , 'store']);
+            // Route::delete('/job-alerts/{alert}', [JobAlertController::class , 'destroy']);
         }
         );
 
@@ -139,12 +140,12 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::put('/company/budget', [CompanyController::class , 'updateBudget']);
             Route::get('/company/billing-history', [CompanyController::class , 'billingHistory']);
 
-            // チーム管理
-            Route::get('/company/team', [TeamController::class, 'index']);
-            Route::post('/company/team/invite', [TeamController::class, 'invite']);
-            Route::put('/company/team/{user}', [TeamController::class, 'updateRole']);
-            Route::delete('/company/team/{user}', [TeamController::class, 'removeMember']);
-            Route::delete('/company/team/invitations/{invitation}', [TeamController::class, 'cancelInvitation']);
+            // チーム管理 — MVP期間中は無効化（1社1アカウントで十分）
+            // Route::get('/company/team', [TeamController::class, 'index']);
+            // Route::post('/company/team/invite', [TeamController::class, 'invite']);
+            // Route::put('/company/team/{user}', [TeamController::class, 'updateRole']);
+            // Route::delete('/company/team/{user}', [TeamController::class, 'removeMember']);
+            // Route::delete('/company/team/invitations/{invitation}', [TeamController::class, 'cancelInvitation']);
 
             // 決済（カード登録）
             Route::post('/payment/setup-intent', [PaymentController::class , 'createSetupIntent']);
@@ -178,18 +179,18 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
                     Route::delete('/campaigns/{campaign}/jobs', [CampaignController::class , 'removeJobs']);
                     Route::post('/campaigns/{campaign}/redistribute', [CampaignController::class , 'redistribute']);
 
-                    // スカウト（候補者全検索は制限付き、一括送信は厳格に制限）
-                    Route::middleware('throttle:30,1')->get('/scout/search', [ScoutController::class , 'search']);
-                    Route::middleware('throttle:20,1')->post('/scout', [ApplicationController::class , 'scout']);
-                    Route::middleware('throttle:5,1')->post('/scout/bulk', [ScoutController::class , 'bulkScout']);
+                    // スカウト — MVP期間中は無効化（後フェーズ）
+                    // Route::middleware('throttle:30,1')->get('/scout/search', [ScoutController::class , 'search']);
+                    // Route::middleware('throttle:20,1')->post('/scout', [ApplicationController::class , 'scout']);
+                    // Route::middleware('throttle:5,1')->post('/scout/bulk', [ScoutController::class , 'bulkScout']);
 
-                    // 順位シミュレーター
-                    Route::post('/ranking/simulate', [JobController::class , 'simulateRanking']);
+                    // 順位シミュレーター — MVP期間中は無効化（キャンペーンで運用可能）
+                    // Route::post('/ranking/simulate', [JobController::class , 'simulateRanking']);
 
-                    // ペルソナ設定
-                    Route::get('/jobs/{job}/persona', [JobController::class , 'getPersona']);
-                    Route::put('/jobs/{job}/persona', [JobController::class , 'savePersona']);
-                    Route::delete('/jobs/{job}/persona', [JobController::class , 'deletePersona']);
+                    // ペルソナ設定 — MVP期間中は無効化（後フェーズ）
+                    // Route::get('/jobs/{job}/persona', [JobController::class , 'getPersona']);
+                    // Route::put('/jobs/{job}/persona', [JobController::class , 'savePersona']);
+                    // Route::delete('/jobs/{job}/persona', [JobController::class , 'deletePersona']);
 
                     // 求人写真
                     Route::get('/jobs/{job}/photos', [JobController::class , 'photos']);
@@ -210,15 +211,18 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
                     Route::middleware('throttle:10,60')->get('/jobs/{job}/applications-csv', [ApplicationController::class , 'exportApplicationsCsv']);
 
                     // エージェント機能（審査済み必須）
-                    Route::get('/agency/revenue-analytics', [AgencyController::class , 'revenueAnalytics']);
+                    // 収益アナリティクス — MVP期間中は無効化（後フェーズ）
+                    // Route::get('/agency/revenue-analytics', [AgencyController::class , 'revenueAnalytics']);
                     Route::get('/agency/job-database', [AgencyController::class , 'jobDatabase']);
                     Route::post('/agency/bulk-upload', [AgencyController::class , 'bulkUpload']);
-                    Route::get('/agency/candidates', [AgencyController::class , 'searchCandidates']);
-                    Route::post('/agency/referrals/{job}', [AgencyController::class , 'createReferral']);
-                    Route::get('/agency/referrals/received', [AgencyController::class , 'receivedReferrals']);
-                    Route::get('/agency/referrals/sent', [AgencyController::class , 'sentReferrals']);
-                    Route::put('/agency/referrals/{referral}/status', [AgencyController::class , 'updateReferralStatus']);
-                    Route::post('/agency/referrals/{referral}/placement', [AgencyController::class , 'reportPlacement']);
+                    // 候補者検索 — MVP期間中は無効化（スカウトと一体、後フェーズ）
+                    // Route::get('/agency/candidates', [AgencyController::class , 'searchCandidates']);
+                    // 紹介成功報酬管理 — MVP期間中は無効化（別ビジネスモデル、後フェーズ）
+                    // Route::post('/agency/referrals/{job}', [AgencyController::class , 'createReferral']);
+                    // Route::get('/agency/referrals/received', [AgencyController::class , 'receivedReferrals']);
+                    // Route::get('/agency/referrals/sent', [AgencyController::class , 'sentReferrals']);
+                    // Route::put('/agency/referrals/{referral}/status', [AgencyController::class , 'updateReferralStatus']);
+                    // Route::post('/agency/referrals/{referral}/placement', [AgencyController::class , 'reportPlacement']);
 
                     // エージェント クライアント管理
                     Route::get('/agency/clients', [AgencyClientController::class , 'index']);
@@ -232,17 +236,16 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
 
             /*
          |----------------------------------------------------------------------
-         | 共通: 面接日程
+         | 共通: 面接日程 — MVP期間中は無効化（メッセージで代用）
          |----------------------------------------------------------------------
          */
-            Route::middleware('active.company')->group(function () {
-            Route::get('/applications/{application}/schedules', [InterviewScheduleController::class , 'index']);
-            Route::post('/applications/{application}/schedules', [InterviewScheduleController::class , 'store']);
-            Route::put('/schedules/{schedule}', [InterviewScheduleController::class , 'update']);
-            Route::put('/schedules/{schedule}/confirm', [InterviewScheduleController::class , 'confirm']);
-            Route::get('/schedules/{schedule}/ical', [InterviewScheduleController::class , 'exportIcal']);
-        }
-        );
+            // Route::middleware('active.company')->group(function () {
+            //     Route::get('/applications/{application}/schedules', [InterviewScheduleController::class , 'index']);
+            //     Route::post('/applications/{application}/schedules', [InterviewScheduleController::class , 'store']);
+            //     Route::put('/schedules/{schedule}', [InterviewScheduleController::class , 'update']);
+            //     Route::put('/schedules/{schedule}/confirm', [InterviewScheduleController::class , 'confirm']);
+            //     Route::get('/schedules/{schedule}/ical', [InterviewScheduleController::class , 'exportIcal']);
+            // });
 
         // ステータス更新
         Route::put('/applications/bulk-status', [ApplicationController::class , 'bulkUpdateStatus']);
