@@ -47,7 +47,8 @@ export default function RegisterPage() {
         setError('');
         try {
             await register(form);
-            navigate('/verify-email', { state: { email: form.email } });
+            const returnJob = localStorage.getItem('atally_return_job');
+            navigate('/verify-email', { state: { email: form.email, returnJob: returnJob || null } });
         } catch (err) {
             const msg = err.response?.data?.message || err.response?.data?.errors;
             setError(typeof msg === 'string' ? msg : '登録に失敗しました。入力内容をご確認ください。');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const STORAGE_KEY = 'guest_resume_draft';
 
@@ -21,6 +21,16 @@ const defaultForm = {
 
 export default function GuestResumeEditorPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const fromJob = params.get('from_job');
+        if (fromJob && /^\d+$/.test(fromJob)) {
+            localStorage.setItem('atally_return_job', fromJob);
+        }
+    }, [location.search]);
+
     const [form, setForm] = useState(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);

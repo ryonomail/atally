@@ -6,6 +6,7 @@ export default function VerifyEmailPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email || '';
+    const returnJob = location.state?.returnJob || null;
 
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
@@ -20,7 +21,8 @@ export default function VerifyEmailPage() {
         setSuccess('');
         try {
             await api.post('/verify-email', { email, code });
-            navigate('/dashboard');
+            localStorage.removeItem('atally_return_job');
+            navigate(returnJob ? `/jobs/${returnJob}` : '/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || '確認に失敗しました。');
         } finally {

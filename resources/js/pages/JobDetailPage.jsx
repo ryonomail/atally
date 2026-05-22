@@ -616,7 +616,7 @@ export default function JobDetailPage() {
                             </div>
                         ) : !user && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
-                                <button className="btn btn-primary btn-lg" onClick={() => navigate('/resumes/guest')}>
+                                <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)}>
                                     📝 履歴書を作って応募する
                                 </button>
                                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
@@ -1063,7 +1063,7 @@ export default function JobDetailPage() {
                             ))}
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <button className="btn btn-primary btn-lg" onClick={() => navigate('/resumes/guest')}>
+                            <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)}>
                                 📝 履歴書を無料で作る
                             </button>
                             <button className="btn btn-secondary" onClick={() => navigate('/login')}>
