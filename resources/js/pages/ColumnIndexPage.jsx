@@ -4,11 +4,29 @@ import SEO from '../components/SEO';
 import { columnList } from '../data/columns';
 
 export default function ColumnIndexPage() {
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'お役立ちコラム | 履歴書・転職・志望動機の書き方 | Atally',
+        description: '履歴書の書き方、志望動機の書き方、職務経歴書の書き方など転職・就職活動に役立つコラムを掲載。',
+        url: `${window.location.origin}/column`,
+        mainEntity: {
+            '@type': 'ItemList',
+            itemListElement: columnList.map((col, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                url: `${window.location.origin}/column/${col.slug}`,
+                name: col.title,
+            })),
+        },
+    };
+
     return (
         <div className="page container" style={{ maxWidth: 860, paddingTop: 'var(--space-2xl)', paddingBottom: 'var(--space-2xl)' }}>
             <SEO
                 title="お役立ちコラム | 履歴書・転職・志望動機の書き方 | Atally"
                 description="履歴書の書き方、志望動機の書き方、職務経歴書の書き方など転職・就職活動に役立つコラムを掲載。求人検索・履歴書作成ツールと合わせてご活用ください。"
+                jsonLd={jsonLd}
             />
             <div style={{ marginBottom: 'var(--space-xl)' }}>
                 <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, marginBottom: 'var(--space-xs)' }}>
