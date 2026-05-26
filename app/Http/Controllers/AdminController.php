@@ -200,6 +200,61 @@ class AdminController extends Controller
     }
 
     /**
+     * 求人審査: 一括承認/却下
+     */
+    public function bulkReviewJobs(Request $request)
+    {
+        $validated = $request->validate([
+            'job_ids'    => ['required', 'array', 'min:1', 'max:200'],
+            'job_ids.*'  => ['required', 'integer', 'exists:jobs,id'],
+            'status'     => ['required', 'in:active,suspended'],
+        ]);
+
+        $jobs = Job::whereIn('id', $validated['job_ids'])
+            ->where('status', 'pending_review')
+            ->with('company.user')
+            ->get();
+
+        DB::transaction(function () use ($jobs, $validated) {
+            foreach ($jobs as $job) {
+                $job->update([
+                    'status'       => $validated['status'],
+                    'published_at' => $validated['status'] === 'active' ? now() : null,
+                ]);
+
+                if ($validated['status'] === 'active') {
+                    GoogleIndexingService::notifyJobPublished($job->id);
+                }
+
+                AdminAuditLog::log(auth()->id(), 'job.' . $validated['status'], 'job', $job->id);
+
+                $companyUser = $job->company->user ?? null;
+                if ($companyUser) {
+                    $isActive = $validated['status'] === 'active';
+                    InAppNotification::notify(
+                        $companyUser->id,
+                        'system',
+                        $isActive ? '求人が公開されました' : '求人が停止されました',
+                        "「{$job->title}」の審査が完了しました。",
+                        '/company/jobs'
+                    );
+                }
+            }
+        });
+
+        Cache::forget('admin_pending_jobs');
+        Cache::forget('admin_overview');
+
+        $count = $jobs->count();
+        return response()->json([
+            'count'   => $count,
+            'message' => $validated['status'] === 'active'
+                ? "{$count}件の求人を公開しました。"
+                : "{$count}件の求人を停止しました。",
+        ]);
+    }
+
+    /**
      * 求人審査: 承認/却下
      */
     public function reviewJob(Request $request, Job $job)

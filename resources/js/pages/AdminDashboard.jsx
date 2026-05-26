@@ -707,9 +707,11 @@ function JobsTab({ initialData }) {
     const [jobs, setJobs] = useState(initialData?.data || []);
     const [loading, setLoading] = useState(!initialData);
     const [processing, setProcessing] = useState(null);
+    const [bulkProcessing, setBulkProcessing] = useState(false);
     const [expandedId, setExpandedId] = useState(null);
     const [page, setPage] = useState(1);
     const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
+    const [selectedIds, setSelectedIds] = useState([]);
 
     const fetchData = (p = 1) => {
         setLoading(true);
@@ -717,10 +719,37 @@ function JobsTab({ initialData }) {
             setJobs(res.data.data || []);
             setMeta({ current_page: res.data.current_page, last_page: res.data.last_page, total: res.data.total });
             setPage(p);
+            setSelectedIds([]);
         }).finally(() => setLoading(false));
     };
 
     useEffect(() => { if (!initialData) fetchData(); }, []);
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const allSelected = jobs.length > 0 && selectedIds.length === jobs.length;
+    const toggleSelectAll = () => {
+        setSelectedIds(allSelected ? [] : jobs.map(j => j.id));
+    };
+
+    const handleBulkReview = async (status) => {
+        if (selectedIds.length === 0) return;
+        const action = status === 'active' ? '公開' : '停止';
+        if (!confirm(`選択した ${selectedIds.length} 件の求人を${action}しますか？`)) return;
+        setBulkProcessing(true);
+        try {
+            const res = await api.put('/admin/jobs/bulk-review', { job_ids: selectedIds, status });
+            toast.success(res.data.message);
+            setJobs(prev => prev.filter(j => !selectedIds.includes(j.id)));
+            setSelectedIds([]);
+        } catch (err) {
+            toast.error('処理に失敗しました');
+        } finally {
+            setBulkProcessing(false);
+        }
+    };
 
     const handleReview = async (jobId, status) => {
         const action = status === 'active' ? '公開' : '停止';
@@ -735,6 +764,7 @@ function JobsTab({ initialData }) {
         try {
             await api.put(`/admin/jobs/${jobId}/review`, { status, note });
             setJobs(jobs.filter(j => j.id !== jobId));
+            setSelectedIds(prev => prev.filter(i => i !== jobId));
         } catch (err) {
             toast.error('処理に失敗しました');
         } finally {
@@ -754,44 +784,96 @@ function JobsTab({ initialData }) {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            {/* 一括操作ツールバー */}
+            <div style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
+                padding: 'var(--space-sm) var(--space-md)',
+                background: 'var(--color-bg-secondary)',
+                borderRadius: 'var(--radius-md)',
+                flexWrap: 'wrap',
+            }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', cursor: 'pointer', fontSize: 'var(--font-size-sm)', userSelect: 'none' }}>
+                    <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleSelectAll}
+                        style={{ width: 16, height: 16, cursor: 'pointer' }}
+                    />
+                    全て選択（{jobs.length}件）
+                </label>
+                {selectedIds.length > 0 && (
+                    <>
+                        <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-accent)', fontWeight: 600 }}>
+                            {selectedIds.length}件選択中
+                        </span>
+                        <button
+                            className="btn btn-primary"
+                            style={{ fontSize: 'var(--font-size-sm)' }}
+                            disabled={bulkProcessing}
+                            onClick={() => handleBulkReview('active')}
+                        >
+                            {bulkProcessing ? '処理中…' : `一括公開（${selectedIds.length}件）`}
+                        </button>
+                        <button
+                            className="btn btn-danger"
+                            style={{ fontSize: 'var(--font-size-sm)' }}
+                            disabled={bulkProcessing}
+                            onClick={() => handleBulkReview('suspended')}
+                        >
+                            {bulkProcessing ? '処理中…' : `一括停止（${selectedIds.length}件）`}
+                        </button>
+                    </>
+                )}
+            </div>
+
             {jobs.map(j => (
                 <div key={j.id} className="card" style={{
-                    borderLeft: j.ng_word_flagged ? '4px solid #ef4444' : undefined,
+                    borderLeft: selectedIds.includes(j.id)
+                        ? '4px solid var(--color-primary)'
+                        : j.ng_word_flagged ? '4px solid #ef4444' : undefined,
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
-                                <h3 style={{ margin: 0 }}>{j.title}</h3>
-                                {j.ng_word_flagged && <span className="badge badge-danger" style={{ fontSize: 10 }}>NGワード検出</span>}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-sm)', flex: 1, minWidth: 0 }}>
+                            <input
+                                type="checkbox"
+                                checked={selectedIds.includes(j.id)}
+                                onChange={() => toggleSelect(j.id)}
+                                style={{ width: 16, height: 16, marginTop: 4, flexShrink: 0, cursor: 'pointer' }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
+                                    <h3 style={{ margin: 0 }}>{j.title}</h3>
+                                    {j.ng_word_flagged && <span className="badge badge-danger" style={{ fontSize: 10 }}>NGワード検出</span>}
+                                </div>
+                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-xs)' }}>
+                                    {j.company?.company_name || '企業名不明'}
+                                    {j.agency_client?.client_name && ` (代理: ${j.agency_client.client_name})`}
+                                </p>
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginBottom: 'var(--space-xs)' }}>
+                                    {j.employment_type && <span className="badge badge-info" style={{ fontSize: 10 }}>{j.employment_type}</span>}
+                                    {j.location && <span className="badge badge-info" style={{ fontSize: 10 }}>{j.location}</span>}
+                                    {(j.salary_min || j.salary_max) && (
+                                        <span className="badge badge-info" style={{ fontSize: 10 }}>
+                                            {j.salary_min ? `${Math.round(j.salary_min / 10000)}万` : ''}〜{j.salary_max ? `${Math.round(j.salary_max / 10000)}万円` : ''}
+                                        </span>
+                                    )}
+                                </div>
+                                <button style={{
+                                    background: 'none', border: 'none', color: 'var(--color-text-accent)',
+                                    fontSize: 'var(--font-size-xs)', cursor: 'pointer', padding: 0,
+                                }} onClick={() => setExpandedId(expandedId === j.id ? null : j.id)}>
+                                    {expandedId === j.id ? '詳細を閉じる ▲' : '詳細を見る ▼'}
+                                </button>
                             </div>
-                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-xs)' }}>
-                                {j.company?.company_name || '企業名不明'}
-                                {j.agency_client?.client_name && ` (代理: ${j.agency_client.client_name})`}
-                            </p>
-                            <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginBottom: 'var(--space-xs)' }}>
-                                {j.employment_type && <span className="badge badge-info" style={{ fontSize: 10 }}>{j.employment_type}</span>}
-                                {j.location && <span className="badge badge-info" style={{ fontSize: 10 }}>{j.location}</span>}
-                                {(j.salary_min || j.salary_max) && (
-                                    <span className="badge badge-info" style={{ fontSize: 10 }}>
-                                        {j.salary_min ? `${Math.round(j.salary_min / 10000)}万` : ''}〜{j.salary_max ? `${Math.round(j.salary_max / 10000)}万円` : ''}
-                                    </span>
-                                )}
-                            </div>
-                            <button style={{
-                                background: 'none', border: 'none', color: 'var(--color-text-accent)',
-                                fontSize: 'var(--font-size-xs)', cursor: 'pointer', padding: 0,
-                            }} onClick={() => setExpandedId(expandedId === j.id ? null : j.id)}>
-                                {expandedId === j.id ? '詳細を閉じる ▲' : '詳細を見る ▼'}
-                            </button>
                         </div>
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexShrink: 0, marginLeft: 'var(--space-sm)' }}>
                             <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)' }}
-                                disabled={processing === j.id}
+                                disabled={processing === j.id || bulkProcessing}
                                 onClick={() => handleReview(j.id, 'active')}>
                                 公開
                             </button>
                             <button className="btn btn-danger" style={{ fontSize: 'var(--font-size-sm)' }}
-                                disabled={processing === j.id}
+                                disabled={processing === j.id || bulkProcessing}
                                 onClick={() => handleReview(j.id, 'suspended')}>
                                 停止
                             </button>

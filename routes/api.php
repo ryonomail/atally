@@ -265,6 +265,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/companies/pending', [AdminController::class , 'pendingCompanies']);
             Route::put('/companies/{company}/review', [AdminController::class , 'reviewCompany']);
             Route::get('/jobs/pending', [AdminController::class , 'pendingJobs']);
+            Route::put('/jobs/bulk-review', [AdminController::class , 'bulkReviewJobs']);
             Route::put('/jobs/{job}/review', [AdminController::class , 'reviewJob']);
             Route::get('/reports', [AdminController::class , 'reports']);
             Route::put('/reports/{report}/resolve', [AdminController::class , 'resolveReport']);
