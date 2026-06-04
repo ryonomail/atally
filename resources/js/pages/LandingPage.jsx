@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 import SEO from '../components/SEO';
+import { formatSalary } from '../utils/salary';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -298,7 +299,7 @@ export default function LandingPage() {
                                         )}
                                         {(job.salary_min || job.salary_max) && (
                                             <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>
-                                                💰 {job.salary_min?.toLocaleString()}〜{job.salary_max?.toLocaleString()}円
+                                                💰 {formatSalary(job)}
                                             </span>
                                         )}
                                     </div>
@@ -387,13 +388,12 @@ export default function LandingPage() {
                                     border: '1px solid var(--color-border)',
                                     borderRadius: 2,
                                     overflow: 'hidden',
-                                    background: '#d6e6f5',
+                                    background: 'var(--color-bg-secondary)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexDirection: 'column', gap: 4,
                                 }}>
-                                    <img
-                                        src="/images/resume-photo.jpg"
-                                        alt="証明写真"
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
+                                    <span style={{ fontSize: '1.5rem', opacity: 0.3 }}>👤</span>
+                                    <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.3 }}>証明<br/>写真</span>
                                 </div>
                             </div>
                             <div style={{ marginTop: 'var(--space-sm)', opacity: 0.5, fontSize: 11 }}>

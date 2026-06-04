@@ -7,31 +7,37 @@ import { formatSalary } from '../utils/salary';
 
 function SectionHeader({ icon, title }) {
     return (
-        <h3 style={{
-            fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 0,
-            color: '#fff',
-            background: '#2c3e50',
-            padding: '10px 16px',
-            display: 'flex', alignItems: 'center', gap: 8,
-            borderRadius: 0,
+        <div style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
+            padding: 'var(--space-md) var(--space-xl)',
+            borderBottom: '1px solid var(--color-border)',
+            background: 'var(--color-bg-secondary)',
         }}>
-            <span style={{ fontSize: 15 }}>{icon}</span> {title}
-        </h3>
+            <span style={{ fontSize: '1rem', opacity: 0.75 }}>{icon}</span>
+            <h3 style={{
+                fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0,
+                color: 'var(--color-text-primary)', letterSpacing: 0.2,
+            }}>
+                {title}
+            </h3>
+        </div>
     );
 }
 
 function InfoRow({ label, value }) {
     if (!value) return null;
     return (
-        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{
+            display: 'flex', gap: 'var(--space-md)',
+            padding: '10px var(--space-xl)',
+            borderBottom: '1px solid var(--color-border)',
+        }}>
             <div style={{
-                flex: '0 0 130px', background: '#f5f6f7', padding: '10px 14px',
-                borderRight: '1px solid #e5e7eb',
-                fontSize: 'var(--font-size-sm)', color: '#555', fontWeight: 600,
-                display: 'flex', alignItems: 'flex-start',
+                flex: '0 0 110px', paddingTop: 1,
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontWeight: 600,
             }}>{label}</div>
             <div style={{
-                flex: 1, padding: '10px 14px',
+                flex: 1,
                 fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)',
                 whiteSpace: 'pre-wrap', lineHeight: 1.7,
             }}>{value}</div>
@@ -40,11 +46,7 @@ function InfoRow({ label, value }) {
 }
 
 function InfoTable({ children }) {
-    return (
-        <div style={{ border: '1px solid #e5e7eb', borderBottom: 'none', borderRadius: 0 }}>
-            {children}
-        </div>
-    );
+    return <div>{children}</div>;
 }
 
 /* ============================================
@@ -766,20 +768,22 @@ export default function JobDetailPage() {
                             <div style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 flexWrap: 'wrap', gap: 12,
-                                padding: '14px 18px', marginBottom: 20,
-                                background: '#f0f7ff', border: '1px solid #b3d4f0', borderRadius: 4,
+                                padding: 'var(--space-md) var(--space-lg)', marginBottom: 'var(--space-lg)',
+                                background: 'rgba(0,112,185,0.05)',
+                                border: '1px solid rgba(0,112,185,0.2)',
+                                borderRadius: 'var(--radius-md)',
                             }}>
                                 <div>
-                                    <p style={{ fontSize: 11, color: '#666', margin: '0 0 3px' }}>求人番号（照会番号）</p>
-                                    <p style={{ fontSize: 20, fontWeight: 700, color: '#0070b9', letterSpacing: 2, margin: 0, fontFamily: 'monospace' }}>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 4px' }}>求人番号（照会番号）</p>
+                                    <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: 2, margin: 0, fontFamily: 'monospace' }}>
                                         {job.hellowork_id || '—'}
                                     </p>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
                                     {job.expires_at && (
                                         <div style={{ textAlign: 'right' }}>
-                                            <p style={{ fontSize: 11, color: '#666', margin: '0 0 3px' }}>紹介期限日</p>
-                                            <p style={{ fontSize: 14, fontWeight: 700, color: '#c0392b', margin: 0 }}>
+                                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 4px' }}>紹介期限日</p>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-error)', margin: 0 }}>
                                                 {new Date(job.expires_at).toLocaleDateString('ja-JP')}
                                             </p>
                                         </div>
@@ -787,11 +791,8 @@ export default function JobDetailPage() {
                                     {job.hellowork_id && (
                                         <button
                                             onClick={() => navigator.clipboard.writeText(job.hellowork_id)}
-                                            style={{
-                                                padding: '6px 14px', border: '1px solid #0070b9', borderRadius: 3,
-                                                background: '#fff', color: '#0070b9', fontSize: 12,
-                                                cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap',
-                                            }}
+                                            className="btn btn-secondary"
+                                            style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}
                                         >番号をコピー</button>
                                     )}
                                 </div>
@@ -807,17 +808,18 @@ export default function JobDetailPage() {
                                     { num: '⑤', label: '企業へ\n応募・面接' },
                                 ].map(({ num, label }, i, arr) => (
                                     <React.Fragment key={num}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 90, flex: 1 }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 80, flex: 1 }}>
                                             <div style={{
-                                                width: 44, height: 44, borderRadius: '50%',
-                                                background: '#2c3e50', color: '#fff',
+                                                width: 40, height: 40, borderRadius: '50%',
+                                                background: 'var(--color-text-primary)', color: '#fff',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontSize: 16, fontWeight: 700, marginBottom: 8,
+                                                fontSize: 'var(--font-size-sm)', fontWeight: 700, marginBottom: 8,
+                                                flexShrink: 0,
                                             }}>{num}</div>
-                                            <p style={{ fontSize: 11, color: '#444', textAlign: 'center', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>{label}</p>
+                                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>{label}</p>
                                         </div>
                                         {i < arr.length - 1 && (
-                                            <div style={{ fontSize: 20, color: '#aaa', paddingTop: 12, flexShrink: 0 }}>›</div>
+                                            <div style={{ fontSize: 18, color: 'var(--color-text-muted)', paddingTop: 10, flexShrink: 0 }}>›</div>
                                         )}
                                     </React.Fragment>
                                 ))}
@@ -853,7 +855,7 @@ export default function JobDetailPage() {
                             )}
                             {job.preferred_qualifications && (
                                 <>
-                                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#555', marginBottom: 4 }}>歓迎条件</p>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: 4 }}>歓迎条件</p>
                                     <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
                                         {job.preferred_qualifications}
                                     </p>
@@ -1093,7 +1095,7 @@ export default function JobDetailPage() {
                     if (list.length === 0) return null;
                     return (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <SectionHeader icon="🔗" title="関連する求人" />
+                            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--space-md)', color: 'var(--color-text-primary)' }}>関連する求人</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                                 {list.map(sj => (
                                     <Link key={sj.id} to={`/jobs/${sj.id}`} style={{
