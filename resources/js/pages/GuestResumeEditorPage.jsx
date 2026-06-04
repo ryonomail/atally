@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Send } from 'lucide-react';
 
 const STORAGE_KEY = 'guest_resume_draft';
 
@@ -114,8 +115,8 @@ export default function GuestResumeEditorPage() {
                             ✓ 自動保存済み
                         </span>
                     )}
-                    <button className="btn btn-primary" onClick={() => setShowSaveModal(true)}>
-                        💾 保存・応募する
+                    <button className="btn btn-primary" onClick={() => setShowSaveModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                        <Send size={14} strokeWidth={2} />保存・応募する
                     </button>
                 </div>
             </div>

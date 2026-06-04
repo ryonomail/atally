@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
+import { Bell, MessageSquare, FileText, User, ChevronDown } from 'lucide-react';
 
 /* ============================================
    通知ベルドロップダウン
@@ -84,10 +85,11 @@ function NotificationBell({ user }) {
                 title="通知"
                 style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    padding: '4px 8px', position: 'relative', fontSize: '1.1rem',
+                    padding: '4px 8px', position: 'relative', color: 'rgba(255,255,255,0.75)',
+                    display: 'flex', alignItems: 'center',
                 }}
             >
-                <span role="img" aria-label="通知">🔔</span>
+                <Bell size={18} strokeWidth={1.75} />
                 {unreadCount > 0 && (
                     <span style={{
                         position: 'absolute', top: 0, right: 2,
@@ -263,7 +265,7 @@ export default function Navbar() {
                     {user && (
                         <Link to={messagesPath} className="navbar-unread-badge-link" title="メッセージ">
                             <span className="navbar-message-icon">
-                                <span role="img" aria-label="メッセージ">💬</span>
+                                <MessageSquare size={18} strokeWidth={1.75} style={{ color: 'rgba(255,255,255,0.75)', display: 'block' }} />
                                 {unreadCount > 0 && (
                                     <span className="navbar-unread-badge">
                                         {unreadCount > 99 ? '99+' : unreadCount}
@@ -327,7 +329,7 @@ function NavDropdown({ label, children }) {
                 aria-expanded={open}
             >
                 {label}
-                <span style={{ fontSize: '0.6em', marginLeft: 4, opacity: 0.7 }}>{open ? '▲' : '▼'}</span>
+                <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 2, opacity: 0.7, transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
             </button>
             {open && (
                 <div className="navbar-dropdown" onClick={() => setOpen(false)}>
@@ -353,7 +355,7 @@ function NavLinks({ user, logout, showAll = false }) {
 
             {!user && (
                 <>
-                    <li><Link to="/resumes/guest" className={`navbar-link ${hideMobile}`}>📝 履歴書を作る</Link></li>
+                    <li><Link to="/resumes/guest" className={`navbar-link ${hideMobile}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={14} strokeWidth={2} />履歴書を作る</Link></li>
                     <li><Link to="/login" className="navbar-link">ログイン</Link></li>
                     <li><Link to="/register" className="btn btn-primary">無料登録</Link></li>
                 </>
@@ -383,7 +385,7 @@ function NavLinks({ user, logout, showAll = false }) {
 
             {user && !showAll && (
                 <>
-                    <NavDropdown label={<><span style={{ fontSize: '1rem' }}>👤</span></>}>
+                    <NavDropdown label={<User size={16} strokeWidth={1.75} style={{ color: 'rgba(255,255,255,0.75)', display: 'block' }} />}>
                         <div style={{ padding: '6px 16px', fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 4 }}>
                             {user.name || 'アカウント'}
                         </div>
