@@ -139,6 +139,66 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-02-10T00:00:00+09:00',
             'modified'    => '2026-05-19T00:00:00+09:00',
         ],
+        'tensyoku-rirekisho' => [
+            'title'       => '転職用履歴書の書き方【職歴が多い場合の整理方法・例文付き】 | Atally',
+            'description' => '転職回数が多い方・職歴が複雑な方向けの履歴書の書き方。職歴の整理方法、転職理由の書き方、採用担当者が転職用履歴書で見るポイントを解説。',
+            'published'   => '2026-03-01T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'shokureki-nashi-rirekisho' => [
+            'title'       => '職歴なし・社会人未経験の履歴書の書き方【フリーター・既卒向け】 | Atally',
+            'description' => '職歴なし・社会人未経験の方向けの履歴書の書き方。アルバイト経験・学校外活動のアピール方法、志望動機の書き方例文を紹介。フリーター・既卒・第二新卒に。',
+            'published'   => '2026-03-10T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'blank-period-rirekisho' => [
+            'title'       => '空白期間・ブランクがある履歴書の書き方【採用担当者への伝え方】 | Atally',
+            'description' => '育児・介護・病気・留学などで空白期間がある場合の履歴書の書き方。ブランクをポジティブに説明する方法と、採用担当者が納得する伝え方を例文付きで解説。',
+            'published'   => '2026-03-20T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'part-rirekisho-shibo-doki' => [
+            'title'       => 'パート・アルバイト応募の志望動機の書き方【主婦・未経験向け例文集】 | Atally',
+            'description' => 'パート・アルバイト応募の志望動機の書き方と例文。主婦・育児中・ブランクあり・未経験の方向けの書き方テンプレート。スーパー・コンビニ・飲食・事務など職種別例文も。',
+            'published'   => '2026-04-01T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'tenshoku-riyuu-kakikata' => [
+            'title'       => '転職理由・退職理由の書き方【ネガティブをポジティブに変換する例文集】 | Atally',
+            'description' => '転職理由・退職理由の書き方を解説。「給与が低い」「人間関係が嫌だった」などのネガティブな本音をポジティブに言い換える例文集と、面接での答え方まで。',
+            'published'   => '2026-04-10T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'mensetsu-manner' => [
+            'title'       => '面接のマナー・服装・当日の流れ【採用担当者が見るポイント完全ガイド】 | Atally',
+            'description' => '転職・就活の面接マナーを完全解説。入室から退室までの正しい流れ、服装のポイント、よく聞かれる質問と回答例、オンライン面接の注意点まで網羅。',
+            'published'   => '2026-04-20T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'engineer-shokumukeirekisho' => [
+            'title'       => 'エンジニアの職務経歴書の書き方【スキルシート・プロジェクト記載のコツ】 | Atally',
+            'description' => 'ITエンジニアの職務経歴書の書き方。スキルシートの書き方、プロジェクト経歴の記載方法、採用担当者・技術面接官が見るポイントを例文付きで解説。',
+            'published'   => '2026-05-01T00:00:00+09:00',
+            'modified'    => '2026-05-19T00:00:00+09:00',
+        ],
+        'rirekisho-template' => [
+            'title'       => '履歴書テンプレート 無料ダウンロード【Word・PDF対応】2026年最新版 | Atally',
+            'description' => '履歴書テンプレートを無料でダウンロード。JIS規格対応・A4サイズ・Word/PDF形式。新卒・転職・パートどれにも使えるフォーマットと正しい書き方を解説。',
+            'published'   => '2026-06-04T00:00:00+09:00',
+            'modified'    => '2026-06-04T00:00:00+09:00',
+        ],
+        'baito-rirekisho-kakikata' => [
+            'title'       => 'バイト・アルバイトの履歴書の書き方【採用されやすい書き方＋例文】 | Atally',
+            'description' => 'バイト・アルバイト応募の履歴書の書き方を解説。学生・初めてのバイト・未経験でも書ける志望動機の例文、本人希望欄の書き方、採用担当者が見るポイントまで。',
+            'published'   => '2026-06-04T00:00:00+09:00',
+            'modified'    => '2026-06-04T00:00:00+09:00',
+        ],
+        'rirekisho-futo-kakikata' => [
+            'title'       => '履歴書の封筒の書き方・送り方マナー【宛名・添え状・折り方まで】 | Atally',
+            'description' => '履歴書を郵送するときの封筒の書き方を完全解説。宛名の書き方、表裏の記載ルール、「応募書類在中」の書き方、添え状の例文、クリアファイルの使い方まで。',
+            'published'   => '2026-06-04T00:00:00+09:00',
+            'modified'    => '2026-06-04T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -355,8 +415,8 @@ Route::get('/companies/{id}', function ($id) {
 Route::get('/resumes/guest', function () {
     $baseUrl = config('app.url');
     $seo = [
-        'title'       => '履歴書を無料で作成 | 登録不要・ダウンロードOK | Atally',
-        'description' => '登録・ログイン不要で履歴書が無料作成できます。JIS規格対応・スマホ対応。入力内容はブラウザに自動保存。作成後はそのまま求人に応募できます。',
+        'title'       => '履歴書テンプレート 無料作成 | 登録不要・ダウンロード・スマホ対応 | Atally',
+        'description' => '履歴書テンプレートを無料で作成・ダウンロード。登録不要・JIS規格対応・スマホ対応。ブラウザ自動保存で途中から再開可能。作成後そのまま47万件の求人に応募できます。',
         'url'         => $baseUrl . '/resumes/guest',
         'type'        => 'website',
         'jsonLd'      => [
@@ -370,7 +430,7 @@ Route::get('/resumes/guest', function () {
                     'offers'           => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'JPY'],
                     'description'      => '登録不要・完全無料で使える履歴書作成ツール。JIS規格対応、スマホ対応、ブラウザ自動保存。作成後は47万件以上の求人にそのまま応募できます。',
                     'url'              => $baseUrl . '/resumes/guest',
-                    'aggregateRating'  => ['@type' => 'AggregateRating', 'ratingValue' => '4.8', 'reviewCount' => '120'],
+
                 ],
                 [
                     '@type'      => 'FAQPage',
@@ -449,6 +509,18 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/jiko-pr-kakikata', 'monthly', '0.9'],
             ['/column/rirekisho-shikaku', 'monthly', '0.8'],
             ['/terms', 'yearly', '0.3'], ['/privacy', 'yearly', '0.3'],
+            ['/for-companies', 'monthly', '0.7'],
+            ['/for-agencies', 'monthly', '0.6'],
+            ['/column/tensyoku-rirekisho', 'monthly', '0.8'],
+            ['/column/shokureki-nashi-rirekisho', 'monthly', '0.8'],
+            ['/column/blank-period-rirekisho', 'monthly', '0.8'],
+            ['/column/part-rirekisho-shibo-doki', 'monthly', '0.8'],
+            ['/column/tenshoku-riyuu-kakikata', 'monthly', '0.8'],
+            ['/column/mensetsu-manner', 'monthly', '0.8'],
+            ['/column/engineer-shokumukeirekisho', 'monthly', '0.8'],
+            ['/column/rirekisho-template', 'monthly', '0.9'],
+            ['/column/baito-rirekisho-kakikata', 'monthly', '0.9'],
+            ['/column/rirekisho-futo-kakikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }

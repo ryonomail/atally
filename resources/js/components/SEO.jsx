@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'Atally';
 const DEFAULT_DESCRIPTION = '品質重視の次世代求人マッチングプラットフォーム。求職者は無料で高機能な履歴書作成、企業は品質スコアで最適な採用を。';
-const DEFAULT_IMAGE = '/images/og-default.png';
+const DEFAULT_IMAGE = '/images/og.png';
 
 export default function SEO({ title, description, image, url, type = 'website', noindex = false, jsonLd }) {
     const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - 次世代求人マッチングプラットフォーム`;
