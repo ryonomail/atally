@@ -219,12 +219,171 @@ function RevenueTab({ initialData }) {
 /* ============================================
    求職者一覧タブ
    ============================================ */
+/* ============================================
+   履歴書閲覧モーダル（管理者用）
+   ============================================ */
+function ResumeViewModal({ user, onClose }) {
+    const [resumes, setResumes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeIdx, setActiveIdx] = useState(0);
+
+    useEffect(() => {
+        api.get(`/admin/jobseekers/${user.id}/resumes`)
+            .then(res => setResumes(res.data.resumes || []))
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, [user.id]);
+
+    const r = resumes[activeIdx];
+
+    const Section = ({ title, children }) => (
+        <div style={{ marginBottom: 'var(--space-lg)' }}>
+            <div style={{
+                fontSize: 'var(--font-size-xs)', fontWeight: 700,
+                color: 'var(--color-text-muted)', letterSpacing: 1,
+                textTransform: 'uppercase', marginBottom: 'var(--space-sm)',
+                paddingBottom: 6, borderBottom: '1px solid var(--color-border)',
+            }}>{title}</div>
+            {children}
+        </div>
+    );
+
+    const Row = ({ label, value }) => value ? (
+        <div style={{ display: 'flex', gap: 'var(--space-md)', padding: '6px 0', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ flex: '0 0 110px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 600, paddingTop: 1 }}>{label}</span>
+            <span style={{ flex: 1, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{value}</span>
+        </div>
+    ) : null;
+
+    return (
+        <div style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+            padding: 'var(--space-lg)', overflowY: 'auto',
+        }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="card animate-fade-in" style={{ width: '100%', maxWidth: 680, marginTop: 20 }}>
+                {/* ヘッダー */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+                    <div>
+                        <h2 style={{ fontSize: 'var(--font-size-xl)', margin: 0 }}>{user.name} の履歴書</h2>
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>{user.email}</p>
+                    </div>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--color-text-muted)' }}>✕</button>
+                </div>
+
+                {loading ? <div className="skeleton" style={{ height: 300 }} /> : resumes.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: 'var(--space-2xl)', color: 'var(--color-text-muted)' }}>
+                        <p style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📄</p>
+                        <p>履歴書が登録されていません</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* 複数履歴書タブ */}
+                        {resumes.length > 1 && (
+                            <div style={{ display: 'flex', gap: 4, marginBottom: 'var(--space-lg)', borderBottom: '1px solid var(--color-border)', overflowX: 'auto' }}>
+                                {resumes.map((res, i) => (
+                                    <button key={i} onClick={() => setActiveIdx(i)} style={{
+                                        padding: '6px 14px', background: 'none', border: 'none',
+                                        borderBottom: activeIdx === i ? '2px solid var(--color-accent)' : '2px solid transparent',
+                                        color: activeIdx === i ? 'var(--color-text-accent)' : 'var(--color-text-muted)',
+                                        fontWeight: activeIdx === i ? 700 : 400,
+                                        cursor: 'pointer', fontSize: 'var(--font-size-sm)', whiteSpace: 'nowrap',
+                                        marginBottom: -1,
+                                    }}>
+                                        {res.title || `履歴書${i + 1}`}
+                                        {res.is_default && <span style={{ marginLeft: 4, fontSize: 10, color: 'var(--color-accent)' }}>●既定</span>}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {r && (
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                                    <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>{r.title || '履歴書'}</span>
+                                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>更新: {r.updated_at}</span>
+                                </div>
+
+                                <Section title="基本情報">
+                                    <Row label="氏名" value={r.full_name && `${r.full_name}（${r.full_name_kana || ''}）`} />
+                                    <Row label="生年月日" value={r.birth_date} />
+                                    <Row label="電話番号" value={r.phone} />
+                                    <Row label="住所" value={r.address} />
+                                </Section>
+
+                                {r.education?.length > 0 && (
+                                    <Section title="学歴">
+                                        {r.education.map((e, i) => (
+                                            <div key={i} style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '4px 0', borderBottom: '1px solid var(--color-border)' }}>
+                                                {e.start && <span style={{ color: 'var(--color-text-muted)', marginRight: 8, fontSize: 'var(--font-size-xs)' }}>{e.start}</span>}
+                                                {e.school}{e.faculty && `　${e.faculty}`}
+                                                {e.end && <span style={{ color: 'var(--color-text-muted)', marginLeft: 8, fontSize: 'var(--font-size-xs)' }}>〜{e.end}</span>}
+                                            </div>
+                                        ))}
+                                    </Section>
+                                )}
+
+                                {r.work_history?.length > 0 && (
+                                    <Section title="職歴">
+                                        {r.work_history.map((w, i) => (
+                                            <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--color-border)' }}>
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                                                    <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-primary)' }}>{w.company}</span>
+                                                    {w.position && <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{w.position}</span>}
+                                                </div>
+                                                {(w.start || w.end) && (
+                                                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+                                                        {w.start}〜{w.end || '現在'}
+                                                    </div>
+                                                )}
+                                                {w.description && <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', margin: '4px 0 0', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{w.description}</p>}
+                                            </div>
+                                        ))}
+                                    </Section>
+                                )}
+
+                                {r.licenses?.length > 0 && (
+                                    <Section title="免許・資格">
+                                        {r.licenses.map((l, i) => (
+                                            <div key={i} style={{ display: 'flex', gap: 8, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '4px 0', borderBottom: '1px solid var(--color-border)' }}>
+                                                {l.date && <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>{l.date}</span>}
+                                                <span>{l.name}</span>
+                                            </div>
+                                        ))}
+                                    </Section>
+                                )}
+
+                                {(r.self_pr || r.motivation) && (
+                                    <Section title="自己PR・志望動機">
+                                        {r.self_pr && <Row label="自己PR" value={r.self_pr} />}
+                                        {r.motivation && <Row label="志望動機" value={r.motivation} />}
+                                    </Section>
+                                )}
+
+                                {(r.desired_salary || r.desired_location || r.available_date) && (
+                                    <Section title="希望条件">
+                                        <Row label="希望年収" value={r.desired_salary} />
+                                        <Row label="希望勤務地" value={r.desired_location} />
+                                        <Row label="入社可能日" value={r.available_date} />
+                                    </Section>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function JobseekersTab({ initialData, onViewUser }) {
     const [users, setUsers] = useState(initialData?.data || []);
     const [loading, setLoading] = useState(!initialData);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
+    const [resumeUser, setResumeUser] = useState(null);
 
     const fetchData = (p = 1, q = '') => {
         setLoading(true);
@@ -287,6 +446,8 @@ function JobseekersTab({ initialData, onViewUser }) {
                                                     <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', padding: '2px 8px' }}
                                                         onClick={() => onViewUser(u.id)}>詳細</button>
                                                 )}
+                                                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', padding: '2px 8px' }}
+                                                    onClick={() => setResumeUser(u)}>履歴書</button>
                                                 {u.suspended_at ? (
                                                     <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', padding: '2px 8px' }}
                                                         onClick={() => {
@@ -321,6 +482,10 @@ function JobseekersTab({ initialData, onViewUser }) {
                         </div>
                     )}
                 </>
+            )}
+
+            {resumeUser && (
+                <ResumeViewModal user={resumeUser} onClose={() => setResumeUser(null)} />
             )}
         </div>
     );

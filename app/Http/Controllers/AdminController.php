@@ -413,6 +413,33 @@ class AdminController extends Controller
     }
 
     /**
+     * 求職者の履歴書一覧（管理者用）
+     */
+    public function jobseekerResumes(User $user)
+    {
+        if ($user->role !== 'jobseeker') {
+            return response()->json(['message' => '求職者のみ参照可能です。'], 403);
+        }
+
+        $resumes = \App\Models\Resume::where('user_id', $user->id)
+            ->with('profile')
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(fn($r) => array_merge($r->toSnapshotData(), [
+                'id'         => $r->id,
+                'title'      => $r->title,
+                'type'       => $r->type,
+                'is_default' => $r->is_default,
+                'updated_at' => $r->updated_at?->format('Y-m-d H:i'),
+            ]));
+
+        return response()->json([
+            'user'    => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
+            'resumes' => $resumes,
+        ]);
+    }
+
+    /**
      * 全企業一覧
      */
     public function allCompanies(Request $request)

@@ -272,6 +272,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/licenses/pending', [AdminController::class , 'pendingLicenses']);
             Route::put('/licenses/{company}/review', [AdminController::class , 'reviewLicense']);
             Route::get('/jobseekers', [AdminController::class , 'jobseekers']);
+            Route::get('/jobseekers/{user}/resumes', [AdminController::class , 'jobseekerResumes']);
             Route::get('/companies/all', [AdminController::class , 'allCompanies']);
             Route::get('/jobs/all', [AdminController::class , 'allJobs']);
             Route::get('/revenue', [AdminController::class , 'revenue']);
