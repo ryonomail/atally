@@ -273,9 +273,10 @@ function ResumeViewModal({ user, onClose }) {
                 </div>
 
                 {loading ? <div className="skeleton" style={{ height: 300 }} /> : resumes.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: 'var(--space-2xl)', color: 'var(--color-text-muted)' }}>
-                        <p style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📄</p>
-                        <p>履歴書が登録されていません</p>
+                    <div style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
+                        <p style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>📄</p>
+                        <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4 }}>履歴書が登録されていません</p>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>このユーザーはまだ履歴書を作成していません</p>
                     </div>
                 ) : (
                     <>
