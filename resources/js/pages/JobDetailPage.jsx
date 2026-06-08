@@ -539,7 +539,9 @@ export default function JobDetailPage() {
                         <div>
                             <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-sm)', lineHeight: 1.4 }}>{job.title}</h1>
                             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)' }}>
-                                🏢 <Link to={`/companies/${job.company?.id}`} style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline', textUnderlineOffset: 3 }}>{job.company?.company_name}</Link>
+                                🏢 {job.source === 'hellowork'
+                                    ? <span>{job.employer_name || job.company?.company_name}</span>
+                                    : <Link to={`/companies/${job.company?.id}`} style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline', textUnderlineOffset: 3 }}>{job.company?.company_name}</Link>}
                                 {job.industry && <span style={{ marginLeft: 8, opacity: 0.7 }}>({job.industry})</span>}
                             </p>
                             <span title="職業安定法・労働基準法に準拠した求人です" style={{
@@ -965,7 +967,67 @@ export default function JobDetailPage() {
                             </InfoTable>
                         </div>
                     </>
-                ) : job.source !== 'hellowork' && job.company && (
+                ) : job.source === 'hellowork' ? (
+                    (job.employer_name || job.business_content || job.industry || job.number_of_employees) && (
+                        <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
+                            <SectionHeader icon="🏢" title="会社情報" />
+                            {/* 事業内容 */}
+                            {job.business_content && (
+                                <div style={{
+                                    padding: 'var(--space-lg) var(--space-xl)',
+                                    borderBottom: '1px solid var(--color-border)',
+                                    background: 'rgba(18,28,52,0.015)',
+                                }}>
+                                    <p style={{
+                                        fontSize: 'var(--font-size-xs)', fontWeight: 600,
+                                        color: 'var(--color-text-muted)', marginBottom: 6,
+                                    }}>事業内容</p>
+                                    <p style={{
+                                        color: 'var(--color-text-secondary)',
+                                        whiteSpace: 'pre-wrap', lineHeight: 1.8,
+                                        fontSize: 'var(--font-size-sm)', margin: 0,
+                                    }}>
+                                        {job.business_content}
+                                    </p>
+                                </div>
+                            )}
+                            <InfoTable>
+                                <InfoRow label="事業所名" value={job.employer_name} />
+                                <InfoRow label="代表者" value={job.representative_name} />
+                                <InfoRow label="業界" value={job.industry} />
+                                <InfoRow label="設立" value={job.founded_year} />
+                                <InfoRow label="従業員数" value={job.number_of_employees} />
+                                <InfoRow label="資本金" value={job.capital} />
+                                <InfoRow label="所在地" value={[job.postal_code && `〒${job.postal_code}`, job.office_address].filter(Boolean).join(' ') || null} />
+                                <InfoRow label="最寄り駅" value={job.nearest_station} />
+                                {job.homepage_url && (
+                                    <div style={{
+                                        display: 'flex', gap: 'var(--space-md)',
+                                        padding: '10px var(--space-xl)',
+                                        borderBottom: '1px solid var(--color-border)',
+                                    }}>
+                                        <div style={{
+                                            flex: '0 0 110px', paddingTop: 1,
+                                            fontSize: 'var(--font-size-sm)',
+                                            color: 'var(--color-text-muted)', fontWeight: 600,
+                                        }}>企業HP</div>
+                                        <a
+                                            href={job.homepage_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                flex: 1, fontSize: 'var(--font-size-sm)',
+                                                color: 'var(--color-accent)', wordBreak: 'break-all',
+                                            }}
+                                        >
+                                            {job.homepage_url}
+                                        </a>
+                                    </div>
+                                )}
+                            </InfoTable>
+                        </div>
+                    )
+                ) : job.company && (
                     <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                         <SectionHeader icon="🏢" title="会社情報" />
                         {/* 事業内容 */}
