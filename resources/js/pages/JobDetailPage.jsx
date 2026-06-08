@@ -965,15 +965,62 @@ export default function JobDetailPage() {
                             </InfoTable>
                         </div>
                     </>
-                ) : (job.number_of_employees || job.founded_year || job.industry) && (
+                ) : job.source !== 'hellowork' && job.company && (
                     <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
-                        <SectionHeader icon="🏛" title="企業情報" />
+                        <SectionHeader icon="🏢" title="会社情報" />
+                        {/* 事業内容 */}
+                        {job.company?.description && (
+                            <div style={{
+                                padding: 'var(--space-lg) var(--space-xl)',
+                                borderBottom: '1px solid var(--color-border)',
+                                background: 'rgba(18,28,52,0.015)',
+                            }}>
+                                <p style={{
+                                    fontSize: 'var(--font-size-xs)', fontWeight: 600,
+                                    color: 'var(--color-text-muted)', marginBottom: 6,
+                                }}>事業内容</p>
+                                <p style={{
+                                    color: 'var(--color-text-secondary)',
+                                    whiteSpace: 'pre-wrap', lineHeight: 1.8,
+                                    fontSize: 'var(--font-size-sm)', margin: 0,
+                                }}>
+                                    {job.company.description}
+                                </p>
+                            </div>
+                        )}
                         <InfoTable>
-                            <InfoRow label="会社名" value={job.company?.company_name} />
-                            <InfoRow label="業界" value={job.industry} />
-                            <InfoRow label="設立" value={job.founded_year} />
-                            <InfoRow label="従業員数" value={job.number_of_employees} />
-                            {job.company?.website && <InfoRow label="HP" value={job.company.website} />}
+                            <InfoRow label="代表者" value={job.company?.representative_name} />
+                            <InfoRow label="業界" value={job.industry || job.company?.industry} />
+                            <InfoRow label="設立" value={job.founded_year || job.company?.founded_year} />
+                            <InfoRow label="従業員数" value={job.number_of_employees || job.company?.number_of_employees} />
+                            <InfoRow label="資本金" value={job.company?.capital} />
+                            <InfoRow label="所在地" value={job.company?.office_address || job.company?.address} />
+                            <InfoRow label="最寄り駅" value={job.company?.nearest_station} />
+                            <InfoRow label="電話番号" value={job.company?.phone} />
+                            {job.company?.website && (
+                                <div style={{
+                                    display: 'flex', gap: 'var(--space-md)',
+                                    padding: '10px var(--space-xl)',
+                                    borderBottom: '1px solid var(--color-border)',
+                                }}>
+                                    <div style={{
+                                        flex: '0 0 110px', paddingTop: 1,
+                                        fontSize: 'var(--font-size-sm)',
+                                        color: 'var(--color-text-muted)', fontWeight: 600,
+                                    }}>企業HP</div>
+                                    <a
+                                        href={job.company.website}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            flex: 1, fontSize: 'var(--font-size-sm)',
+                                            color: 'var(--color-accent)', wordBreak: 'break-all',
+                                        }}
+                                    >
+                                        {job.company.website}
+                                    </a>
+                                </div>
+                            )}
                         </InfoTable>
                     </div>
                 )}
