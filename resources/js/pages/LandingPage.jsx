@@ -411,18 +411,17 @@ export default function LandingPage() {
                                     ))}
                                 </div>
                                 {/* 右: 証明写真 */}
-                                <div style={{
-                                    width: 72, height: 96, flexShrink: 0,
-                                    border: '1px solid var(--color-border)',
-                                    borderRadius: 2,
-                                    overflow: 'hidden',
-                                    background: 'var(--color-bg-secondary)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    flexDirection: 'column', gap: 4,
-                                }}>
-                                    <span style={{ fontSize: '1.5rem', opacity: 0.3 }}>👤</span>
-                                    <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.3 }}>証明<br/>写真</span>
-                                </div>
+                                <img
+                                    src="/images/resume-photo.jpg"
+                                    alt="証明写真"
+                                    style={{
+                                        width: 72, height: 96, flexShrink: 0,
+                                        border: '1px solid var(--color-border)',
+                                        borderRadius: 2,
+                                        objectFit: 'cover',
+                                        background: 'var(--color-bg-secondary)',
+                                    }}
+                                />
                             </div>
                             <div style={{ marginTop: 'var(--space-sm)', opacity: 0.5, fontSize: 11 }}>
                                 学歴・職歴 ／ 免許・資格 ／ 志望動機...
