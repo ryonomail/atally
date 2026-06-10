@@ -52,6 +52,11 @@ if [ "${SEED_ON_BOOT}" = "true" ]; then
     php artisan db:seed --class=LargeDataSeeder --force || echo "LargeDataSeeder failed (skipped)"
 fi
 
+# ハローワーク新スクレイパー反映用の一度きり同期（非ブロッキング・Redisマーカーで二重実行防止）
+# 起動を遅らせないようバックグラウンドで実行。通常の定期同期は毎日07:00に別途走る。
+echo "--- hellowork one-time sync (background) ---"
+( php artisan app:sync-hellowork-once >> /tmp/hw-boot-sync.log 2>&1 & )
+
 # ストレージリンク
 php artisan storage:link 2>/dev/null || true
 
