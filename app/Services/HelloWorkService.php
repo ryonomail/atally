@@ -717,7 +717,7 @@ class HelloWorkService
     {
         if (empty($location)) return [null, null];
 
-        if (preg_match('/^(.+?[都道府県])(.*)$/', $location, $m)) {
+        if (preg_match('/^(.+?[都道府県])(.*)$/u', $location, $m)) {
             return [
                 $m[1],
                 $m[2] ?: null,
