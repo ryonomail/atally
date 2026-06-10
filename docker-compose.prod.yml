@@ -5,8 +5,9 @@ services:
       dockerfile: Dockerfile.prod
     container_name: atally-app
     restart: always
-    ports:
-      - "80:80"
+    # Caddy がHTTPSを終端してこのコンテナへプロキシするため、ホストには公開せず内部公開のみ
+    expose:
+      - "80"
     env_file:
       - .env
     depends_on:
@@ -14,6 +15,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    networks:
+      - atally
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: atally-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: "${DOMAIN:?DOMAIN must be set in .env (例: atally.jp)}"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on:
+      - app
     networks:
       - atally
 
@@ -48,6 +67,8 @@ services:
 volumes:
   pgdata:
   redisdata:
+  caddydata:
+  caddyconfig:
 
 networks:
   atally:

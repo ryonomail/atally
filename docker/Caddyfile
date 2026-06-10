@@ -1,0 +1,24 @@
+# Atally 本番リバースプロキシ
+# 自動HTTPS（Let's Encrypt）。app コンテナ（nginx:80）へプロキシする。
+#
+# Cloudflare をオレンジ（プロキシ）にする場合:
+#   1) 最初は Cloudflare を「DNS only（グレー）」にして DNS をこのサーバーへ直接向ける
+#   2) Caddy が Let's Encrypt 証明書を自動取得（数十秒）
+#   3) 動作確認後、Cloudflare を「Proxied（オレンジ）」に切替、SSL/TLS を Full(strict) に設定
+#      → Caddy の正式証明書を Cloudflare が検証するので安全（Flexible は使わない）
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# 静的アセットは長期キャッシュ（Cloudflare とブラウザ両方に効く）
+	@static {
+		path /build/* /images/* *.js *.css *.woff2 *.png *.jpg *.jpeg *.svg *.webp *.ico
+	}
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	reverse_proxy app:80 {
+		# 実クライアントIPを正しく伝える（Cloudflare 経由でも app 側のログ・レート制御が機能）
+		header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+		header_up X-Real-IP {http.request.header.CF-Connecting-IP}
+	}
+}
