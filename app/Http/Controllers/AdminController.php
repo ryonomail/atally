@@ -13,6 +13,7 @@ use App\Enums\VerificationStatus;
 use App\Enums\JobStatus;
 use App\Services\GoogleIndexingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -197,6 +198,36 @@ class AdminController extends Controller
                 ->toArray();
         });
         return response()->json($data);
+    }
+
+    /**
+     * ハローワーク同期の状況を返す（最後の同期結果＋現在の有効件数）
+     */
+    public function helloworkStatus()
+    {
+        $last = Cache::get('hellowork_last_sync');
+        $activeCount = Job::where('source', 'hellowork')->where('status', 'active')->count();
+
+        return response()->json([
+            'last_sync'    => $last,          // at / inserted / updated / deleted / errors / active_count / note
+            'active_count' => $activeCount,   // 現時点の有効なハローワーク求人数
+        ]);
+    }
+
+    /**
+     * ハローワーク同期を今すぐ実行（キューへ投入）。
+     * 全国フル同期は時間がかかるため Web リクエストはブロックせずキューに流す。
+     */
+    public function triggerHelloworkSync(Request $request)
+    {
+        // キューワーカー（supervisord常駐）が拾って実行する
+        Artisan::queue('app:sync-hellowork-jobs');
+
+        AdminAuditLog::log(auth()->id(), 'hellowork.sync_trigger', null, null, '管理画面からハローワーク同期を手動実行');
+
+        return response()->json([
+            'message' => '同期をキューに投入しました。完了まで数分かかります。状況は本カードで確認できます。',
+        ]);
     }
 
     /**

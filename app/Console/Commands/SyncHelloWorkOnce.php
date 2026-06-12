@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Cache;
  */
 class SyncHelloWorkOnce extends Command
 {
-    protected $signature = 'app:sync-hellowork-once {--key=hw_boot_sync_v1}';
+    protected $signature = 'app:sync-hellowork-once {--key=hw_boot_sync_v2}';
     protected $description = '起動時に一度だけハローワーク求人を同期（Redisマーカーで二重実行防止）';
 
     public function handle(HelloWorkService $service): int

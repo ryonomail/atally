@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\Job;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -43,7 +44,9 @@ class HelloWorkService
     {
         $token = $this->getToken();
         if (!$token) {
-            return ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'errors' => 1];
+            $stats = ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'errors' => 1];
+            $this->recordSyncResult($stats, 'APIトークン取得に失敗（認証情報 or IP登録を確認）');
+            return $stats;
         }
 
         $stats = ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'errors' => 0];
@@ -104,7 +107,25 @@ class HelloWorkService
             $this->deleteToken($token);
         }
 
+        $this->recordSyncResult($stats);
         return $stats;
+    }
+
+    /**
+     * 同期結果を可視化用にキャッシュへ記録（管理画面で表示）。
+     * 同期が「いつ・何件動いたか / 失敗したか」を運用者が確認できるようにする。
+     */
+    private function recordSyncResult(array $stats, ?string $note = null): void
+    {
+        try {
+            Cache::forever('hellowork_last_sync', array_merge($stats, [
+                'at'           => now()->toDateTimeString(),
+                'active_count' => Job::where('source', 'hellowork')->where('status', 'active')->count(),
+                'note'         => $note,
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('HelloWork: recordSyncResult failed', ['error' => $e->getMessage()]);
+        }
     }
 
     /**

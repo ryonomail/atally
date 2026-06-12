@@ -868,6 +868,79 @@ function CompaniesTab({ initialData }) {
 /* ============================================
    求人審査タブ
    ============================================ */
+function HelloWorkSyncCard() {
+    const toast = useToast();
+    const [status, setStatus] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
+
+    const load = () => {
+        api.get('/admin/hellowork-status')
+            .then(res => setStatus(res.data))
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    };
+    useEffect(() => { load(); }, []);
+
+    const handleSync = async () => {
+        if (!confirm('ハローワーク求人を今すぐ同期しますか？（完了まで数分かかります）')) return;
+        setSyncing(true);
+        try {
+            const res = await api.post('/admin/hellowork-sync');
+            toast.success(res.data.message);
+            setTimeout(load, 5000); // キュー投入後しばらくして状況を再取得
+        } catch (err) {
+            toast.error('同期の実行に失敗しました');
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    const last = status?.last_sync;
+    const hasError = last && last.errors > 0;
+
+    return (
+        <div className="card" style={{ padding: 'var(--space-lg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+                <div>
+                    <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 6px' }}>
+                        🔄 ハローワーク同期状況
+                    </p>
+                    {loading ? (
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0 }}>読み込み中...</p>
+                    ) : (
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+                            <p style={{ margin: 0 }}>
+                                有効なハローワーク求人数: <strong style={{ color: 'var(--color-text-primary)' }}>{(status?.active_count ?? 0).toLocaleString()}</strong> 件
+                            </p>
+                            {last ? (
+                                <>
+                                    <p style={{ margin: 0 }}>最終同期: {last.at}</p>
+                                    <p style={{ margin: 0 }}>
+                                        新規 {last.inserted} ／ 更新 {last.updated} ／ 締切 {last.deleted} ／ エラー {last.errors}
+                                    </p>
+                                    {hasError && (
+                                        <p style={{ margin: '4px 0 0', color: 'var(--color-danger)', fontWeight: 600 }}>
+                                            ⚠️ {last.note || '同期でエラーが発生しています'}
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <p style={{ margin: '4px 0 0', color: 'var(--color-danger)', fontWeight: 600 }}>
+                                    ⚠️ まだ同期記録がありません（同期がまだ走っていない可能性があります）
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <button className="btn btn-primary" onClick={handleSync} disabled={syncing} style={{ whiteSpace: 'nowrap' }}>
+                    {syncing ? '投入中...' : '今すぐ同期'}
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function JobsTab({ initialData }) {
     const toast = useToast();
     const [jobs, setJobs] = useState(initialData?.data || []);
@@ -938,18 +1011,27 @@ function JobsTab({ initialData }) {
         }
     };
 
-    if (loading) return <div className="skeleton" style={{ height: 200 }} />;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <HelloWorkSyncCard />
+            <div className="skeleton" style={{ height: 200 }} />
+        </div>
+    );
 
     if (jobs.length === 0) {
         return (
-            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                審査待ちの求人はありません
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                <HelloWorkSyncCard />
+                <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
+                    審査待ちの求人はありません
+                </div>
             </div>
         );
     }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <HelloWorkSyncCard />
             {/* 一括操作ツールバー */}
             <div style={{
                 display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
