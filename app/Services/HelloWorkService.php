@@ -52,6 +52,8 @@ class HelloWorkService
         $stats = ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'errors' => 0];
         // updated_at でこの同期で触れた求人を判別する
         $syncStartedAt = now();
+        $processed = 0;
+        $this->recordSyncProgress(0, $stats); // 「実行中」を即時記録（管理画面に表示）
 
         try {
             $this->companyId = $this->getOrCreateHelloWorkCompany();
@@ -85,6 +87,9 @@ class HelloWorkService
                         $stats['errors']++;
                     }
                 }
+
+                $processed += count($jobs);
+                $this->recordSyncProgress($processed, $stats); // ページごとに進捗を更新
 
                 $page++;
             }
@@ -123,12 +128,36 @@ class HelloWorkService
     {
         try {
             Cache::forever('hellowork_last_sync', array_merge($stats, [
+                'state'        => ($stats['errors'] ?? 0) > 0 ? 'error' : 'done',
                 'at'           => now()->toDateTimeString(),
                 'active_count' => Job::where('source', 'hellowork')->where('status', 'active')->count(),
                 'note'         => $note,
             ]));
         } catch (\Throwable $e) {
             Log::warning('HelloWork: recordSyncResult failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * 同期の進捗（実行中）を記録。管理画面が「同期中…○件処理済み」を表示できるようにする。
+     * 軽量にするため active_count の集計はしない（状況APIが別途ライブ取得する）。
+     * 異常終了で「実行中」が残り続けないよう2時間でTTL失効させる。
+     */
+    private function recordSyncProgress(int $processed, array $stats): void
+    {
+        try {
+            Cache::put('hellowork_last_sync', [
+                'state'     => 'running',
+                'at'        => now()->toDateTimeString(),
+                'processed' => $processed,
+                'inserted'  => $stats['inserted'],
+                'updated'   => $stats['updated'],
+                'deleted'   => 0,
+                'errors'    => $stats['errors'],
+                'note'      => null,
+            ], now()->addHours(2));
+        } catch (\Throwable $e) {
+            // 進捗記録の失敗は本処理を止めない
         }
     }
 

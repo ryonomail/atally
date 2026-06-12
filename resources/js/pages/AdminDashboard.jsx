@@ -885,13 +885,25 @@ function HelloWorkSyncCard() {
     };
     useEffect(() => { load(); }, []);
 
+    const last = status?.last_sync;
+    const state = last?.state;
+    const running = state === 'running';
+
+    // 実行中は5秒ごとに自動更新（進捗を表示）
+    useEffect(() => {
+        if (!running) return;
+        const id = setInterval(load, 5000);
+        return () => clearInterval(id);
+    }, [running]);
+
     const handleSync = async () => {
-        if (!confirm('ハローワーク求人を今すぐ同期しますか？（完了まで数分かかります）')) return;
+        if (!confirm('ハローワーク求人を今すぐ同期しますか？（完了まで数十分かかる場合があります）')) return;
         setSyncing(true);
         try {
             const res = await api.post('/admin/hellowork-sync');
             toast.success(res.data.message);
-            setTimeout(load, 5000); // キュー投入後しばらくして状況を再取得
+            // ワーカーが「実行中」を書き込むのを数回拾いに行く（その後は自動更新が継続）
+            [3000, 6000, 10000, 15000].forEach(ms => setTimeout(load, ms));
         } catch (err) {
             toast.error('同期の実行に失敗しました');
         } finally {
@@ -899,15 +911,21 @@ function HelloWorkSyncCard() {
         }
     };
 
-    const last = status?.last_sync;
-    const hasError = last && last.errors > 0;
+    const hasError = state === 'error' || (last && last.errors > 0 && state !== 'running');
 
     return (
-        <div className="card" style={{ padding: 'var(--space-lg)' }}>
+        <div className="card" style={{ padding: 'var(--space-lg)', borderLeft: running ? '3px solid var(--color-accent)' : undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
                         🔄 ハローワーク同期状況
+                        {running && (
+                            <span style={{
+                                fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#fff',
+                                background: 'var(--color-accent)', padding: '2px 10px', borderRadius: 'var(--radius-full)',
+                                animation: 'pulse 1.5s ease-in-out infinite',
+                            }}>● 実行中</span>
+                        )}
                     </p>
                     {loading ? (
                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0 }}>読み込み中...</p>
@@ -916,7 +934,16 @@ function HelloWorkSyncCard() {
                             <p style={{ margin: 0 }}>
                                 有効なハローワーク求人数: <strong style={{ color: 'var(--color-text-primary)' }}>{(status?.active_count ?? 0).toLocaleString()}</strong> 件
                             </p>
-                            {last ? (
+                            {running ? (
+                                <>
+                                    <p style={{ margin: 0, color: 'var(--color-accent)', fontWeight: 600 }}>
+                                        同期中… {(last.processed ?? 0).toLocaleString()} 件処理済み
+                                    </p>
+                                    <p style={{ margin: 0 }}>
+                                        新規 {last.inserted} ／ 更新 {last.updated}（開始 {last.at}）
+                                    </p>
+                                </>
+                            ) : last ? (
                                 <>
                                     <p style={{ margin: 0 }}>最終同期: {last.at}</p>
                                     <p style={{ margin: 0 }}>
@@ -936,8 +963,8 @@ function HelloWorkSyncCard() {
                         </div>
                     )}
                 </div>
-                <button className="btn btn-primary" onClick={handleSync} disabled={syncing} style={{ whiteSpace: 'nowrap' }}>
-                    {syncing ? '投入中...' : '今すぐ同期'}
+                <button className="btn btn-primary" onClick={handleSync} disabled={syncing || running} style={{ whiteSpace: 'nowrap' }}>
+                    {running ? '実行中…' : syncing ? '投入中...' : '今すぐ同期'}
                 </button>
             </div>
         </div>

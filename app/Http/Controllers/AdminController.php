@@ -206,7 +206,8 @@ class AdminController extends Controller
     public function helloworkStatus()
     {
         $last = Cache::get('hellowork_last_sync');
-        $activeCount = Job::where('source', 'hellowork')->where('status', 'active')->count();
+        // カードを頻繁にポーリングするため、件数集計は15秒キャッシュして負荷を抑える
+        $activeCount = Cache::remember('hellowork_active_count', 15, fn () => Job::where('source', 'hellowork')->where('status', 'active')->count());
 
         return response()->json([
             'last_sync'    => $last,          // at / inserted / updated / deleted / errors / active_count / note
