@@ -669,6 +669,9 @@ function AllJobsTab({ initialData }) {
 
     return (
         <div>
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+                <HelloWorkSyncCard />
+            </div>
             <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                 <input className="form-input" placeholder="求人タイトルで検索..." value={search}
                     onChange={e => setSearch(e.target.value)}
