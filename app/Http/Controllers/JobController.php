@@ -167,14 +167,10 @@ class JobController extends Controller
 
         $hasFilters = array_filter($countParams, fn($v) => $v !== null && $v !== '');
         if (empty($hasFilters)) {
-            // フィルターなし: pg_class の reltuples（統計解析値）で高速近似カウント
-            $total = Cache::remember('jobs_count_active_approx', 60, function () {
-                $approx = DB::selectOne(
-                    "SELECT reltuples::bigint AS n FROM pg_class WHERE relname = 'jobs'"
-                )?->n ?? 0;
-                // 近似値が古い場合は正確なカウントにフォールバック
-                return $approx > 100 ? $approx : Job::where('status', 'active')->count();
-            });
+            // フィルターなし: status='active' の正確な件数（部分インデックス idx_jobs_active_ranking で高速）。
+            // 以前は pg_class.reltuples を使っていたが、これはテーブル全行（closed/pending/draft含む）を
+            // 数えてしまい、実際に表示される active 件数と大きく食い違っていた（締切求人が行として残るため）。
+            $total = Cache::remember('jobs_count_active_exact', 60, fn () => Job::where('status', 'active')->count());
         } else {
             $total = Cache::remember($countCacheKey, 300, fn() => (clone $query)->count());
         }
