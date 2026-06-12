@@ -907,6 +907,40 @@ export default function JobDetailPage() {
                         )}
                         {job.positions_available && <InfoRow label="募集人数" value={`${job.positions_available}名`} />}
                     </InfoTable>
+
+                    {/* 勤務地の地図（住所があるときのみ・APIキー不要のGoogleマップ埋め込み） */}
+                    {(() => {
+                        const mapQuery = job.office_address
+                            || [job.prefecture, job.city].filter(Boolean).join('')
+                            || job.location;
+                        if (!mapQuery) return null;
+                        return (
+                            <div style={{ padding: 'var(--space-lg) var(--space-xl) var(--space-xl)' }}>
+                                <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>
+                                    地図
+                                </p>
+                                <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                                    <iframe
+                                        title="勤務地の地図"
+                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&hl=ja&output=embed`}
+                                        width="100%"
+                                        height="280"
+                                        style={{ border: 0, display: 'block' }}
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                    />
+                                </div>
+                                <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ display: 'inline-block', marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent)' }}
+                                >
+                                    🗺 Googleマップで開く
+                                </a>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* 試用期間 */}

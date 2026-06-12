@@ -36,7 +36,7 @@ class SecurityHeaders
             "img-src 'self' data: https:",
             "font-src 'self' data: https://fonts.gstatic.com",
             "connect-src 'self' https://api.stripe.com https://stripe.com wss://client.relay.crisp.chat https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://region1.google-analytics.com",
-            "frame-src 'self' https://js.stripe.com",
+            "frame-src 'self' https://js.stripe.com https://www.google.com https://maps.google.com",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'self'",
