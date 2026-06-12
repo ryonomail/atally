@@ -103,6 +103,10 @@ class HelloWorkService
                     ->where('updated_at', '<', $syncStartedAt)
                     ->update(['status' => 'closed']);
             }
+        } catch (\Throwable $e) {
+            // 途中で例外が出ても必ず結果を記録する（記録なしで原因不明になるのを防ぐ）
+            Log::error('HelloWork: sync exception', ['error' => $e->getMessage()]);
+            $stats['errors']++;
         } finally {
             $this->deleteToken($token);
         }
