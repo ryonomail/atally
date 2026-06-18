@@ -8,6 +8,9 @@ services:
     # Caddy がHTTPSを終端してこのコンテナへプロキシするため、ホストには公開せず内部公開のみ
     expose:
       - "80"
+    environment:
+      # エントリポイントが nginx の listen ポートに使う。Caddy/expose の 80 と揃える。
+      PORT: "80"
     env_file:
       - .env
     depends_on:
