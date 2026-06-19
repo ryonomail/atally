@@ -16,6 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // リバースプロキシ（Caddy/Cloudflare/Render等）背後で実クライアントIPを正しく取得する。
+        // appコンテナはホスト非公開で、前段プロキシ経由でのみ到達するため '*' を信頼してよい。
+        // これがないと全リクエストがプロキシIPに見え、レート制限/BAN判定が誤爆する。
+        $middleware->trustProxies(at: '*', headers:
+            Request::HEADER_X_FORWARDED_FOR |
+            Request::HEADER_X_FORWARDED_HOST |
+            Request::HEADER_X_FORWARDED_PORT |
+            Request::HEADER_X_FORWARDED_PROTO
+        );
+
         // グローバルミドルウェア: セキュリティヘッダー
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
