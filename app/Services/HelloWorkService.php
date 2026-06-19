@@ -53,6 +53,8 @@ class HelloWorkService
         // updated_at でこの同期で触れた求人を判別する
         $syncStartedAt = now();
         $processed = 0;
+        // 同期前のアクティブ件数（一括クローズの安全判定に使う）
+        $activeBefore = Job::where('source', 'hellowork')->where('status', 'active')->count();
         $this->recordSyncProgress(0, $stats); // 「実行中」を即時記録（管理画面に表示）
 
         try {
@@ -102,11 +104,25 @@ class HelloWorkService
 
             // updated_at < 同期開始時刻 の求人 = 今回APIに無かった → 非公開化
             // whereNotIn(全ID) の代わりに timestamp 比較でメモリ/パラメータ上限を回避
-            if ($maxPages === 0) {
+            //
+            // ★安全弁: 取得件数が異常に少ない場合は一括クローズしない。
+            //   API障害・IP未登録・メンテ等で0件や極端に少ない取得になったとき、
+            //   既存の全在庫を誤ってクローズしてしまう事故を防ぐ（過去に全件closed化が発生）。
+            $closeIsSafe = $stats['errors'] === 0
+                && $processed > 0
+                && ($activeBefore === 0 || $processed >= $activeBefore * 0.5);
+
+            if ($maxPages === 0 && $closeIsSafe) {
                 $stats['deleted'] = Job::where('source', 'hellowork')
                     ->where('status', 'active')
                     ->where('updated_at', '<', $syncStartedAt)
                     ->update(['status' => 'closed']);
+            } elseif ($maxPages === 0 && !$closeIsSafe) {
+                Log::warning('HelloWork: 取得件数が少ないため一括クローズを見送り（在庫保護）', [
+                    'processed'     => $processed,
+                    'active_before' => $activeBefore,
+                    'errors'        => $stats['errors'],
+                ]);
             }
         } catch (\Throwable $e) {
             // 途中で例外が出ても必ず結果を記録する（記録なしで原因不明になるのを防ぐ）
