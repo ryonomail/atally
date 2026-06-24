@@ -574,7 +574,12 @@ Route::get('/sitemap-jobs-{page}.xml', function ($page) {
                 if ($job->updated_at) echo "<lastmod>{$job->updated_at->toAtomString()}</lastmod>";
                 echo "<changefreq>weekly</changefreq><priority>0.7</priority></url>\n";
                 $fetched++;
-                if ($fetched % 2000 === 0) { ob_flush(); flush(); }
+                // 2000件ごとに送出。出力バッファが無い場合に ob_flush() が警告→例外化して
+                // ループが途中(2000件)で止まる事故があったため、バッファ有無を確認し @ で抑止する。
+                if ($fetched % 2000 === 0) {
+                    if (ob_get_level() > 0) { @ob_flush(); }
+                    flush();
+                }
             });
 
         echo '</urlset>';
