@@ -335,7 +335,7 @@ Route::get('/jobs/{id}', function ($id) {
     ), 0, 5000);
 
     $seo = [
-        'title'       => $job->title . '【' . ($job->prefecture ?? $job->location ?? '') . '】 - ' . ($job->company->company_name ?? '') . ' | Atally',
+        'title'       => $job->title . '【' . ($job->prefecture ?? $job->location ?? '') . '】 - ' . $orgName . ' | Atally',
         'description' => $metaDesc,
         'url'         => $baseUrl . '/jobs/' . $job->id,
         'type'        => 'website',
