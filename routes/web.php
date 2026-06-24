@@ -318,6 +318,22 @@ Route::get('/jobs/{id}', function ($id) {
         0, 160
     );
 
+    // ---- Google for Jobs（しごと検索）用の補強値 ----
+    $isHelloWork = ($job->source ?? '') === 'hellowork';
+    // 雇用主名: ハローワーク求人はダミー企業「ハローワーク」ではなく実際の事業所名を使う
+    $orgName = ($isHelloWork ? ($job->employer_name ?: null) : null)
+        ?: ($job->company->company_name ?? '求人企業');
+    $orgSameAs = $isHelloWork ? ($job->homepage_url ?: null) : ($job->company->website ?? null);
+    // 求人の識別子（ハローワーク求人番号 or 内部ID）
+    $jobIdentifier = $isHelloWork ? ($job->hellowork_id ?: (string) $job->id) : (string) $job->id;
+    // 構造化データ用の詳細な職務内容（Google for Jobs は網羅的な説明を推奨）
+    $jpDescription = mb_substr(trim(
+        ($job->description ?? '')
+        . ($job->requirements ? "\n\n【応募要件】\n" . $job->requirements : '')
+        . ($job->work_hours ? "\n\n【勤務時間】" . $job->work_hours : '')
+        . ($job->holidays ? "\n\n【休日・休暇】" . $job->holidays : '')
+    ), 0, 5000);
+
     $seo = [
         'title'       => $job->title . '【' . ($job->prefecture ?? $job->location ?? '') . '】 - ' . ($job->company->company_name ?? '') . ' | Atally',
         'description' => $metaDesc,
@@ -330,22 +346,30 @@ Route::get('/jobs/{id}', function ($id) {
                 [
                     '@type'          => 'JobPosting',
                     'title'          => $job->title,
-                    'description'    => mb_substr($job->description ?? '', 0, 5000),
+                    'description'    => $jpDescription,
                     'datePosted'     => ($job->published_at ?? $job->created_at)?->toIso8601String(),
                     'validThrough'   => $validThrough?->toIso8601String(),
-                    'directApply'    => true,
+                    // 直接応募できるのは自社掲載求人のみ。ハローワーク求人はHW経由のため false
+                    'directApply'    => !$isHelloWork,
                     'employmentType' => $employmentTypeMap[$job->employment_type] ?? 'OTHER',
-                    'hiringOrganization' => [
-                        '@type' => 'Organization',
-                        'name'  => $job->company->company_name ?? '',
-                        ...($job->company->website ? ['sameAs' => $job->company->website] : []),
+                    'identifier'     => [
+                        '@type' => 'PropertyValue',
+                        'name'  => $orgName,
+                        'value' => $jobIdentifier,
                     ],
+                    'hiringOrganization' => array_filter([
+                        '@type'  => 'Organization',
+                        'name'   => $orgName,
+                        'sameAs' => $orgSameAs ?: null,
+                    ]),
                     'jobLocation' => [
                         '@type'   => 'Place',
                         'address' => array_filter([
                             '@type'           => 'PostalAddress',
-                            'addressRegion'   => $job->prefecture ?? '',
-                            'addressLocality' => $job->location ?? '',
+                            'streetAddress'   => $job->office_address ?: null,
+                            'addressLocality' => $job->city ?: ($job->location ?: null),
+                            'addressRegion'   => $job->prefecture ?: null,
+                            'postalCode'      => $job->postal_code ?: null,
                             'addressCountry'  => 'JP',
                         ]),
                     ],
