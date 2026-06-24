@@ -199,6 +199,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-04T00:00:00+09:00',
             'modified'    => '2026-06-04T00:00:00+09:00',
         ],
+        'mensetsu-yokuaru-shitsumon' => [
+            'title'       => '面接でよく聞かれる質問と回答例【転職・就活 想定質問15選】 | Atally',
+            'description' => '面接でよく聞かれる質問と回答例を徹底解説。自己紹介・志望動機・転職理由・強み・弱み・逆質問まで15問。NG例と言い換え例付きで、転職・就活どちらにも使えます。',
+            'published'   => '2026-06-24T00:00:00+09:00',
+            'modified'    => '2026-06-24T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -545,6 +551,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-template', 'monthly', '0.9'],
             ['/column/baito-rirekisho-kakikata', 'monthly', '0.9'],
             ['/column/rirekisho-futo-kakikata', 'monthly', '0.8'],
+            ['/column/mensetsu-yokuaru-shitsumon', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
