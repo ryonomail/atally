@@ -205,6 +205,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-24T00:00:00+09:00',
             'modified'    => '2026-06-24T00:00:00+09:00',
         ],
+        'taishoku-todoke-kakikata' => [
+            'title'       => '退職届・退職願の書き方と例文【手書きテンプレート・提出タイミングまで解説】 | Atally',
+            'description' => '退職届・退職願の書き方を完全解説。退職届と退職願の違い、手書き縦書きの例文テンプレート、封筒の書き方、提出タイミング・マナー、引き留めへの対処まで網羅。',
+            'published'   => '2026-06-25T00:00:00+09:00',
+            'modified'    => '2026-06-25T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -552,6 +558,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/baito-rirekisho-kakikata', 'monthly', '0.9'],
             ['/column/rirekisho-futo-kakikata', 'monthly', '0.8'],
             ['/column/mensetsu-yokuaru-shitsumon', 'monthly', '0.8'],
+            ['/column/taishoku-todoke-kakikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
