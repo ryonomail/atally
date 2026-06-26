@@ -217,6 +217,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-26T00:00:00+09:00',
             'modified'    => '2026-06-26T00:00:00+09:00',
         ],
+        'daini-shinsotsu-tenshoku' => [
+            'title'       => '第二新卒の転職完全ガイド【定義・メリット・転職のコツ・面接対策まで】 | Atally',
+            'description' => '第二新卒とは何か・採用市場での評価・転職のタイミング・履歴書・職務経歴書の書き方・面接でよく聞かれる質問まで。第二新卒での転職を検討している方の実践的ガイド。',
+            'published'   => '2026-06-26T00:00:00+09:00',
+            'modified'    => '2026-06-26T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -566,6 +572,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-yokuaru-shitsumon', 'monthly', '0.8'],
             ['/column/taishoku-todoke-kakikata', 'monthly', '0.8'],
             ['/column/rirekisho-shumi-tokugi', 'monthly', '0.8'],
+            ['/column/daini-shinsotsu-tenshoku', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
