@@ -211,6 +211,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-25T00:00:00+09:00',
             'modified'    => '2026-06-25T00:00:00+09:00',
         ],
+        'rirekisho-shumi-tokugi' => [
+            'title'       => '履歴書の趣味・特技欄の書き方【例文30選】採用担当者が見るポイントも解説 | Atally',
+            'description' => '履歴書の趣味・特技欄の書き方を採用担当者目線で徹底解説。ジャンル別例文30選、「特技がない」時の対処法、NGワード、仕事への結びつけ方まで網羅。',
+            'published'   => '2026-06-26T00:00:00+09:00',
+            'modified'    => '2026-06-26T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -559,6 +565,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-futo-kakikata', 'monthly', '0.8'],
             ['/column/mensetsu-yokuaru-shitsumon', 'monthly', '0.8'],
             ['/column/taishoku-todoke-kakikata', 'monthly', '0.8'],
+            ['/column/rirekisho-shumi-tokugi', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
