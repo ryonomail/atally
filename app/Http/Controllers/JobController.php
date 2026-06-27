@@ -627,12 +627,23 @@ class JobController extends Controller
         // ランキングスコアを事前計算（Atally求人: 10000 + 予算 × 品質スコア × 採用実績係数）
         $data['ranking_score'] = 10000 + $data['daily_budget'] * ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
 
-        // 公開予約の処理
+        // ステータス決定（無料掲載モデル）:
+        //  - 公開予約あり → scheduled
+        //  - NGワード検出 → pending_review（手動レビュー行き）
+        //  - それ以外 → 自動承認で即公開（必須項目はvalidate済み・NGワード無し）
+        //    無料掲載は published_at から30日で自動終了（expires_at）。ハローワーク求人は別ルール。
         if ($request->filled('scheduled_publish_at')) {
             $data['scheduled_publish_at'] = $request->input('scheduled_publish_at');
             $data['status'] = 'scheduled';
-        } else {
+        } elseif ($hasNgWord) {
             $data['status'] = 'pending_review';
+        } else {
+            $data['status'] = 'active';
+            $data['published_at'] = now();
+            // 無料掲載の自動終了日（明示指定が無ければ30日後）
+            if (empty($data['expires_at'])) {
+                $data['expires_at'] = now()->addDays(30);
+            }
         }
 
         $job = Job::create($data);
