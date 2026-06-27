@@ -223,6 +223,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-26T00:00:00+09:00',
             'modified'    => '2026-06-26T00:00:00+09:00',
         ],
+        'mensetsu-jikoshokai' => [
+            'title'       => '面接での自己紹介の仕方【例文10選・1分/3分版】転職・就活完全ガイド | Atally',
+            'description' => '面接での自己紹介の仕方を例文10選で解説。1分・3分の時間別テンプレート、転職・新卒・パート向けの例文集、NGパターンと改善例まで。面接 自己紹介 例文を探している方に。',
+            'published'   => '2026-06-27T00:00:00+09:00',
+            'modified'    => '2026-06-27T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -573,6 +579,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/taishoku-todoke-kakikata', 'monthly', '0.8'],
             ['/column/rirekisho-shumi-tokugi', 'monthly', '0.8'],
             ['/column/daini-shinsotsu-tenshoku', 'monthly', '0.8'],
+            ['/column/mensetsu-jikoshokai', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
