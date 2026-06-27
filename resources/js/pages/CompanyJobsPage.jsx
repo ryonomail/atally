@@ -1942,10 +1942,27 @@ export default function CompanyJobsPage() {
                             )}
                         </div>
 
+                        {/* 掲載前アナウンス（無料掲載の30日自動終了） */}
+                        {!editingJob && (
+                            <div style={{
+                                display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-start',
+                                padding: 'var(--space-md)', marginBottom: 'var(--space-md)',
+                                background: 'rgba(0,112,185,0.06)', border: '1px solid rgba(0,112,185,0.2)',
+                                borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)',
+                                color: 'var(--color-text-secondary)', lineHeight: 1.7,
+                            }}>
+                                <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
+                                <span>
+                                    <strong style={{ color: 'var(--color-text-primary)' }}>無料掲載は30日で自動終了します。</strong><br />
+                                    掲載を続けたい場合は、期限内に再掲載するか、キャンペーンでブースト（日額予算を設定）すると掲載が継続し、上位表示されます。NGワードや必須項目に問題がなければ、求人は<strong>自動で公開</strong>されます。
+                                </span>
+                            </div>
+                        )}
+
                         {/* 保存・送信ボタン */}
                         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
                             <button type="submit" className="btn btn-primary" disabled={saving}>
-                                {saving ? '保存中...' : editingJob ? '💾 求人を更新' : '📋 求人を作成（審査へ）'}
+                                {saving ? '保存中...' : editingJob ? '💾 求人を更新' : '📋 求人を作成して公開'}
                             </button>
                             <button type="button" className="btn btn-secondary" onClick={() => setShowPreview(true)}>
                                 👁 プレビュー
@@ -1965,7 +1982,7 @@ export default function CompanyJobsPage() {
                             )}
                             {!editingJob && (
                                 <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginLeft: 'auto', alignSelf: 'center' }}>
-                                    ※ 初回投稿は運営の審査後に公開されます
+                                    ※ NGワード・必須項目に問題がなければ自動で公開されます
                                 </p>
                             )}
                         </div>
@@ -1989,7 +2006,7 @@ export default function CompanyJobsPage() {
                     <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
                         <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📋</div>
                         <h3 style={{ marginBottom: 'var(--space-sm)' }}>まだ求人がありません</h3>
-                        <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>最初の求人を作成しましょう。初回投稿は運営の審査後に公開されます。</p>
+                        <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>最初の求人を作成しましょう。問題がなければ自動で公開され、無料掲載は30日で終了します。</p>
                         <button className="btn btn-primary btn-lg" onClick={() => setShowForm(true)}>最初の求人を作成</button>
                     </div>
                 ) : (

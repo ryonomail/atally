@@ -20,6 +20,9 @@ Schedule::command('app:update-hiring-reputation')->dailyAt('01:00');
 // 毎日6:00: 放置求人の検出・段階対応（通知→ラベル→自動クローズ）
 Schedule::command('app:detect-stalled-jobs')->dailyAt('06:00');
 
+// 毎日4:00: 無料掲載求人を掲載期限(30日)で自動終了（ハロワ・ブースト中は除外）
+Schedule::command('app:close-expired-jobs')->dailyAt('04:00');
+
 // 毎朝8時: 面接リマインダー送信
 Schedule::command('app:send-interview-reminders')->dailyAt('08:00');
 
