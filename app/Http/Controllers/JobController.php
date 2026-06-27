@@ -626,7 +626,7 @@ class JobController extends Controller
         $data['daily_budget'] = $data['daily_budget'] ?? 0;
         $data['expires_at'] = $request->input('expires_at');
         // ランキングスコアを事前計算（Atally求人: 10000 + 予算 × 品質スコア × 採用実績係数）
-        $data['ranking_score'] = 10000 + $data['daily_budget'] * ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
+        $data['ranking_score'] = $this->computeRankingScore((float) $data['daily_budget'], $company);
 
         // ステータス決定（無料掲載モデル）:
         //  - 公開予約あり → scheduled
@@ -945,7 +945,7 @@ class JobController extends Controller
         $oldBudget = (float) $job->daily_budget;
         // ランキングスコアを再計算（予算または公開状態が変わった場合に反映）
         $newBudget = (float) ($data['daily_budget'] ?? $oldBudget);
-        $data['ranking_score'] = 10000 + $newBudget * ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
+        $data['ranking_score'] = $this->computeRankingScore((float) $newBudget, $company);
         $job->update($data);
 
         // 課金保護: 予算変更ログ
@@ -1149,6 +1149,19 @@ class JobController extends Controller
     }
 
     // 企業: 一括予算設定
+    /**
+     * ティア方式のランキングスコアを算出。
+     *  - 予算>0（ブースト中）→ BOOST_BASE + 日額 × 品質 × 採用実績（無料より必ず上）
+     *  - 予算0（無料掲載）   → FREE_BASE
+     */
+    private function computeRankingScore(float $budget, $company): float
+    {
+        $mult = ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
+        return $budget > 0
+            ? \App\Models\Campaign::BOOST_BASE + $budget * $mult
+            : \App\Models\Campaign::FREE_BASE;
+    }
+
     public function bulkBudget(Request $request)
     {
         $request->validate([
@@ -1171,7 +1184,10 @@ class JobController extends Controller
             $oldBudget = (float) $job->daily_budget;
             $newBudget = (float) $request->daily_budget;
 
-            $job->update(['daily_budget' => $newBudget]);
+            $job->update([
+                'daily_budget'  => $newBudget,
+                'ranking_score' => $this->computeRankingScore($newBudget, $company),
+            ]);
 
             if ($oldBudget !== $newBudget) {
                 BillingProtectionService::logBudgetChange(

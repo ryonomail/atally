@@ -220,9 +220,9 @@ class CampaignController extends Controller
 
         $campaign->update($updateData);
 
-        // 一時停止の場合、所属求人の日額を0に
+        // 一時停止の場合、所属求人を無料ティアに戻す（日額0・ランキングを無料基準へ）
         if ($request->status === 'paused') {
-            $campaign->activeJobs()->update(['daily_budget' => 0]);
+            $campaign->activeJobs()->update(['daily_budget' => 0, 'ranking_score' => Campaign::FREE_BASE]);
         }
 
         // 予算変更時は再配分
@@ -253,8 +253,10 @@ class CampaignController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // 所属求人の予算グループ紐付けを解除（日額は維持）
-        Job::where('campaign_id', $campaign->id)->update(['campaign_id' => null]);
+        // 所属求人を無料ティアに戻す（予算グループ解除・日額0・ランキングを無料基準へ）
+        Job::where('campaign_id', $campaign->id)->update([
+            'campaign_id' => null, 'daily_budget' => 0, 'ranking_score' => Campaign::FREE_BASE,
+        ]);
 
         $campaign->delete();
 
@@ -306,7 +308,7 @@ class CampaignController extends Controller
         $updated = Job::where('company_id', $company->id)
             ->where('campaign_id', $campaign->id)
             ->whereIn('id', $request->job_ids)
-            ->update(['campaign_id' => null, 'daily_budget' => 0]);
+            ->update(['campaign_id' => null, 'daily_budget' => 0, 'ranking_score' => Campaign::FREE_BASE]);
 
         // 残りの求人で予算再配分
         $campaign->refresh();

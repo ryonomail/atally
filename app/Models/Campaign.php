@@ -9,6 +9,16 @@ class Campaign extends Model
 {
     use HasFactory;
 
+    /**
+     * ランキングのティア方式:
+     *   無料掲載 = FREE_BASE(10000)前後
+     *   ブースト中 = BOOST_BASE(1,000,000)以上 → 無料より必ず上に出る。
+     *   ブースト枠の中では「1件あたり日額 × 品質 × 採用実績」で順位が決まる
+     *   （件数が多いほど1件あたりが薄まり、枠内では下がる）。
+     */
+    public const BOOST_BASE = 1000000;
+    public const FREE_BASE = 10000;
+
     protected $fillable = [
         'company_id',
         'name',
@@ -79,32 +89,33 @@ class Campaign extends Model
         }
 
         $jobCount = $jobs->count();
+        // キャンペーンは単一企業に属するので、品質・採用実績の係数は共通
+        $company = $this->company;
+        $mult = ($company->quality_score ?? 1.0) * ($company->hiring_reputation ?? 1.0);
+        // ブースト枠のランキング = BOOST_BASE + 1件あたり日額 × 係数（無料より必ず上）
+        $boostScore = fn (float $perJob) => self::BOOST_BASE + $perJob * $mult;
 
         if ($this->budget_allocation === 'weighted') {
             // パフォーマンス比配分（閲覧数ベース）
             $totalViews = $jobs->sum(fn ($job) => $job->views()->where('viewed_at', '>=', now()->subDays(7))->count());
             if ($totalViews === 0) {
-                // 閲覧データなしの場合は均等配分にフォールバック
+                // 閲覧データなしの場合は均等配分にフォールバック（一括更新）
                 $perJob = $this->perJobDailyBudget($jobCount);
-                foreach ($jobs as $job) {
-                    $job->update(['daily_budget' => $perJob]);
-                }
+                $this->activeJobs()->update(['daily_budget' => $perJob, 'ranking_score' => $boostScore($perJob)]);
             } else {
                 $baseDailyTotal = $this->billing_period === 'monthly'
                     ? (float) $this->daily_budget / 30
                     : (float) $this->daily_budget;
                 foreach ($jobs as $job) {
                     $views = $job->views()->where('viewed_at', '>=', now()->subDays(7))->count();
-                    $ratio = $views / $totalViews;
-                    $job->update(['daily_budget' => round($baseDailyTotal * $ratio, 2)]);
+                    $perJob = round($baseDailyTotal * ($views / $totalViews), 2);
+                    $job->update(['daily_budget' => $perJob, 'ranking_score' => $boostScore($perJob)]);
                 }
             }
         } else {
-            // 均等配分
+            // 均等配分（全件同額なので一括更新で高速に）
             $perJob = $this->perJobDailyBudget($jobCount);
-            foreach ($jobs as $job) {
-                $job->update(['daily_budget' => $perJob]);
-            }
+            $this->activeJobs()->update(['daily_budget' => $perJob, 'ranking_score' => $boostScore($perJob)]);
         }
     }
 
