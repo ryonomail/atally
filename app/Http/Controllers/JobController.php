@@ -436,8 +436,14 @@ class JobController extends Controller
     public function myJobs(Request $request)
     {
         $company = Auth::user()->company;
-        // 一覧では重い関連（photos/persona）を読み込まない。大量求人でのペイロード肥大化を防ぐ。
-        $jobs = Job::with('agencyClient:id,client_name')
+        // 会社未紐付けユーザー（company_role未設定など）は空ページを返す（500を防ぐ）
+        if (!$company) {
+            return response()->json(['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0]);
+        }
+
+        // 一覧では重い関連（photos/persona）を読み込まない。サーバー側で絞り込み＋ページングし、
+        // 数千件規模でもペイロードが肥大化しないようにする（旧: 全件get で30MB級だった）。
+        $query = Job::with('agencyClient:id,client_name')
             ->withCount('applications')
             ->withCount('views')
             ->withCount(['applications as pending_count' => fn ($q) => $q->where('status', 'pending')])
@@ -445,10 +451,30 @@ class JobController extends Controller
             ->withCount(['applications as interviewing_count' => fn ($q) => $q->where('status', 'interviewing')])
             ->withCount(['applications as offered_count' => fn ($q) => $q->where('status', 'offered')])
             ->withCount(['applications as hired_count' => fn ($q) => $q->where('status', 'hired')])
-            ->where('company_id', $company->id)
-            ->latest()
-            ->get();
-        return response()->json($jobs);
+            ->where('company_id', $company->id);
+
+        // ステータス絞り込み（all=全件）
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        // 予算（無料=予算なし / paid=ブースト中）
+        if ($request->input('budget') === 'free') {
+            $query->where(fn ($q) => $q->whereNull('daily_budget')->orWhere('daily_budget', '<=', 0));
+        } elseif ($request->input('budget') === 'paid') {
+            $query->where('daily_budget', '>', 0);
+        }
+        // キーワード（タイトル・勤務地・雇用形態）
+        if ($request->filled('q')) {
+            $kw = mb_substr(trim($request->q), 0, 100);
+            $query->where(function ($q) use ($kw) {
+                $q->where('title', 'ilike', "%{$kw}%")
+                  ->orWhere('location', 'ilike', "%{$kw}%")
+                  ->orWhere('employment_type', 'ilike', "%{$kw}%");
+            });
+        }
+
+        $perPage = min(max((int) $request->input('per_page', 50), 1), 100);
+        return response()->json($query->latest()->paginate($perPage));
     }
 
     // 企業: 求人作成（職業安定法2022年改正 必須項目を義務化）

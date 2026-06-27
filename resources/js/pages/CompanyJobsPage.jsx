@@ -120,6 +120,7 @@ export default function CompanyJobsPage() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterBudget, setFilterBudget] = useState('all'); // all | free | paid
     const [currentPage, setCurrentPage] = useState(1); // 一覧のページング（大量求人対策）
+    const [meta, setMeta] = useState(null); // サーバーページングのメタ（current_page/last_page/total）
     const [agencyClients, setAgencyClients] = useState([]);
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -206,17 +207,40 @@ export default function CompanyJobsPage() {
         return () => clearTimeout(rankTimerRef.current);
     }, [form.daily_budget, showForm]);
 
-    useEffect(() => {
-        api.get('/my-jobs').then(res => {
+    // 求人一覧をサーバーから取得（サーバー側で絞り込み＋ページング。数千件でも軽量）
+    const fetchJobs = useCallback((page = 1) => {
+        setLoading(true);
+        api.get('/my-jobs', { params: {
+            status: filterStatus !== 'all' ? filterStatus : undefined,
+            budget: filterBudget !== 'all' ? filterBudget : undefined,
+            q: searchKeyword.trim() || undefined,
+            page,
+            per_page: 50,
+        } }).then(res => {
             setJobs(res.data.data || res.data || []);
+            setMeta({
+                current_page: res.data.current_page || 1,
+                last_page: res.data.last_page || 1,
+                total: res.data.total ?? (res.data.data?.length || 0),
+            });
+            setCurrentPage(res.data.current_page || page);
         }).catch(() => {}).finally(() => setLoading(false));
-        // 人材紹介会社ならクライアント一覧も取得
+    }, [filterStatus, filterBudget, searchKeyword]);
+
+    // 初回：人材紹介会社ならクライアント一覧も取得
+    useEffect(() => {
         if (isAgency) {
             api.get('/agency/clients').then(res => {
                 setAgencyClients(res.data.data || res.data || []);
             }).catch(() => {});
         }
     }, []);
+
+    // 絞り込み・検索が変わったら1ページ目から取り直す（検索は400msデバウンス）
+    useEffect(() => {
+        const t = setTimeout(() => fetchJobs(1), searchKeyword ? 400 : 0);
+        return () => clearTimeout(t);
+    }, [filterStatus, filterBudget, searchKeyword]);
 
     const fetchAnalytics = useCallback(() => {
         setAnalyticsLoading(true);
@@ -507,40 +531,10 @@ export default function CompanyJobsPage() {
         }
     };
 
-    // フィルタリング
-    const filteredJobs = useMemo(() => {
-        let result = jobs;
-        if (searchKeyword.trim()) {
-            const kw = searchKeyword.trim().toLowerCase();
-            result = result.filter(j =>
-                (j.title || '').toLowerCase().includes(kw) ||
-                (j.location || '').toLowerCase().includes(kw) ||
-                (j.employment_type || '').toLowerCase().includes(kw) ||
-                (j.description || '').toLowerCase().includes(kw)
-            );
-        }
-        if (filterStatus !== 'all') {
-            result = result.filter(j => j.status === filterStatus);
-        }
-        if (filterBudget === 'free') {
-            result = result.filter(j => !j.daily_budget || Number(j.daily_budget) === 0);
-        } else if (filterBudget === 'paid') {
-            result = result.filter(j => Number(j.daily_budget) > 0);
-        }
-        return result;
-    }, [jobs, searchKeyword, filterStatus, filterBudget]);
-
-    // 一覧のページング（数千件をDOMに一括描画すると重いため、1ページ50件ずつ表示）
-    const JOBS_PER_PAGE = 50;
-    const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
-    // フィルタ変更などで件数が減ったら、現在ページを範囲内に戻す
-    useEffect(() => { if (currentPage > totalPages) setCurrentPage(1); }, [totalPages, currentPage]);
-    const pagedJobs = useMemo(
-        () => filteredJobs.slice((currentPage - 1) * JOBS_PER_PAGE, currentPage * JOBS_PER_PAGE),
-        [filteredJobs, currentPage]
-    );
-    // 絞り込み条件が変わったら1ページ目に戻す
-    useEffect(() => { setCurrentPage(1); }, [searchKeyword, filterStatus, filterBudget]);
+    // 絞り込み・ページングはサーバー側で実施済み。jobs はそのまま現在ページの結果。
+    const filteredJobs = jobs;          // 選択・一括操作は現在ページの求人に対して行う
+    const pagedJobs = jobs;             // 描画対象（サーバーが50件に絞って返す）
+    const totalPages = meta?.last_page || 1;
 
     const toggleJobSelect = (jobId) => {
         setSelectedJobs(prev => prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]);
@@ -2136,17 +2130,17 @@ export default function CompanyJobsPage() {
                         </div>
 
                         {/* ページング（大量求人を快適に閲覧） */}
-                        {filteredJobs.length > JOBS_PER_PAGE && !showForm && (
+                        {totalPages > 1 && !showForm && (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-md)', marginTop: 'var(--space-lg)', flexWrap: 'wrap' }}>
-                                <button className="btn btn-secondary" disabled={currentPage <= 1}
-                                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                                <button className="btn btn-secondary" disabled={currentPage <= 1 || loading}
+                                    onClick={() => { fetchJobs(Math.max(1, currentPage - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                                     ← 前へ
                                 </button>
                                 <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                    {currentPage} / {totalPages} ページ（全 {filteredJobs.length.toLocaleString()} 件）
+                                    {currentPage} / {totalPages} ページ（全 {(meta?.total || 0).toLocaleString()} 件）
                                 </span>
-                                <button className="btn btn-secondary" disabled={currentPage >= totalPages}
-                                    onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                                <button className="btn btn-secondary" disabled={currentPage >= totalPages || loading}
+                                    onClick={() => { fetchJobs(Math.min(totalPages, currentPage + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                                     次へ →
                                 </button>
                             </div>
