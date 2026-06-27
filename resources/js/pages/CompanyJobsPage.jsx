@@ -119,6 +119,7 @@ export default function CompanyJobsPage() {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterBudget, setFilterBudget] = useState('all'); // all | free | paid
+    const [currentPage, setCurrentPage] = useState(1); // 一覧のページング（大量求人対策）
     const [agencyClients, setAgencyClients] = useState([]);
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -528,6 +529,18 @@ export default function CompanyJobsPage() {
         }
         return result;
     }, [jobs, searchKeyword, filterStatus, filterBudget]);
+
+    // 一覧のページング（数千件をDOMに一括描画すると重いため、1ページ50件ずつ表示）
+    const JOBS_PER_PAGE = 50;
+    const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
+    // フィルタ変更などで件数が減ったら、現在ページを範囲内に戻す
+    useEffect(() => { if (currentPage > totalPages) setCurrentPage(1); }, [totalPages, currentPage]);
+    const pagedJobs = useMemo(
+        () => filteredJobs.slice((currentPage - 1) * JOBS_PER_PAGE, currentPage * JOBS_PER_PAGE),
+        [filteredJobs, currentPage]
+    );
+    // 絞り込み条件が変わったら1ページ目に戻す
+    useEffect(() => { setCurrentPage(1); }, [searchKeyword, filterStatus, filterBudget]);
 
     const toggleJobSelect = (jobId) => {
         setSelectedJobs(prev => prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]);
@@ -2090,7 +2103,7 @@ export default function CompanyJobsPage() {
                             </div>
                         )}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                            {filteredJobs.map(job => (
+                            {pagedJobs.map(job => (
                                 <JobCard
                                     key={job.id}
                                     job={job}
@@ -2104,6 +2117,23 @@ export default function CompanyJobsPage() {
                                 />
                             ))}
                         </div>
+
+                        {/* ページング（大量求人を快適に閲覧） */}
+                        {filteredJobs.length > JOBS_PER_PAGE && !showForm && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-md)', marginTop: 'var(--space-lg)', flexWrap: 'wrap' }}>
+                                <button className="btn btn-secondary" disabled={currentPage <= 1}
+                                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                                    ← 前へ
+                                </button>
+                                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                                    {currentPage} / {totalPages} ページ（全 {filteredJobs.length.toLocaleString()} 件）
+                                </span>
+                                <button className="btn btn-secondary" disabled={currentPage >= totalPages}
+                                    onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                                    次へ →
+                                </button>
+                            </div>
+                        )}
                     </>
                 )
             )}

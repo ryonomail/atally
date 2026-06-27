@@ -436,7 +436,8 @@ class JobController extends Controller
     public function myJobs(Request $request)
     {
         $company = Auth::user()->company;
-        $jobs = Job::with(['photos', 'persona', 'agencyClient:id,client_name'])
+        // 一覧では重い関連（photos/persona）を読み込まない。大量求人でのペイロード肥大化を防ぐ。
+        $jobs = Job::with('agencyClient:id,client_name')
             ->withCount('applications')
             ->withCount('views')
             ->withCount(['applications as pending_count' => fn ($q) => $q->where('status', 'pending')])
