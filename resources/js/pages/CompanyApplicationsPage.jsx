@@ -67,12 +67,9 @@ export default function CompanyApplicationsPage() {
           .finally(() => setLoading(false));
     }, [jobId]);
 
-    // 選択中の応募者の面接日程を読み込む
+    // 面接日程機能はMVP期間中は無効（面接調整はメッセージで行う）。無効APIは呼ばない。
     useEffect(() => {
-        if (!selectedApp) { setInterviews([]); return; }
-        api.get(`/applications/${selectedApp.id}/schedules`)
-            .then(res => setInterviews(res.data.schedules || []))
-            .catch(() => setInterviews([]));
+        setInterviews([]);
         setShowInterviewForm(false);
         setInterviewData({ scheduled_at: '', location: '', meeting_url: '', notes: '' });
     }, [selectedApp?.id]);
@@ -494,13 +491,9 @@ export default function CompanyApplicationsPage() {
                                         💬 メッセージを送る
                                     </Link>
                                     {selectedApp.status === 'interviewing' && (
-                                        <button
-                                            className="btn btn-accent"
-                                            style={{ fontSize: 'var(--font-size-sm)' }}
-                                            onClick={() => setShowInterviewForm(!showInterviewForm)}
-                                        >
-                                            📅 面接設定
-                                        </button>
+                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', alignSelf: 'center' }}>
+                                            面接の日程調整はメッセージでやり取りできます
+                                        </span>
                                     )}
                                 </div>
 
