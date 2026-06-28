@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
+import PaymentCardSection from '../components/PaymentCardSection';
 
+// MVP期間中は無効化された機能（収益分析・紹介の送受信）のタブは出さない。
+// 「求人一覧」は外部求人データベースの閲覧機能のため実態に合わせて改称。
+// 自社が掲載した求人の管理は「求人管理」(/company/jobs) で行う。
 const TABS = [
     { key: 'overview', label: '概要' },
-    { key: 'analytics', label: '収益分析' },
-    { key: 'received', label: '受けた紹介' },
-    { key: 'sent', label: '送った紹介' },
-    { key: 'jobs', label: '求人一覧' },
+    { key: 'jobs', label: '求人データベース' },
     { key: 'companies', label: '企業一覧' },
     { key: 'license', label: '許可証' },
 ];
@@ -82,16 +83,13 @@ function ReferralFeeSummary({ referral: r }) {
    概要タブ
    ============================================ */
 function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verificationStatus, onTabChange }) {
+    const navigate = useNavigate();
     if (!stats) return <div className="skeleton" style={{ height: 200 }} />;
 
+    // MVP期間中は紹介・収益機能を無効化しているため、関連統計は表示しない
     const cards = [
         { label: 'アクティブ求人', value: stats.active_jobs, color: '#22c55e' },
         { label: '全求人', value: stats.total_jobs, color: '#121c34' },
-        { label: '送った紹介', value: stats.sent_referrals, color: '#8b5cf6' },
-        { label: '受けた紹介', value: stats.received_referrals, color: '#c8952e' },
-        { label: '保留中', value: stats.pending_referrals, color: stats.pending_referrals > 0 ? '#f59e0b' : '#94a3b8' },
-        { label: '成約数', value: stats.placements, color: '#14b8a6' },
-        { label: '累計収益', value: `¥${Number(stats.total_earnings || 0).toLocaleString()}`, color: '#22c55e', isText: true },
     ];
 
     const licenseStatusLabel = licenseVerified
@@ -130,11 +128,29 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
                 {cards.map(c => (
                     <div key={c.label} className="card" style={{ textAlign: 'center' }}>
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>{c.label}</p>
-                        <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: c.color, margin: 0 }}>
-                            {c.isText ? c.value : c.value}
-                        </p>
+                        <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: c.color, margin: 0 }}>{c.value}</p>
                     </div>
                 ))}
+            </div>
+
+            {/* 自社が掲載した求人の管理導線 */}
+            <div className="card" style={{ marginTop: 'var(--space-lg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+                <div>
+                    <p style={{ fontWeight: 600, marginBottom: 4 }}>📋 自社が掲載した求人の管理</p>
+                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
+                        投稿した求人の確認・編集・ブースト設定は「求人管理」から行えます。
+                    </p>
+                </div>
+                <button className="btn btn-primary" onClick={() => navigate('/company/jobs')}>求人管理を開く</button>
+            </div>
+
+            {/* クレジットカード（ブースト課金用） */}
+            <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
+                <h3 style={{ marginBottom: 'var(--space-sm)' }}>💳 クレジットカード</h3>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)' }}>
+                    求人を上位表示（ブースト）するにはカード登録が必要です。掲載自体は無料です。
+                </p>
+                <PaymentCardSection />
             </div>
         </div>
     );
