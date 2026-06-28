@@ -3,10 +3,76 @@
 namespace App\Http\Controllers;
 
 use App\Models\Resume;
+use App\Models\UserProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ResumeController extends Controller
 {
+    /**
+     * ゲスト（未ログイン）が作成した履歴書ドラフトを、登録/ログイン後のアカウントへ取り込む。
+     * 履歴書本体データはプロフィールに保存し、履歴書(Resume)を1件作成する。
+     * 登録フロー中に呼ばれるため、失敗しても例外を投げず常に200で返す（登録を止めない）。
+     */
+    public function importGuest(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || $user->role !== 'jobseeker') {
+            return response()->json(['skipped' => true, 'reason' => 'not_jobseeker'], 200);
+        }
+        // 既に履歴書がある場合は二重取り込みしない
+        if ($user->resumes()->exists()) {
+            return response()->json(['skipped' => true, 'reason' => 'already_has_resume'], 200);
+        }
+
+        $d = $request->input('draft', []);
+        if (!is_array($d) || empty($d)) {
+            return response()->json(['skipped' => true, 'reason' => 'no_draft'], 200);
+        }
+
+        try {
+            // skills: 文字列なら配列化
+            $skills = $d['skills'] ?? null;
+            if (is_string($skills)) {
+                $skills = array_values(array_filter(array_map('trim', preg_split('/[,、\s]+/u', $skills)), fn ($s) => $s !== ''));
+            }
+            // birth_date: YYYY-MM-DD のみ採用（不正値はスキップしてcastエラーを防ぐ）
+            $birth = (!empty($d['birth_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $d['birth_date'])) ? $d['birth_date'] : null;
+
+            $profileData = array_filter([
+                'full_name'      => $d['full_name'] ?? null,
+                'full_name_kana' => $d['full_name_kana'] ?? null,
+                'birth_date'     => $birth,
+                'phone'          => $d['phone'] ?? null,
+                'address'        => $d['address'] ?? null,
+                'work_history'   => isset($d['work_history']) && is_array($d['work_history']) ? $d['work_history'] : null,
+                'education'      => isset($d['education']) && is_array($d['education']) ? $d['education'] : null,
+                'self_pr'        => $d['self_pr'] ?? null,
+                'skills'         => $skills,
+            ], fn ($v) => $v !== null && $v !== '');
+
+            $profile = $user->profile;
+            if ($profile) {
+                $profile->update($profileData);
+            } else {
+                $profile = UserProfile::create(array_merge(['user_id' => $user->id], $profileData));
+            }
+
+            $resume = $user->resumes()->create([
+                'profile_id'       => $profile->id,
+                'title'            => $d['title'] ?? '履歴書',
+                'type'             => 'resume',
+                'desired_location' => $d['desired_location'] ?? null,
+                'desired_salary'   => $d['desired_salary'] ?? null,
+            ]);
+
+            return response()->json(['imported' => true, 'resume' => $resume->load('profile')], 201);
+        } catch (\Throwable $e) {
+            Log::warning('importGuest failed', ['user' => $user->id, 'error' => $e->getMessage()]);
+            return response()->json(['skipped' => true, 'reason' => 'error'], 200);
+        }
+    }
+
     public function index(Request $request)
     {
         $resumes = $request->user()->resumes()

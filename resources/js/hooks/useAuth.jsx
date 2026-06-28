@@ -53,11 +53,28 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
+    // ゲスト（未ログイン）が作成した履歴書ドラフトをアカウントへ取り込む。
+    // 失敗しても認証フローを止めない（握りつぶしてログだけ）。
+    const importGuestResumeIfAny = async (user) => {
+        if (!user || user.role !== 'jobseeker') return;
+        const raw = localStorage.getItem('guest_resume_draft');
+        if (!raw) return;
+        try {
+            const draft = JSON.parse(raw);
+            await api.post('/resumes/import-guest', { draft });
+            localStorage.removeItem('guest_resume_draft'); // 取り込めたら下書きは破棄
+        } catch (e) {
+            // 取り込み失敗時は下書きを残し、次回ログインで再試行できるようにする
+            console.warn('guest resume import failed', e);
+        }
+    };
+
     const login = async (email, password) => {
         const res = await api.post('/login', { email, password });
         localStorage.setItem('auth_token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         setUser(res.data.user);
+        await importGuestResumeIfAny(res.data.user);
         return res.data;
     };
 
@@ -66,6 +83,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('auth_token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         setUser(res.data.user);
+        await importGuestResumeIfAny(res.data.user);
         return res.data;
     };
 

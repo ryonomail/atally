@@ -98,8 +98,24 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
             ? { text: '審査中（書類提出済み）', bg: 'rgba(245,158,11,0.12)', color: '#d97706' }
             : { text: '未提出', bg: 'rgba(239,68,68,0.12)', color: '#dc2626' };
 
+    // 文脈に応じた「次にやること」を1つ提示（離脱防止のナビゲーション）
+    const nextStep = !licenseVerified
+        ? { text: 'まず職業紹介事業の許可証を提出して、審査を通しましょう。', cta: '許可証を提出する', action: () => onTabChange('license') }
+        : (stats.total_jobs || 0) === 0
+            ? { text: '最初の求人を作成しましょう。掲載は無料で、問題がなければ自動公開されます。', cta: '求人を作成する', action: () => navigate('/company/jobs') }
+            : { text: '求人をブーストすると上位表示されます。下のカード登録を済ませると設定できます。', cta: '求人管理を開く', action: () => navigate('/company/jobs') };
+
     return (
         <div>
+            {/* スタートガイド（次にやること） */}
+            <div className="card" style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+                <div>
+                    <p style={{ fontWeight: 700, margin: '0 0 4px' }}>🚀 次にやること</p>
+                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>{nextStep.text}</p>
+                </div>
+                <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={nextStep.action}>{nextStep.cta}</button>
+            </div>
+
             {/* 許可証状態 */}
             <div className="card" style={{ marginBottom: 'var(--space-lg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>

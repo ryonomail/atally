@@ -22,7 +22,8 @@ export default function VerifyEmailPage() {
         try {
             await api.post('/verify-email', { email, code });
             localStorage.removeItem('atally_return_job');
-            localStorage.removeItem('guest_resume_draft');
+            // guest_resume_draft は登録/ログイン時に取り込み済み。取り込み失敗時の再試行用に
+            // ここでは消さない（次回ログインで再取り込みされる）。
             navigate(returnJob ? `/jobs/${returnJob}` : '/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || '確認に失敗しました。');
@@ -97,24 +98,20 @@ export default function VerifyEmailPage() {
                     </button>
                 </form>
 
-                <p style={{ textAlign: 'center', marginTop: 'var(--space-lg)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                    コードが届かない場合は{' '}
+                <div style={{ marginTop: 'var(--space-lg)', textAlign: 'center' }}>
                     <button
+                        className="btn btn-secondary"
                         onClick={handleResend}
                         disabled={resending}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-text-accent)',
-                            cursor: resending ? 'not-allowed' : 'pointer',
-                            padding: 0,
-                            fontSize: 'inherit',
-                            textDecoration: 'underline',
-                        }}
+                        style={{ width: '100%' }}
                     >
-                        {resending ? '送信中...' : 'コードを再送信'}
+                        {resending ? '送信中...' : '📧 確認コードを再送信する'}
                     </button>
-                </p>
+                    <p style={{ marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+                        メールが届かない場合は<strong>迷惑メール（スパム）フォルダ</strong>もご確認ください。<br />
+                        数分待っても届かなければ上のボタンで再送信できます。
+                    </p>
+                </div>
             </div>
         </div>
     );

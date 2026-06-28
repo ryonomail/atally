@@ -101,6 +101,8 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::post('/profile/photo', [UserProfileController::class , 'uploadPhoto']);
 
             // 履歴書
+            // ゲスト履歴書の取り込み（{resume}に取られないよう apiResource より前に定義）
+            Route::post('/resumes/import-guest', [ResumeController::class , 'importGuest']);
             Route::apiResource('resumes', ResumeController::class);
             Route::post('/resumes/{resume}/duplicate', [ResumeController::class , 'duplicate']);
             Route::post('/resumes/{resume}/to-cv', [ResumeController::class , 'toCv']);
