@@ -7,6 +7,7 @@ import SEO from '../components/SEO';
 import GuestProfileBanner, { getGuestProfile } from '../components/GuestProfileBanner';
 import { JOB_CATEGORY_MAJORS } from '../data/jobCategories';
 import { formatSalary } from '../utils/salary';
+import { Search, MapPin, Bookmark, BookmarkCheck, X } from 'lucide-react';
 
 const EMPLOYMENT_TYPES = [
     { value: '', label: 'すべて' },
@@ -467,20 +468,20 @@ export default function JobSearchPage() {
 
             {/* 検索ヘッダー（sticky） */}
             <div style={{
-                background: 'linear-gradient(135deg, rgba(18,28,52,0.1) 0%, rgba(168,85,247,0.06) 100%)',
+                background: 'rgba(255, 255, 255, 0.85)',
                 borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-xl) 0 var(--space-md)',
                 position: 'sticky', top: 52, zIndex: 100,
-                backdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(20px) saturate(180%)',
             }}>
                 <div className="container">
                     <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                         <div style={{ flex: '2 1 220px', position: 'relative' }} ref={historyRef}>
-                            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.4, zIndex: 1 }}>🔍</span>
+                            <Search size={17} strokeWidth={2} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.35, zIndex: 1, pointerEvents: 'none' }} />
                             <input type="text" className="form-input" placeholder="職種・スキル・会社名"
                                 value={inputKeyword} onChange={e => handleKeywordChange(e.target.value)}
                                 onFocus={() => { if (!inputKeyword && searchHistory.length > 0) { setShowHistory(true); setShowSuggestions(false); } }}
-                                style={{ paddingLeft: 40, height: 46 }} />
+                                style={{ paddingLeft: 42, height: 46 }} />
                             {/* キーワードサジェスト */}
                             {showSuggestions && suggestions.length > 0 && (
                                 <div style={{
@@ -502,7 +503,7 @@ export default function JobSearchPage() {
                                         }}
                                         onMouseEnter={e => e.currentTarget.style.background = 'var(--color-accent-light)'}
                                         onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                                            <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>🔍</span>
+                                            <Search size={13} strokeWidth={2} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
                                             {s}
                                         </button>
                                     ))}
@@ -530,17 +531,17 @@ export default function JobSearchPage() {
                                             fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)',
                                         }}>
                                             <span>{entry.keyword || '(キーワードなし)'}</span>
-                                            {entry.location && <span style={{ marginLeft: 8, color: 'var(--color-text-muted)' }}>📍{entry.location}</span>}
+                                            {entry.location && <span style={{ marginLeft: 8, color: 'var(--color-text-muted)' }}>{entry.location}</span>}
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </div>
                         <div style={{ flex: '1 1 160px', position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.4 }}>📍</span>
+                            <MapPin size={17} strokeWidth={2} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.35, pointerEvents: 'none' }} />
                             <input type="text" className="form-input" placeholder="勤務地" list="location-suggestions"
                                 value={inputLocation} onChange={e => setInputLocation(e.target.value)}
-                                style={{ paddingLeft: 40, height: 46 }} />
+                                style={{ paddingLeft: 42, height: 46 }} />
                             <datalist id="location-suggestions">
                                 {['東京都', '大阪府', '愛知県', '神奈川県', '福岡県', '北海道', '埼玉県', '千葉県', '兵庫県', '京都府', '広島県', '宮城県', 'リモート'].map(a => (
                                     <option key={a} value={a} />
@@ -760,11 +761,13 @@ export default function JobSearchPage() {
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: 6,
                                     padding: '6px 14px', borderRadius: 'var(--radius-full)',
-                                    border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)',
+                                    border: '1px solid var(--color-border)', background: 'transparent',
                                     cursor: 'pointer', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)',
                                     transition: 'all var(--transition-fast)',
-                                }}>
-                                <span>{cat.icon}</span>{cat.label}
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-text-accent)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}>
+                                {cat.label}
                             </button>
                         ))}
                     </div>
@@ -786,7 +789,7 @@ export default function JobSearchPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                         {!loading && meta && (
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                <span style={{ color: 'var(--color-text-accent)', fontWeight: 700, fontSize: 'var(--font-size-xl)' }}>{meta.total}</span> 件
+                                <span style={{ color: 'var(--color-navy)', fontWeight: 700, fontSize: 'var(--font-size-xl)' }}>{meta.total}</span> 件
                             </p>
                         )}
                         {filters.keyword && <FilterBadge icon="🔍" label={filters.keyword} onRemove={() => { setInputKeyword(''); updateFilter('keyword', ''); }} />}
@@ -873,7 +876,7 @@ export default function JobSearchPage() {
                         ) : jobs.length === 0 ? (
                             <div className="card" style={{ padding: 'var(--space-xl)' }}>
                                 <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
-                                    <div style={{ fontSize: 48, marginBottom: 'var(--space-sm)' }}>🔍</div>
+                                    <Search size={40} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)', opacity: 0.5, marginBottom: 'var(--space-sm)' }} />
                                     <h3 style={{ marginBottom: 'var(--space-xs)' }}>条件に合う求人が見つかりませんでした</h3>
                                     {filters.keyword && (
                                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0 }}>
@@ -912,16 +915,6 @@ export default function JobSearchPage() {
                                         ))}
                                     </div>
                                 </div>
-                                {user?.role === 'jobseeker' && (
-                                    <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: 'rgba(200,149,46,0.06)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(200,149,46,0.15)' }}>
-                                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-accent)', fontWeight: 600, marginBottom: 4 }}>
-                                            💡 求人アラートを設定しませんか？
-                                        </p>
-                                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
-                                            条件に合う新着求人が登録されたら自動でお知らせします。
-                                        </p>
-                                    </div>
-                                )}
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
@@ -987,8 +980,8 @@ export default function JobSearchPage() {
                                 <JobDetailPanel job={selectedJob} user={user} navigate={navigate} isSaved={savedJobs.includes(selectedJob.id)} onToggleSave={() => toggleSaveJob(selectedJob.id)} />
                             ) : (
                                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                                    <div style={{ fontSize: 48, marginBottom: 'var(--space-md)', opacity: 0.4 }}>👈</div>
-                                    <p>左のリストから求人をクリックしてください</p>
+                                    <Search size={40} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)', opacity: 0.4, marginBottom: 'var(--space-md)' }} />
+                                    <p>左のリストから求人を選んでください</p>
                                 </div>
                             )}
                         </div>
@@ -1011,8 +1004,8 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
             style={{
                 padding: 'var(--space-md)',
                 borderRadius: 'var(--radius-lg)',
-                border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                background: isSelected ? 'rgba(18,28,52,0.06)' : 'var(--color-bg-surface)',
+                border: isSelected ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                background: isSelected ? 'rgba(18,28,52,0.05)' : 'var(--color-bg-surface)',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
                 boxShadow: isSelected ? '0 0 0 1px rgba(18,28,52,0.2)' : 'none',
@@ -1023,7 +1016,7 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
             {/* ヘッダー: 企業名 + 保存ボタン */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xs)' }}>
                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    🏢 {job.company?.company_name || '企業名非公開'}
+                    {job.company?.company_name || '企業名非公開'}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                     {isApplied && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 'var(--radius-full)', background: 'rgba(16,185,129,0.15)', color: '#059669', fontWeight: 700, border: '1px solid rgba(16,185,129,0.3)' }}>応募済み</span>}
@@ -1031,8 +1024,8 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
                     {job.is_agency_job && <span className="badge badge-warning" style={{ fontSize: 10, padding: '1px 6px' }}>人材紹介</span>}
                     {job.employment_type && <span className="badge badge-info" style={{ fontSize: 10, padding: '1px 6px' }}>{job.employment_type}</span>}
                     <button onClick={e => { e.stopPropagation(); onToggleSave(); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: '0 2px', color: isSaved ? '#f59e0b' : 'var(--color-text-muted)' }}
-                        title={isSaved ? '保存済み' : '保存する'}>{isSaved ? '⭐' : '☆'}</button>
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', display: 'inline-flex', color: isSaved ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                        title={isSaved ? '保存済み' : '保存する'}>{isSaved ? <BookmarkCheck size={16} strokeWidth={2} /> : <Bookmark size={16} strokeWidth={2} />}</button>
                 </div>
             </div>
 
@@ -1055,13 +1048,13 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
             {/* メタ情報 */}
             <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginBottom: 'var(--space-xs)' }}>
                 {job.location && (
-                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                        📍 {job.location}
+                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <MapPin size={12} strokeWidth={2} style={{ opacity: 0.5 }} /> {job.location}
                     </span>
                 )}
                 {formatSalary(job) && (
-                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)', fontWeight: 600 }}>
-                        💰 {formatSalary(job)}
+                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-navy)', fontWeight: 700 }}>
+                        {formatSalary(job)}
                     </span>
                 )}
             </div>
@@ -1097,14 +1090,15 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
 /* ============================================
    セクションヘッダー共通コンポーネント
    ============================================ */
-function SectionHeader({ icon, title }) {
+function SectionHeader({ title }) {
     return (
         <h3 style={{
-            fontSize: 'var(--font-size-sm)', fontWeight: 700, marginBottom: 'var(--space-sm)',
-            color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: 6,
-            paddingBottom: 'var(--space-xs)', borderBottom: '2px solid var(--color-accent)',
+            fontSize: 'var(--font-size-sm)', fontWeight: 700, marginBottom: 'var(--space-md)',
+            color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8,
+            paddingBottom: 'var(--space-xs)',
         }}>
-            <span style={{ fontSize: 14 }}>{icon}</span> {title}
+            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+            {title}
         </h3>
     );
 }
@@ -1133,7 +1127,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
             <div style={{
                 padding: 'var(--space-lg) var(--space-xl)',
                 borderBottom: '1px solid var(--color-border)',
-                background: 'linear-gradient(135deg, rgba(18,28,52,0.04) 0%, rgba(168,85,247,0.02) 100%)',
+                background: 'var(--color-bg-secondary)',
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
                     <div style={{ flex: 1 }}>
@@ -1142,42 +1136,42 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                                 {job.job_category_major}{job.job_category_minor ? ` > ${job.job_category_minor}` : ''}
                             </div>
                         )}
-                        <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)', lineHeight: 1.4 }}>
+                        <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)', lineHeight: 1.4, color: 'var(--color-navy)' }}>
                             {job.title}
                         </h2>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                            🏢 <Link to={`/companies/${job.company?.id}`} style={{ color: 'var(--color-text-secondary)' }}>{job.company?.company_name || '企業名非公開'}</Link>
+                            <Link to={`/companies/${job.company?.id}`} style={{ color: 'var(--color-text-secondary)' }}>{job.company?.company_name || '企業名非公開'}</Link>
                             {job.industry && <span style={{ marginLeft: 8, opacity: 0.7 }}>({job.industry})</span>}
                         </p>
                     </div>
                     <button onClick={onToggleSave}
                         style={{
                             background: 'none', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-                            cursor: 'pointer', fontSize: 20, padding: '6px 10px',
-                            color: isSaved ? '#f59e0b' : 'var(--color-text-muted)',
+                            cursor: 'pointer', padding: '8px 10px', display: 'inline-flex',
+                            color: isSaved ? 'var(--color-accent)' : 'var(--color-text-muted)',
                         }}
-                        title={isSaved ? '保存済み' : '保存する'}>{isSaved ? '⭐' : '☆'}</button>
+                        title={isSaved ? '保存済み' : '保存する'}>{isSaved ? <BookmarkCheck size={18} strokeWidth={2} /> : <Bookmark size={18} strokeWidth={2} />}</button>
                 </div>
 
                 {/* バッジ */}
                 <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginTop: 'var(--space-md)' }}>
                     {job.source === 'hellowork'
-                        ? <span className="badge" style={{ background: 'rgba(0,112,185,0.08)', color: '#0070b9', border: '1px solid rgba(0,112,185,0.25)' }}>🏢 ハローワーク掲載</span>
+                        ? <span className="badge" style={{ background: 'rgba(0,112,185,0.08)', color: '#0070b9', border: '1px solid rgba(0,112,185,0.25)' }}>ハローワーク掲載</span>
                         : job.is_agency_job
-                            ? <span className="badge" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)' }}>🤝 エージェント求人</span>
-                            : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-primary)', border: '1px solid rgba(18,28,52,0.2)' }}>🏢 直接採用</span>
+                            ? <span className="badge" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)' }}>エージェント求人</span>
+                            : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)' }}>直接採用</span>
                     }
-                    {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
-                    {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}
-                    {job.location && <span className="badge badge-info">📍 {job.location}</span>}
+                    {job.employment_type && <span className="badge badge-info">{job.employment_type}</span>}
+                    {job.remote_policy && <span className="badge badge-info">{job.remote_policy}</span>}
+                    {job.location && <span className="badge badge-info">{job.location}</span>}
                     {formatSalary(job) && (
-                        <span className="badge badge-success">💰 {formatSalary(job)}</span>
+                        <span className="badge badge-success">{formatSalary(job)}</span>
                     )}
-                    {job.overtime_average && <span className="badge badge-info">⏱ 残業{job.overtime_average}</span>}
-                    {job.holidays && <span className="badge badge-info">📅 {job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
-                    {job.application_type && <span className="badge badge-info">📋 {job.application_type}</span>}
-                    {job.positions_available && <span className="badge badge-info">👥 {job.positions_available}名募集</span>}
-                    {job.dormitory === 'あり' && <span className="badge badge-info">🏠 寮あり</span>}
+                    {job.overtime_average && <span className="badge badge-info">残業 {job.overtime_average}</span>}
+                    {job.holidays && <span className="badge badge-info">{job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
+                    {job.application_type && <span className="badge badge-info">{job.application_type}</span>}
+                    {job.positions_available && <span className="badge badge-info">{job.positions_available}名募集</span>}
+                    {job.dormitory === 'あり' && <span className="badge badge-info">寮あり</span>}
                 </div>
                 {job.feature_tags?.length > 0 && (
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 'var(--space-sm)' }}>
@@ -1199,7 +1193,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     borderBottom: '1px solid var(--color-border)',
                     background: 'rgba(245,158,11,0.04)',
                 }}>
-                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#d97706', marginBottom: 4 }}>✨ アピールポイント</p>
+                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#d97706', marginBottom: 4 }}>アピールポイント</p>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: 0 }}>
                         {job.appeal_points}
                     </p>
@@ -1243,7 +1237,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 {job.source === 'hellowork' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#0070b9', margin: 0 }}>
-                            🏢 ハローワーク掲載求人について
+                            ハローワーク掲載求人について
                         </p>
                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>
                             この求人はハローワーク（公共職業安定所）が提供する求人情報です。
@@ -1468,7 +1462,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         borderRadius: 'var(--radius-md)', marginTop: 'var(--space-md)',
                     }}>
                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                            ⚖️ {job.agency_display}
+                            {job.agency_display}
                         </p>
                     </div>
                 )}
@@ -1478,8 +1472,8 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
             {!user && job.source !== 'hellowork' && (
                 <div style={{
                     padding: 'var(--space-xl)',
-                    background: 'linear-gradient(135deg, rgba(18,28,52,0.08) 0%, rgba(168,85,247,0.05) 100%)',
-                    borderTop: '1px solid rgba(18,28,52,0.15)',
+                    background: 'var(--color-accent-light)',
+                    borderTop: '1px solid var(--color-border)',
                     textAlign: 'center',
                 }}>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
@@ -1502,20 +1496,22 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
 /* ============================================
    フィルターバッジ
    ============================================ */
-function FilterBadge({ icon, label, color, onRemove }) {
+function FilterBadge({ label, color, onRemove }) {
     const isGreen = color === 'green';
     return (
         <span style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            padding: '2px 10px', borderRadius: 'var(--radius-full)',
-            background: isGreen ? 'rgba(16,185,129,0.1)' : 'rgba(18,28,52,0.1)',
-            border: isGreen ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(18,28,52,0.2)',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '3px 10px', borderRadius: 'var(--radius-full)',
+            background: isGreen ? 'rgba(16,185,129,0.08)' : 'rgba(18,28,52,0.07)',
+            border: isGreen ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(18,28,52,0.18)',
             fontSize: 'var(--font-size-xs)',
-            color: isGreen ? 'var(--color-success)' : 'var(--color-text-accent)',
+            color: isGreen ? 'var(--color-success)' : 'var(--color-navy)',
         }}>
-            {icon} {label}
+            {label}
             <button onClick={onRemove}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', lineHeight: 1, fontSize: 12 }}>✕</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', lineHeight: 1, display: 'inline-flex', opacity: 0.7 }}>
+                <X size={12} strokeWidth={2.5} />
+            </button>
         </span>
     );
 }
