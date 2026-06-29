@@ -4,7 +4,10 @@ import api from '../api';
 import { useToast } from '../hooks/useToast';
 import SEO from '../components/SEO';
 import { formatSalary } from '../utils/salary';
-import { Search, MapPin, FileText, ArrowRight } from 'lucide-react';
+import {
+    Search, MapPin, ArrowRight, ArrowUpRight,
+    ShieldCheck, Lock, MessageSquare, FileText,
+} from 'lucide-react';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -50,251 +53,148 @@ export default function LandingPage() {
                 jsonLd={websiteJsonLd}
             />
 
-            {/* ── Hero ── */}
-            <section style={{
-                padding: 'var(--space-3xl) 0 var(--space-2xl)',
-                position: 'relative',
-                overflow: 'hidden',
-            }}>
-                <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(18,28,52,0.12) 0%, transparent 70%)',
-                    pointerEvents: 'none',
-                }} />
+            {/* ─────────────────────────  Hero  ───────────────────────── */}
+            <section style={{ padding: 'var(--space-3xl) 0 var(--space-2xl)' }}>
+                <div className="container animate-slide-up" style={{ maxWidth: 760, textAlign: 'center' }}>
 
-                <div className="container animate-slide-up" style={{ textAlign: 'center', position: 'relative' }}>
-
-                    {/* バッジ */}
                     <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        padding: '4px 16px',
-                        background: 'rgba(200,149,46,0.1)',
-                        border: '1px solid rgba(200,149,46,0.3)',
-                        borderRadius: 'var(--radius-full)',
                         fontSize: 'var(--font-size-xs)',
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
                         color: 'var(--color-text-accent)',
-                        marginBottom: 'var(--space-lg)',
                         fontWeight: 600,
+                        marginBottom: 'var(--space-lg)',
                     }}>
                         登録不要・完全無料
                     </div>
 
-                    {/* H1：履歴書を主役に */}
                     <h1 style={{
-                        fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                        fontWeight: 800,
-                        lineHeight: 1.2,
-                        marginBottom: 'var(--space-md)',
+                        fontSize: 'clamp(2.1rem, 5vw, 3.4rem)',
+                        fontWeight: 700,
+                        lineHeight: 1.18,
+                        letterSpacing: '-0.02em',
+                        margin: '0 0 var(--space-lg)',
                     }}>
-                        <span style={{
-                            background: 'var(--gradient-accent)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                        }}>履歴書を作って、</span><br />
-                        仕事を探そう
+                        履歴書を作って、<br />仕事を探そう。
                     </h1>
 
                     <p style={{
                         fontSize: 'var(--font-size-lg)',
                         color: 'var(--color-text-secondary)',
-                        maxWidth: 520,
-                        margin: '0 auto var(--space-xl)',
-                        lineHeight: 1.7,
+                        maxWidth: 480,
+                        margin: '0 auto var(--space-2xl)',
+                        lineHeight: 1.8,
                     }}>
-                        入力するだけでプロ品質の履歴書が完成。<br />
+                        入力するだけでプロ品質の履歴書が完成。
                         そのまま47万件以上の求人に応募できます。
                     </p>
 
-                    {/* メインCTA：履歴書作成 */}
-                    <div style={{ marginBottom: 'var(--space-lg)' }}>
+                    <div style={{
+                        display: 'inline-flex', gap: 'var(--space-sm)',
+                        flexWrap: 'wrap', justifyContent: 'center',
+                        marginBottom: 'var(--space-md)',
+                    }}>
                         <Link
                             to="/resumes/guest"
                             className="btn btn-primary"
                             style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 10,
-                                padding: '14px 36px',
-                                fontSize: 'var(--font-size-lg)',
-                                fontWeight: 700,
-                                borderRadius: 'var(--radius-lg)',
-                                boxShadow: '0 4px 20px rgba(200,149,46,0.35)',
-                                letterSpacing: '-0.01em',
+                                gap: 8, padding: '13px 30px',
+                                fontSize: 'var(--font-size-base)', fontWeight: 600,
+                                borderRadius: 'var(--radius-md)',
                             }}
                         >
-                            <FileText size={20} strokeWidth={2} />
+                            <FileText size={18} strokeWidth={2} />
                             履歴書を無料で作る
-                            <ArrowRight size={18} strokeWidth={2.5} />
+                            <ArrowRight size={17} strokeWidth={2.25} />
                         </Link>
-                        <p style={{ marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                            登録不要・2分で完成 · 作成後そのまま応募できます
-                        </p>
-                    </div>
-
-                    {/* 安心バッジ */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-xs)', marginBottom: 'var(--space-2xl)', flexWrap: 'wrap' }}>
-                        {[
-                            { label: '⚖️ 職業安定法準拠' },
-                            { label: '🔒 個人情報保護' },
-                            { label: '✅ ブラック求人排除' },
-                            { label: '🆓 求職者は完全無料' },
-                        ].map((b, i) => (
-                            <span key={i} style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 4,
-                                padding: '4px 12px',
-                                borderRadius: 'var(--radius-full)',
-                                background: 'rgba(52,199,89,0.1)',
-                                border: '1px solid rgba(52,199,89,0.3)',
-                                fontSize: 'var(--font-size-xs)',
-                                color: '#1d8f42',
-                                fontWeight: 500,
-                            }}>
-                                {b.label}
-                            </span>
-                        ))}
-                    </div>
-
-                    {/* セパレーター */}
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
-                        maxWidth: 560, margin: '0 auto var(--space-lg)',
-                    }}>
-                        <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                            または求人から探す
-                        </span>
-                        <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-                    </div>
-
-                    {/* 検索バー（セカンダリ） */}
-                    <form onSubmit={handleSearch} style={{
-                        display: 'flex',
-                        gap: 'var(--space-sm)',
-                        flexWrap: 'wrap',
-                        maxWidth: 660,
-                        margin: '0 auto var(--space-lg)',
-                    }}>
-                        <div style={{ flex: '2 1 200px', position: 'relative' }}>
-                            <Search size={16} strokeWidth={2} style={{
-                                position: 'absolute', left: 14, top: '50%',
-                                transform: 'translateY(-50%)', opacity: 0.4, pointerEvents: 'none',
-                            }} />
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="職種・スキル・会社名"
-                                value={keyword}
-                                onChange={e => setKeyword(e.target.value)}
-                                style={{ paddingLeft: 40, height: 46 }}
-                            />
-                        </div>
-                        <div style={{ flex: '1 1 140px', position: 'relative' }}>
-                            <MapPin size={16} strokeWidth={2} style={{
-                                position: 'absolute', left: 14, top: '50%',
-                                transform: 'translateY(-50%)', opacity: 0.4, pointerEvents: 'none',
-                            }} />
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="勤務地"
-                                value={location}
-                                onChange={e => setLocation(e.target.value)}
-                                style={{ paddingLeft: 40, height: 46 }}
-                            />
-                        </div>
-                        <button
-                            type="submit"
+                        <a
+                            href="#jobs"
                             className="btn btn-secondary"
-                            style={{ height: 46, padding: '0 var(--space-lg)', whiteSpace: 'nowrap', flex: '0 0 auto' }}
+                            style={{ padding: '13px 24px', fontSize: 'var(--font-size-base)', borderRadius: 'var(--radius-md)' }}
                         >
-                            検索する
-                        </button>
-                    </form>
-
-                    {/* カテゴリクイック選択 */}
-                    <div style={{
-                        display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap',
-                        justifyContent: 'center',
-                    }}>
-                        {[
-                            { icon: '💻', label: 'IT・エンジニア', q: 'エンジニア' },
-                            { icon: '📊', label: '営業', q: '営業' },
-                            { icon: '🎨', label: 'デザイン', q: 'デザイナー' },
-                            { icon: '💼', label: '経営・企画', q: '経営企画' },
-                            { icon: '🏥', label: '医療・介護', q: '医療' },
-                            { icon: '📚', label: '教育', q: '教育' },
-                            { icon: '🏗️', label: '建設・不動産', q: '建設' },
-                            { icon: '🛒', label: '販売・接客', q: '販売' },
-                        ].map((cat, i) => (
-                            <button key={i}
-                                onClick={() => navigate(`/jobs?keyword=${encodeURIComponent(cat.q)}`)}
-                                style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                                    padding: '4px 12px', borderRadius: 'var(--radius-full)',
-                                    border: '1px solid var(--color-border)',
-                                    background: 'var(--color-bg-glass)', cursor: 'pointer',
-                                    fontSize: 'var(--font-size-xs)', fontWeight: 500,
-                                    color: 'var(--color-text-secondary)',
-                                    transition: 'all 0.15s',
-                                    backdropFilter: 'blur(8px)',
-                                }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-text-accent)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
-                            >
-                                {cat.icon} {cat.label}
-                            </button>
-                        ))}
+                            求人を見る
+                        </a>
                     </div>
+
+                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
+                        2分で完成 ・ 作成後そのまま応募 ・ 職業安定法準拠
+                    </p>
                 </div>
             </section>
 
-            {/* ── 使い方 3ステップ ── */}
-            <section className="container" style={{ paddingBottom: 'var(--space-2xl)' }}>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 'var(--space-lg)',
-                    position: 'relative',
-                }}>
-                    {[
-                        { step: '01', icon: '🔍', title: '求人を検索', desc: '登録なしで全件閲覧。\nキーワード・地域・雇用形態で絞り込み。' },
-                        { step: '02', icon: '📝', title: '履歴書を作成', desc: '職歴・スキルを入力するだけ。\nプロ品質の書類が完全無料で作れます。' },
-                        { step: '03', icon: '✉️', title: '気になる求人に応募', desc: 'Google連携で30秒登録→即応募。\n企業とメッセージで直接やりとり。' },
-                    ].map((item, i) => (
-                        <div key={i} className="card" style={{ textAlign: 'center', padding: 'var(--space-xl)' }}>
-                            <div style={{
-                                fontSize: 'var(--font-size-xs)', fontWeight: 700,
-                                color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)', letterSpacing: 2,
-                            }}>STEP {item.step}</div>
-                            <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>{item.icon}</div>
-                            <h3 style={{ marginBottom: 'var(--space-xs)', fontSize: 'var(--font-size-lg)' }}>{item.title}</h3>
-                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-                                {item.desc}
-                            </p>
-                        </div>
+            {/* ─────────────────────────  検索  ───────────────────────── */}
+            <section className="container" style={{ paddingBottom: 'var(--space-3xl)' }}>
+                <form
+                    onSubmit={handleSearch}
+                    style={{
+                        display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap',
+                        maxWidth: 720, margin: '0 auto',
+                        background: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: 'var(--shadow-md)',
+                        padding: 'var(--space-sm)',
+                    }}
+                >
+                    <div style={{ flex: '2 1 220px', position: 'relative' }}>
+                        <Search size={17} strokeWidth={2} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.35, pointerEvents: 'none' }} />
+                        <input
+                            type="text" className="form-input"
+                            placeholder="職種・スキル・会社名"
+                            value={keyword} onChange={e => setKeyword(e.target.value)}
+                            style={{ paddingLeft: 42, height: 50, border: 'none', boxShadow: 'none', background: 'transparent' }}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 150px', position: 'relative' }}>
+                        <MapPin size={17} strokeWidth={2} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.35, pointerEvents: 'none' }} />
+                        <input
+                            type="text" className="form-input"
+                            placeholder="勤務地"
+                            value={location} onChange={e => setLocation(e.target.value)}
+                            style={{ paddingLeft: 42, height: 50, border: 'none', boxShadow: 'none', background: 'transparent' }}
+                        />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ height: 50, padding: '0 28px', whiteSpace: 'nowrap', flex: '0 0 auto', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
+                        検索
+                    </button>
+                </form>
+
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', justifyContent: 'center', marginTop: 'var(--space-lg)' }}>
+                    {['エンジニア', '営業', 'デザイナー', '医療・介護', '販売・接客', '事務'].map((q, i) => (
+                        <button
+                            key={i}
+                            onClick={() => navigate(`/jobs?keyword=${encodeURIComponent(q)}`)}
+                            style={{
+                                padding: '5px 16px', borderRadius: 'var(--radius-full)',
+                                border: '1px solid var(--color-border)', background: 'transparent',
+                                cursor: 'pointer', fontSize: 'var(--font-size-sm)',
+                                color: 'var(--color-text-secondary)', transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-text-accent)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+                        >
+                            {q}
+                        </button>
                     ))}
                 </div>
             </section>
 
-            {/* ── 注目求人 ── */}
-            <section style={{ borderTop: '1px solid var(--color-border)', padding: 'var(--space-2xl) 0' }}>
+            {/* ─────────────────────────  注目求人  ───────────────────────── */}
+            <section id="jobs" style={{ borderTop: '1px solid var(--color-divider)', padding: 'var(--space-3xl) 0' }}>
                 <div className="container">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
-                        <div>
-                            <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-xs)' }}>
-                                注目の求人
-                            </h2>
-                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                                登録なしで全件閲覧できます
-                            </p>
-                        </div>
-                        <Link to="/jobs" className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>
-                            すべて見る →
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-2xl)', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+                        <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, letterSpacing: '-0.01em', margin: 0 }}>
+                            注目の求人
+                        </h2>
+                        <Link to="/jobs" style={{ color: 'var(--color-text-accent)', fontSize: 'var(--font-size-sm)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                            すべての求人を見る <ArrowRight size={15} strokeWidth={2.25} />
                         </Link>
                     </div>
 
                     {jobsLoading ? (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-md)' }}>
-                            {[1,2,3,4,5,6].map(i => (
-                                <div key={i} className="skeleton" style={{ height: 160, borderRadius: 'var(--radius-lg)' }} />
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <div key={i} className="skeleton" style={{ height: 150, borderRadius: 'var(--radius-lg)' }} />
                             ))}
                         </div>
                     ) : featuredJobs.length === 0 ? (
@@ -307,27 +207,31 @@ export default function LandingPage() {
                                 <Link
                                     key={job.id}
                                     to={`/jobs/${job.id}`}
-                                    className="card card-glow"
-                                    style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}
+                                    className="card"
+                                    style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', padding: 'var(--space-lg)' }}
                                 >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                            🏢 {job.company?.company_name || '企業名非公開'}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
+                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                            {job.company?.company_name || '企業名非公開'}
                                         </span>
                                         {job.employment_type && (
-                                            <span className="badge badge-info" style={{ fontSize: 11 }}>{job.employment_type}</span>
+                                            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-full)', padding: '2px 10px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                                {job.employment_type}
+                                            </span>
                                         )}
                                     </div>
-                                    <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, lineHeight: 1.4 }}>
+                                    <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
                                         {job.title}
                                     </h3>
-                                    <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginTop: 'auto' }}>
+                                    <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', marginTop: 'auto', fontSize: 'var(--font-size-sm)' }}>
                                         {job.location && (
-                                            <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>📍 {job.location}</span>
+                                            <span style={{ color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                <MapPin size={13} strokeWidth={2} style={{ opacity: 0.5 }} /> {job.location}
+                                            </span>
                                         )}
                                         {(job.salary_min || job.salary_max) && (
-                                            <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>
-                                                💰 {formatSalary(job)}
+                                            <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>
+                                                {formatSalary(job)}
                                             </span>
                                         )}
                                     </div>
@@ -335,157 +239,30 @@ export default function LandingPage() {
                             ))}
                         </div>
                     )}
-
-                    <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
-                        <Link to="/jobs" className="btn btn-primary btn-lg">
-                            求人をすべて見る
-                        </Link>
-                    </div>
                 </div>
             </section>
 
-            {/* ── 履歴書作成フック ── */}
-            <section style={{ borderTop: '1px solid var(--color-border)', padding: 'var(--space-2xl) 0' }}>
-                <div className="container">
-                    <div className="card card-glow" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: 'var(--space-xl)',
-                        alignItems: 'center',
-                        padding: 'var(--space-2xl)',
-                        background: 'linear-gradient(135deg, rgba(18,28,52,0.08) 0%, rgba(168,85,247,0.05) 100%)',
-                    }}>
-                        <div>
-                            <div style={{
-                                display: 'inline-block', padding: '4px 12px',
-                                background: 'rgba(18,28,52,0.15)', borderRadius: 'var(--radius-full)',
-                                fontSize: 'var(--font-size-xs)', color: 'var(--color-text-accent)',
-                                fontWeight: 600, marginBottom: 'var(--space-md)',
-                            }}>
-                                登録不要・完全無料
-                            </div>
-                            <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)', lineHeight: 1.3 }}>
-                                まず履歴書を<br />作ってみませんか？
-                            </h2>
-                            <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-sm)' }}>
-                                職歴・スキルを入力するだけで<br />
-                                JIS規格対応の履歴書が完成します。<br />
-                                登録なしでそのまま作り始められます。
-                            </p>
-                            <Link to="/resumes/guest" className="btn btn-primary btn-lg">
-                                今すぐ無料で作る →
-                            </Link>
-                        </div>
-
-                        {/* 履歴書イメージ */}
-                        <div style={{
-                            background: 'var(--color-bg-surface)',
-                            borderRadius: 'var(--radius-lg)',
-                            border: '1px solid var(--color-border)',
-                            padding: 'var(--space-lg)',
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary)',
-                            fontFamily: 'serif',
-                        }}>
-                            <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 'var(--font-size-base)', marginBottom: 'var(--space-sm)', color: 'var(--color-text-primary)', letterSpacing: 8 }}>
-                                履 歴 書
-                            </div>
-                            <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                                {/* 左: 個人情報 */}
-                                <div style={{ flex: 1 }}>
-                                    {[
-                                        { label: 'ふりがな', value: 'やまだ はなこ' },
-                                        { label: '氏　　名', value: '山田 花子', large: true },
-                                        { label: '生年月日', value: '1990年 4月 1日生（34歳）' },
-                                        { label: '現住所', value: '東京都渋谷区○○' },
-                                    ].map((row, i) => (
-                                        <div key={i} style={{
-                                            display: 'flex', gap: 8, padding: '4px 0',
-                                            borderBottom: '1px solid var(--color-border)',
-                                        }}>
-                                            <span style={{ minWidth: 56, opacity: 0.6 }}>{row.label}</span>
-                                            <span style={{ fontWeight: row.large ? 700 : 400, color: row.large ? 'var(--color-text-primary)' : undefined }}>
-                                                {row.value}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                                {/* 右: 証明写真 */}
-                                <img
-                                    src="/images/resume-photo.jpg"
-                                    alt="証明写真"
-                                    style={{
-                                        width: 72, height: 96, flexShrink: 0,
-                                        border: '1px solid var(--color-border)',
-                                        borderRadius: 2,
-                                        objectFit: 'cover',
-                                        background: 'var(--color-bg-secondary)',
-                                    }}
-                                />
-                            </div>
-                            <div style={{ marginTop: 'var(--space-sm)', opacity: 0.5, fontSize: 11 }}>
-                                学歴・職歴 ／ 免許・資格 ／ 志望動機...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── なぜAtallyか ── */}
-            <section style={{ borderTop: '1px solid var(--color-border)', padding: 'var(--space-2xl) 0' }}>
-                <div className="container">
-                    <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-                        <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>
-                            Atallyが選ばれる理由
-                        </h2>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                            ぴったり合う仕事・人材が見つかる設計
-                        </p>
-                    </div>
+            {/* ─────────────────────────  使い方 3ステップ  ───────────────────────── */}
+            <section style={{ borderTop: '1px solid var(--color-divider)', padding: 'var(--space-3xl) 0' }}>
+                <div className="container" style={{ maxWidth: 880 }}>
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                        gap: 'var(--space-md)',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        gap: 'var(--space-2xl)',
                     }}>
                         {[
-                            {
-                                icon: '🛡️',
-                                title: 'ブラック求人ゼロ',
-                                desc: '労働基準法・職業安定法に準拠した求人のみ掲載審査。違反求人を排除し、安心して応募できる環境を守ります。',
-                                color: '#f59e0b',
-                            },
-                            {
-                                icon: '🔒',
-                                title: '個人情報を厳重保護',
-                                desc: '個人情報保護法に準拠した情報管理。SSL暗号化通信で、あなたの情報は常に安全に守られます。',
-                                color: '#3b82f6',
-                            },
-                            {
-                                icon: '🆓',
-                                title: '求職者は完全無料',
-                                desc: '求人検索・応募・履歴書作成・メッセージ機能、すべて無料で使い放題。隠れた費用は一切ありません。',
-                                color: '#22c55e',
-                            },
-                            {
-                                icon: '💬',
-                                title: '企業と直接やりとり',
-                                desc: '応募後はメッセージ機能で担当者と直接コミュニケーション。エージェント不要で選考がスムーズに進みます。',
-                                color: '#8b5cf6',
-                            },
+                            { step: '01', title: '求人を探す', desc: '登録なしで全件閲覧。キーワード・地域・雇用形態で絞り込めます。' },
+                            { step: '02', title: '履歴書を作る', desc: '職歴・スキルを入力するだけ。JIS規格対応の履歴書が無料で完成します。' },
+                            { step: '03', title: '応募する', desc: 'Google連携で30秒登録。作った履歴書でそのまま応募・直接やりとり。' },
                         ].map((item, i) => (
-                            <div key={i} className="card" style={{ padding: 'var(--space-lg)' }}>
-                                <div style={{
-                                    width: 44, height: 44, borderRadius: 'var(--radius-md)',
-                                    background: `${item.color}15`,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '1.4rem', marginBottom: 'var(--space-md)',
-                                }}>
-                                    {item.icon}
+                            <div key={i}>
+                                <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)' }}>
+                                    {item.step}
                                 </div>
-                                <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-xs)' }}>
+                                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
                                     {item.title}
                                 </h3>
-                                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, margin: 0 }}>
+                                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.8, margin: 0 }}>
                                     {item.desc}
                                 </p>
                             </div>
@@ -494,79 +271,92 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* ── 企業・エージェント向け（下部） ── */}
-            <section style={{ borderTop: '1px solid var(--color-border)', padding: 'var(--space-2xl) 0', background: 'var(--color-bg-secondary)' }}>
+            {/* ─────────────────────────  選ばれる理由  ───────────────────────── */}
+            <section style={{ borderTop: '1px solid var(--color-divider)', padding: 'var(--space-3xl) 0' }}>
                 <div className="container">
-                    {/* 企業向け */}
-                    <div style={{ marginBottom: 'var(--space-3xl)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
-                            <div style={{ flex: 1, minWidth: 260 }}>
-                                <div style={{ display: 'inline-block', padding: '3px 12px', background: 'rgba(18,28,52,0.1)', border: '1px solid rgba(18,28,52,0.2)', borderRadius: 'var(--radius-full)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-accent)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
-                                    採用担当者の方へ
-                                </div>
-                                <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-sm)', lineHeight: 1.3 }}>
-                                    求人掲載は無料から。<br />初期費用も成功報酬も¥0。
-                                </h2>
-                                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.8, marginBottom: 'var(--space-lg)' }}>
-                                    まずは無料で掲載スタート。注目度を上げたい場合は<br />
-                                    日額・月額¥500〜から有料プランにアップグレードできます。<br />
-                                    採用成功報酬なし。違約金・解約手続き一切不要。
-                                </p>
-                                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                                    {['¥0 無料掲載あり', '¥0 成功報酬', '有料は¥500〜/日', 'いつでも停止OK'].map((t, i) => (
-                                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)' }}>✓ {t}</span>
-                                    ))}
-                                </div>
-                            </div>
-                            {/* 料金フロー簡易説明 */}
-                            <div style={{ flex: 1, minWidth: 280 }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
-                                    {[
-                                        { step: '1', icon: '🏢', title: '無料アカウント作成', desc: '会社情報を入力するだけ。無料で求人を即時掲載できます。' },
-                                        { step: '2', icon: '📋', title: '求人・プランを設定', desc: '無料掲載のままでもOK。注目を集めたい場合は日額¥500〜から。' },
-                                        { step: '3', icon: '✉️', title: '応募者を管理', desc: '書類選考から内定まで一画面で完結。' },
-                                        { step: '4', icon: '🔍', title: 'スカウトで先手を打つ', desc: '登録求職者を検索してダイレクトアプローチ。' },
-                                    ].map((item, i) => (
-                                        <div key={i} className="card" style={{ padding: 'var(--space-md)' }}>
-                                            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-accent)', marginBottom: 4 }}>STEP {item.step}</div>
-                                            <div style={{ fontSize: '1.4rem', marginBottom: 4 }}>{item.icon}</div>
-                                            <div style={{ fontWeight: 700, fontSize: 'var(--font-size-xs)', marginBottom: 2 }}>{item.title}</div>
-                                            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>{item.desc}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                            <Link to="/register?role=company" className="btn btn-primary">
-                                企業として無料登録する
-                            </Link>
-                            <Link to="/for-companies" className="btn btn-secondary">
-                                採用担当者向けページ →
-                            </Link>
-                            <Link to="/pricing" className="btn btn-secondary">
-                                料金の詳細
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* エージェント向け */}
-                    <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-xl)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-xl)', flexWrap: 'wrap' }}>
-                            <div>
-                                <div style={{ display: 'inline-block', padding: '3px 12px', background: 'rgba(149,100,200,0.1)', border: '1px solid rgba(149,100,200,0.25)', borderRadius: 'var(--radius-full)', fontSize: 'var(--font-size-xs)', color: '#7c3aed', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
-                                    人材紹介会社の方へ
-                                </div>
-                                <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)' }}>
-                                    BtoB人材紹介もAtallyで一元化
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                        gap: 'var(--space-2xl)',
+                    }}>
+                        {[
+                            { Icon: ShieldCheck, title: 'ブラック求人ゼロ', desc: '労働基準法・職業安定法に準拠した求人のみを掲載。安心して応募できる環境を守ります。' },
+                            { Icon: Lock, title: '個人情報を厳重保護', desc: '個人情報保護法に準拠した管理とSSL暗号化通信。あなたの情報は常に安全です。' },
+                            { Icon: FileText, title: '求職者は完全無料', desc: '検索・応募・履歴書作成・メッセージまで、すべて無料。隠れた費用はありません。' },
+                            { Icon: MessageSquare, title: '企業と直接やりとり', desc: '応募後はメッセージで担当者と直接コミュニケーション。選考がスムーズに進みます。' },
+                        ].map(({ Icon, title, desc }, i) => (
+                            <div key={i}>
+                                <Icon size={22} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)', marginBottom: 'var(--space-md)' }} />
+                                <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
+                                    {title}
                                 </h3>
-                                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, maxWidth: 520 }}>
-                                    求人DBへのアクセス・候補者マッチング・紹介申請管理・クライアント管理まで。<br />
-                                    ライセンス認証済み事業者向け。紹介申請¥500/件のみ。月額固定費なし。
+                                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.8, margin: 0 }}>
+                                    {desc}
                                 </p>
                             </div>
-                            <Link to="/for-agencies" className="btn btn-secondary" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                紹介会社向けページ →
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ─────────────────────────  履歴書 CTA  ───────────────────────── */}
+            <section style={{ borderTop: '1px solid var(--color-divider)', padding: 'var(--space-3xl) 0' }}>
+                <div className="container" style={{ maxWidth: 640, textAlign: 'center' }}>
+                    <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 'var(--space-md)' }}>
+                        まず、履歴書を作ってみませんか。
+                    </h2>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)', lineHeight: 1.8, marginBottom: 'var(--space-xl)' }}>
+                        登録不要。入力するだけでJIS規格対応の履歴書が完成し、<br />
+                        そのまま気になる求人に応募できます。
+                    </p>
+                    <Link
+                        to="/resumes/guest"
+                        className="btn btn-primary"
+                        style={{ gap: 8, padding: '13px 32px', fontSize: 'var(--font-size-base)', fontWeight: 600, borderRadius: 'var(--radius-md)' }}
+                    >
+                        今すぐ無料で作る
+                        <ArrowRight size={17} strokeWidth={2.25} />
+                    </Link>
+                </div>
+            </section>
+
+            {/* ─────────────────────────  企業・紹介会社向け  ───────────────────────── */}
+            <section style={{ borderTop: '1px solid var(--color-divider)', padding: 'var(--space-3xl) 0', background: 'var(--color-bg-secondary)' }}>
+                <div className="container" style={{ maxWidth: 880 }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-2xl)', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ flex: '1 1 360px' }}>
+                            <div style={{ fontSize: 'var(--font-size-xs)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-text-accent)', fontWeight: 600, marginBottom: 'var(--space-md)' }}>
+                                採用担当者の方へ
+                            </div>
+                            <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 'var(--space-md)', lineHeight: 1.3 }}>
+                                求人掲載は無料から。<br />初期費用も成功報酬も¥0。
+                            </h2>
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.9, marginBottom: 'var(--space-lg)' }}>
+                                まずは無料で掲載スタート。注目度を上げたいときだけ、日額¥500〜から有料ブーストにアップグレードできます。
+                                採用成功報酬なし、違約金なし、いつでも停止可能です。
+                            </p>
+                            <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                                <Link to="/register?role=company" className="btn btn-primary" style={{ borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
+                                    企業として無料登録
+                                </Link>
+                                <Link to="/for-companies" className="btn btn-secondary" style={{ borderRadius: 'var(--radius-md)' }}>
+                                    詳しく見る
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div style={{ flex: '1 1 280px', borderLeft: '1px solid var(--color-divider)', paddingLeft: 'var(--space-2xl)' }}>
+                            <div style={{ fontSize: 'var(--font-size-xs)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: 'var(--space-md)' }}>
+                                人材紹介会社の方へ
+                            </div>
+                            <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
+                                BtoB人材紹介もAtallyで一元化
+                            </h3>
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.8, marginBottom: 'var(--space-lg)' }}>
+                                求人DB・候補者マッチング・紹介申請・クライアント管理まで一元化。紹介申請¥500/件のみ、月額固定費なし。
+                            </p>
+                            <Link to="/for-agencies" style={{ color: 'var(--color-text-accent)', fontSize: 'var(--font-size-sm)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                                紹介会社向けページ <ArrowUpRight size={15} strokeWidth={2.25} />
                             </Link>
                         </div>
                     </div>
