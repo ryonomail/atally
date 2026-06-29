@@ -12,8 +12,8 @@ const TYPE_STYLES = {
         icon: '\u2717',
     },
     info: {
-        background: 'linear-gradient(135deg, #c8952e, #2563eb)',
-        borderColor: '#2563eb',
+        background: 'linear-gradient(135deg, #1a2744, #121c34)',
+        borderColor: '#121c34',
         icon: '\u2139',
     },
 };

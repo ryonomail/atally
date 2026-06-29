@@ -52,7 +52,7 @@ function ReferralPatternBadge({ pattern }) {
         );
     }
     return (
-        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 'var(--radius-md)', fontSize: 10, fontWeight: 600, background: 'rgba(168,85,247,0.1)', color: '#6b21a8' }}>
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 'var(--radius-md)', fontSize: 10, fontWeight: 600, background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)' }}>
             レベニューシェア
         </span>
     );

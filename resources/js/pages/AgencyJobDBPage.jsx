@@ -227,7 +227,7 @@ export default function AgencyJobDBPage() {
 
             {/* 検索ヘッダー（sticky） */}
             <div style={{
-                background: 'linear-gradient(135deg, rgba(18,28,52,0.1) 0%, rgba(168,85,247,0.06) 100%)',
+                background: 'rgba(255, 255, 255, 0.85)',
                 borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-xl) 0 var(--space-md)',
                 position: 'sticky', top: 52, zIndex: 100,
@@ -692,7 +692,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
             <div style={{
                 padding: 'var(--space-lg) var(--space-xl)',
                 borderBottom: '1px solid var(--color-border)',
-                background: 'linear-gradient(135deg, rgba(18,28,52,0.04) 0%, rgba(168,85,247,0.02) 100%)',
+                background: 'var(--color-bg-secondary)',
             }}>
                 <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)', lineHeight: 1.4 }}>
                     {job.title}
@@ -846,7 +846,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                         ) : (
                             /* パターン2: エージェント間レベニューシェア */
                             <div>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: 'var(--space-sm)', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-size-xs)', color: '#6b21a8', lineHeight: 1.6, marginBottom: 'var(--space-md)' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: 'var(--space-sm)', background: 'rgba(18,28,52,0.05)', border: '1px solid rgba(18,28,52,0.18)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-navy)', lineHeight: 1.6, marginBottom: 'var(--space-md)' }}>
                                     <span>🔄</span>
                                     <span>パターン2（レベニューシェア）: 採用企業が紹介元エージェントに支払う手数料を、紹介元と紹介者で分配します。</span>
                                 </div>

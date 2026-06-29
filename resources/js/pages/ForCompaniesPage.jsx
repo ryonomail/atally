@@ -81,32 +81,29 @@ export default function ForCompaniesPage() {
 
             {/* ヒーロー */}
             <section style={{
-                background: 'linear-gradient(160deg, #0d1b35 0%, #1a2a4a 50%, #1e3a5f 100%)',
+                background: 'var(--color-bg-secondary)',
+                borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
-                color: '#fff',
                 textAlign: 'center',
                 minHeight: '60vh',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
                 <div style={{ maxWidth: 720 }}>
                     <div style={{
-                        display: 'inline-block',
-                        background: 'rgba(200,149,46,0.2)',
-                        border: '1px solid rgba(200,149,46,0.4)',
-                        borderRadius: 'var(--radius-full)',
-                        padding: '4px 16px',
                         fontSize: 'var(--font-size-xs)',
-                        color: '#d4a843',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-text-accent)',
                         fontWeight: 600,
                         marginBottom: 'var(--space-lg)',
                     }}>
                         採用担当者の方へ
                     </div>
-                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)' }}>
+                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)', color: 'var(--color-navy)' }}>
                         ぴったりの人材を、<br />見つけよう。
                     </h1>
-                    <p style={{ fontSize: 'var(--font-size-base)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.8, marginBottom: 'var(--space-2xl)', maxWidth: 560, margin: '0 auto var(--space-2xl)' }}>
-                        求人掲載は<strong style={{ color: '#fff' }}>無料</strong>からスタートできます。<br />
+                    <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-2xl)', maxWidth: 560, margin: '0 auto var(--space-2xl)' }}>
+                        求人掲載は<strong style={{ color: 'var(--color-navy)' }}>無料</strong>からスタートできます。<br />
                         注目を集めたい場合は日額・月額¥500〜の有料プランも選択可能。<br />
                         採用成功報酬なし。最短5分で掲載開始。
                     </p>
@@ -118,11 +115,11 @@ export default function ForCompaniesPage() {
                         >
                             無料で求人を掲載する
                         </button>
-                        <Link to="/pricing" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px', color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}>
+                        <Link to="/pricing" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px' }}>
                             料金を確認する
                         </Link>
                     </div>
-                    <p style={{ marginTop: 'var(--space-md)', fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.4)' }}>
+                    <p style={{ marginTop: 'var(--space-md)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                         職業安定法準拠 · 求人掲載無料から · 成功報酬¥0 · いつでも停止・再開可
                     </p>
                 </div>
@@ -245,15 +242,15 @@ export default function ForCompaniesPage() {
 
             {/* CTA */}
             <section style={{
-                background: 'linear-gradient(135deg, #1a2a4a, #0d1b35)',
+                background: 'var(--color-accent-light)',
+                borderTop: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
                 textAlign: 'center',
-                color: '#fff',
             }}>
-                <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>
+                <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>
                     今すぐ採用を始めましょう
                 </h2>
-                <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-sm)' }}>
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-sm)' }}>
                     求人掲載は無料からスタートできます。有料プランは日額・月額¥500〜。<br />
                     成功報酬なし、違約金なし、いつでも停止可能。
                 </p>
@@ -261,7 +258,7 @@ export default function ForCompaniesPage() {
                     <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px' }} onClick={() => navigate('/register?role=company')}>
                         無料で始める
                     </button>
-                    <Link to="/help" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px', color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}>
+                    <Link to="/help" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px' }}>
                         よくある質問
                     </Link>
                 </div>

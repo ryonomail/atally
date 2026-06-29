@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Search } from 'lucide-react';
 
 const FAQS = {
     jobseeker: [
@@ -118,31 +119,29 @@ export default function HelpPage() {
 
             {/* ヒーロー */}
             <div style={{
-                background: 'linear-gradient(160deg, #1a2a4a 0%, #0d1b35 100%)',
+                background: 'var(--color-bg-secondary)',
+                borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
                 textAlign: 'center',
-                color: '#fff',
             }}>
-                <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>
+                <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>
                     ヘルプセンター
                 </h1>
-                <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-base)' }}>
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-base)' }}>
                     よくある質問やチャットサポートでご案内します
                 </p>
                 <div style={{ maxWidth: 500, margin: '0 auto', position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 18, opacity: 0.5 }}>🔍</span>
+                    <Search size={18} strokeWidth={2} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.35, pointerEvents: 'none' }} />
                     <input
                         type="text"
                         placeholder="質問を検索..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
+                        className="form-input"
                         style={{
-                            width: '100%', padding: '14px 16px 14px 44px',
+                            width: '100%', padding: '14px 16px 14px 46px',
                             borderRadius: 'var(--radius-full)',
-                            border: 'none', fontSize: 'var(--font-size-base)',
-                            background: 'rgba(255,255,255,0.12)',
-                            color: '#fff', outline: 'none',
-                            backdropFilter: 'blur(10px)',
+                            fontSize: 'var(--font-size-base)',
                         }}
                     />
                 </div>

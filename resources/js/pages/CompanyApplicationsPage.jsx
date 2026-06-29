@@ -377,7 +377,7 @@ export default function CompanyApplicationsPage() {
                                 <div style={{
                                     padding: 'var(--space-lg) var(--space-xl)',
                                     borderBottom: '1px solid var(--color-border)',
-                                    background: 'linear-gradient(135deg, rgba(18,28,52,0.04) 0%, rgba(168,85,247,0.02) 100%)',
+                                    background: 'var(--color-bg-secondary)',
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                         <div>

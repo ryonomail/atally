@@ -71,8 +71,8 @@ export default function ColumnIndexPage() {
                 ))}
             </div>
 
-            <div className="card" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-xl)', textAlign: 'center', background: 'linear-gradient(135deg, rgba(0,112,185,0.07) 0%, rgba(52,199,89,0.05) 100%)' }}>
-                <h3 style={{ marginBottom: 'var(--space-sm)' }}>📝 無料で履歴書を作成しませんか？</h3>
+            <div className="card" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-xl)', textAlign: 'center', background: 'var(--color-accent-light)' }}>
+                <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>無料で履歴書を作成しませんか？</h3>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
                     登録不要・完全無料。作成後そのまま47万件以上の求人に応募できます。
                 </p>

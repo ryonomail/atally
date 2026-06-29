@@ -35,16 +35,16 @@ export default function AboutPage() {
 
             {/* ヒーロー */}
             <section style={{
-                background: 'linear-gradient(160deg, #1a2a4a 0%, #0d1b35 100%)',
+                background: 'var(--color-bg-secondary)',
+                borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
                 textAlign: 'center',
-                color: '#fff',
             }}>
                 <div style={{ maxWidth: 640, margin: '0 auto' }}>
-                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)' }}>
+                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)', color: 'var(--color-navy)' }}>
                         ぴったり合う仕事探し、はじめよう。
                     </h1>
-                    <p style={{ fontSize: 'var(--font-size-base)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.9 }}>
+                    <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 1.9 }}>
                         Atallyは「仕事を探す人」と「人を探す企業」が、<br />
                         ストレスなくつながれるプラットフォームです。<br />
                         余計なものをそぎ落とし、本当に必要な機能だけを届けます。

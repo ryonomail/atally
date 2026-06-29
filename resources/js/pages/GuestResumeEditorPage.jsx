@@ -123,8 +123,8 @@ export default function GuestResumeEditorPage() {
 
             {/* バナー: 登録促進 + 求人探し導線 */}
             <div style={{
-                background: 'linear-gradient(135deg, rgba(18,28,52,0.07) 0%, rgba(0,112,185,0.07) 100%)',
-                border: '1px solid rgba(0,112,185,0.2)',
+                background: 'var(--color-accent-light)',
+                border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-md)',
                 padding: 'var(--space-md) var(--space-lg)',
                 marginBottom: 'var(--space-xl)',

@@ -60,21 +60,21 @@ export default function PricingPage() {
 
             {/* ヘッダー */}
             <div style={{
-                background: 'linear-gradient(160deg, #1a2a4a 0%, #0d1b35 100%)',
+                background: 'var(--color-bg-secondary)',
+                borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
                 textAlign: 'center',
-                color: '#fff',
             }}>
-                <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>
+                <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>
                     無料から始めて、必要なときだけ課金。
                 </h1>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 'var(--font-size-base)', maxWidth: 520, margin: '0 auto var(--space-lg)' }}>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)', maxWidth: 520, margin: '0 auto var(--space-lg)' }}>
                     求人掲載は無料。注目度を高めたい場合は日額・月額¥500〜から。<br />
                     初期費用なし・採用成功報酬なし・違約金なし。
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                     {['¥0 掲載は無料から', '¥0 成功報酬', '有料は¥500〜/日', '違約金なし'].map((t, i) => (
-                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 14px', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>✓ {t}</span>
+                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 14px', borderRadius: 'var(--radius-full)', background: 'var(--color-accent-light)', border: '1px solid rgba(18,28,52,0.12)', fontSize: 'var(--font-size-xs)', color: 'var(--color-navy)', fontWeight: 600 }}>✓ {t}</span>
                     ))}
                 </div>
             </div>
@@ -155,7 +155,7 @@ export default function PricingPage() {
                 </div>
 
                 {/* キャンペーン機能の説明 */}
-                <div className="card" style={{ padding: 'var(--space-2xl)', marginBottom: 'var(--space-3xl)', background: 'linear-gradient(135deg, rgba(18,28,52,0.05) 0%, rgba(168,85,247,0.04) 100%)' }}>
+                <div className="card" style={{ padding: 'var(--space-2xl)', marginBottom: 'var(--space-3xl)', background: 'var(--color-accent-light)' }}>
                     <div style={{ display: 'flex', gap: 'var(--space-xl)', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div style={{ flex: '1 1 280px' }}>
                             <div style={{ display: 'inline-block', padding: '3px 10px', background: 'var(--color-accent)15', border: '1px solid var(--color-accent)30', borderRadius: 'var(--radius-full)', fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>

@@ -83,33 +83,30 @@ export default function ForAgenciesPage() {
 
             {/* ヒーロー */}
             <section style={{
-                background: 'linear-gradient(160deg, #1a0d35 0%, #2a1a4a 50%, #3a1e5f 100%)',
+                background: 'var(--color-bg-secondary)',
+                borderBottom: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
-                color: '#fff',
                 textAlign: 'center',
                 minHeight: '60vh',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
                 <div style={{ maxWidth: 720 }}>
                     <div style={{
-                        display: 'inline-block',
-                        background: 'rgba(149,100,200,0.2)',
-                        border: '1px solid rgba(149,100,200,0.4)',
-                        borderRadius: 'var(--radius-full)',
-                        padding: '4px 16px',
                         fontSize: 'var(--font-size-xs)',
-                        color: '#c084fc',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-text-accent)',
                         fontWeight: 600,
                         marginBottom: 'var(--space-lg)',
                     }}>
                         人材紹介会社の方へ
                     </div>
-                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)' }}>
+                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)', color: 'var(--color-navy)' }}>
                         紹介業務を、<br />もっとシンプルに。
                     </h1>
-                    <p style={{ fontSize: 'var(--font-size-base)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.8, marginBottom: 'var(--space-2xl)', maxWidth: 560, margin: '0 auto var(--space-2xl)' }}>
+                    <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-2xl)', maxWidth: 560, margin: '0 auto var(--space-2xl)' }}>
                         求人DB検索から候補者マッチング、紹介申請、成約管理、収益分析まで。<br />
-                        自社求人は<strong style={{ color: '#fff' }}>無料</strong>で掲載可能。紹介申請は¥500/件のみ。<br />
+                        自社求人は<strong style={{ color: 'var(--color-navy)' }}>無料</strong>で掲載可能。紹介申請は¥500/件のみ。<br />
                         月額固定費なし、採用成功報酬への上乗せなし。
                     </p>
                     <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -120,11 +117,11 @@ export default function ForAgenciesPage() {
                         >
                             無料で始める
                         </button>
-                        <Link to="/pricing" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px', color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}>
+                        <Link to="/pricing" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px' }}>
                             料金を確認する
                         </Link>
                     </div>
-                    <p style={{ marginTop: 'var(--space-md)', fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.4)' }}>
+                    <p style={{ marginTop: 'var(--space-md)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                         職業安定法準拠 · ライセンス審査あり · 自社求人掲載無料から · 紹介申請¥500/件 · 月額固定費¥0
                     </p>
                 </div>
@@ -255,15 +252,15 @@ export default function ForAgenciesPage() {
 
             {/* CTA */}
             <section style={{
-                background: 'linear-gradient(135deg, #2a1a4a, #1a0d35)',
+                background: 'var(--color-accent-light)',
+                borderTop: '1px solid var(--color-border)',
                 padding: 'var(--space-3xl) var(--space-md)',
                 textAlign: 'center',
-                color: '#fff',
             }}>
-                <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>
+                <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>
                     紹介業務をAtally で始めましょう
                 </h2>
-                <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-sm)' }}>
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xl)', fontSize: 'var(--font-size-sm)' }}>
                     自社求人の掲載は無料からスタートできます。<br />
                     ライセンス審査を通過すれば、求人DBへのアクセスと候補者紹介機能が解放されます。紹介申請¥500/件のみ。
                 </p>
@@ -272,7 +269,7 @@ export default function ForAgenciesPage() {
                         onClick={() => navigate('/register?role=company')}>
                         無料で始める
                     </button>
-                    <Link to="/help" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px', color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}>
+                    <Link to="/help" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-base)', padding: '14px 32px' }}>
                         よくある質問
                     </Link>
                 </div>

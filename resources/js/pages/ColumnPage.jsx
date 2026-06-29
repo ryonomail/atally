@@ -198,7 +198,7 @@ export default function ColumnPage() {
                         {col.sections.map((section, i) => <Section key={i} section={section} />)}
 
                         {/* CTA */}
-                        <div className="card" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-xl)', textAlign: 'center', background: 'linear-gradient(135deg, rgba(0,112,185,0.07) 0%, rgba(52,199,89,0.05) 100%)', border: '1px solid rgba(0,112,185,0.15)' }}>
+                        <div className="card" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-xl)', textAlign: 'center', background: 'var(--color-accent-light)', border: '1px solid var(--color-border)' }}>
                             <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📝</div>
                             <h3 style={{ marginBottom: 'var(--space-sm)' }}>実際に履歴書を作ってみましょう</h3>
                             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)', lineHeight: 1.7 }}>

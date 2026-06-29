@@ -281,8 +281,8 @@ export default function ProfilePage() {
                 {!basicComplete && (
                     <div style={{
                         padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)',
-                        background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(168,85,247,0.06))',
-                        borderRadius: 'var(--radius-lg)', border: '1px solid rgba(59,130,246,0.2)',
+                        background: 'var(--color-accent-light)',
+                        borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)',
                     }}>
                         <p style={{ fontWeight: 700, fontSize: 'var(--font-size-base)', marginBottom: 'var(--space-xs)' }}>
                             まずは基本情報だけ入力しましょう
