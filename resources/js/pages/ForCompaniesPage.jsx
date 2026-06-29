@@ -1,47 +1,48 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Zap, BarChart3, Mail, MessageSquare, TrendingUp, Scale, Building2, FileText, ClipboardList, Rocket } from 'lucide-react';
 
 const STEPS = [
-    { num: '01', title: '企業アカウントを作成', desc: '会社情報を登録するだけ。審査なし、最短5分で利用開始できます。', icon: '🏢' },
-    { num: '02', title: '求人票を作成・無料公開', desc: '必要事項を入力して公開ボタンを押すだけ。無料でそのまま掲載できます。', icon: '📝' },
-    { num: '03', title: '応募者を管理', desc: '応募が届いたら書類選考・面接・内定まで一画面で管理できます。', icon: '📋' },
-    { num: '04', title: '（任意）有料プランで注目度アップ', desc: '日額・月額¥500〜の有料掲載で露出を強化。スカウト機能も使えるようになります。', icon: '🚀' },
+    { num: '01', title: '企業アカウントを作成', desc: '会社情報を登録するだけ。審査なし、最短5分で利用開始できます。', Icon: Building2 },
+    { num: '02', title: '求人票を作成・無料公開', desc: '必要事項を入力して公開ボタンを押すだけ。無料でそのまま掲載できます。', Icon: FileText },
+    { num: '03', title: '応募者を管理', desc: '応募が届いたら書類選考・面接・内定まで一画面で管理できます。', Icon: ClipboardList },
+    { num: '04', title: '（任意）有料プランで注目度アップ', desc: '日額・月額¥500〜の有料掲載で求人の露出を強化できます。', Icon: Rocket },
 ];
 
 const FEATURES = [
     {
-        icon: '⚡',
+        Icon: Zap,
         title: '最短5分で求人掲載',
         desc: '複雑な審査や書類提出は不要。アカウント作成後すぐに求人を公開できます。',
         group: '採用活動を効率化',
     },
     {
-        icon: '📊',
+        Icon: BarChart3,
         title: '応募状況を一元管理',
         desc: '書類選考・面接・内定・不採用まで、選考フローをビジュアルで把握。担当者の工数を大幅削減。',
         group: '採用活動を効率化',
     },
     {
-        icon: '✉️',
+        Icon: Mail,
         title: 'スカウト機能（有料プランで利用可）',
         desc: '有料掲載中の求人が1件以上あれば、スカウト検索・送信を追加費用なしで利用できます。',
         group: '採用活動を効率化',
     },
     {
-        icon: '💬',
+        Icon: MessageSquare,
         title: '応募者とダイレクトメッセージ',
         desc: '応募者と直接やり取り。日程調整から質疑応答まで、メッセージ機能で完結します。',
         group: '採用活動を効率化',
     },
     {
-        icon: '📈',
+        Icon: TrendingUp,
         title: '求人パフォーマンス分析',
         desc: '閲覧数・応募数・選考通過率をデータで確認。予算対効果を最大化できます。',
         group: 'コスト管理・安心',
     },
     {
-        icon: '⚖️',
+        Icon: Scale,
         title: '法令準拠サポート',
         desc: '職業安定法・労働基準法に準拠した求人フォーマットを提供。コンプライアンスリスクを低減。',
         group: 'コスト管理・安心',
@@ -163,7 +164,7 @@ export default function ForCompaniesPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
                             {FEATURES.filter(f => f.group === '採用活動を効率化').map((f, i) => (
                                 <div key={i} className="card card-lift" style={{ padding: 'var(--space-xl)' }}>
-                                    <div style={{ fontSize: 28, marginBottom: 'var(--space-md)' }}>{f.icon}</div>
+                                    <div style={{ marginBottom: 'var(--space-md)' }}><f.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)' }} /></div>
                                     <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>{f.title}</h3>
                                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
                                 </div>
@@ -180,7 +181,7 @@ export default function ForCompaniesPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
                             {FEATURES.filter(f => f.group === 'コスト管理・安心').map((f, i) => (
                                 <div key={i} className="card card-lift" style={{ padding: 'var(--space-xl)' }}>
-                                    <div style={{ fontSize: 28, marginBottom: 'var(--space-md)' }}>{f.icon}</div>
+                                    <div style={{ marginBottom: 'var(--space-md)' }}><f.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)' }} /></div>
                                     <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>{f.title}</h3>
                                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
                                 </div>
@@ -201,7 +202,7 @@ export default function ForCompaniesPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-lg)' }}>
                         {STEPS.map((step, i) => (
                             <div key={i} style={{ textAlign: 'center', position: 'relative' }}>
-                                <div style={{ fontSize: 36, marginBottom: 'var(--space-sm)' }}>{step.icon}</div>
+                                <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}><step.Icon size={30} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)' }} /></div>
                                 <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-accent)', marginBottom: 'var(--space-xs)', letterSpacing: '0.1em' }}>
                                     STEP {step.num}
                                 </div>
@@ -228,7 +229,7 @@ export default function ForCompaniesPage() {
                                     「{t.comment}」
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏢</div>
+                                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={18} strokeWidth={2} style={{ color: 'var(--color-text-accent)' }} /></div>
                                     <div>
                                         <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{t.company}</div>
                                         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{t.industry} · {t.size}</div>

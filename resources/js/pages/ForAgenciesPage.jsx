@@ -1,40 +1,41 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Database, User, FolderUp, Building2, BarChart3, Lock, FileText, ScrollText, Search, Mail } from 'lucide-react';
 
 const FEATURES = [
     {
-        icon: '🗂️',
+        Icon: Database,
         title: '求人データベース',
         desc: '他社企業の紹介受入求人を一覧検索。キーワード・勤務地・給与で絞り込み、候補者にぴったりの求人を探せます。',
         group: '紹介業務を効率化',
     },
     {
-        icon: '👤',
+        Icon: User,
         title: '候補者マッチング',
         desc: 'スカウト公開中の求職者を匿名で検索し、求人とマッチした候補者を選んで紹介申請できます。',
         group: '紹介業務を効率化',
     },
     {
-        icon: '📂',
+        Icon: FolderUp,
         title: 'CSV一括アップロード',
         desc: '自社保有の求人を一括登録。テンプレートに沿って入力するだけで、大量の求人も短時間で掲載できます。',
         group: '紹介業務を効率化',
     },
     {
-        icon: '🏢',
+        Icon: Building2,
         title: 'クライアント管理',
         desc: '取引先企業の担当者情報・連絡先をプラットフォーム上で一元管理。案件ごとの進捗も把握できます。',
         group: '紹介業務を効率化',
     },
     {
-        icon: '📊',
+        Icon: BarChart3,
         title: '成約・紹介分析',
         desc: '月別・クライアント別の紹介件数・成約状況をダッシュボードで確認。経営判断に必要なデータをすぐに把握。',
         group: '信頼・コスト管理',
     },
     {
-        icon: '🔒',
+        Icon: Lock,
         title: 'ライセンス認証バッジ',
         desc: '職業紹介事業許可証を提出して運営が認証。認証済みバッジにより採用企業からの信頼性が向上します。',
         group: '信頼・コスト管理',
@@ -42,10 +43,10 @@ const FEATURES = [
 ];
 
 const STEPS = [
-    { num: '01', icon: '📝', title: 'アカウント作成', desc: '人材紹介会社として登録。基本情報と会社名を入力するだけで、すぐに利用開始できます。' },
-    { num: '02', icon: '📜', title: 'ライセンス申請', desc: '職業紹介事業許可証と許可番号を提出。運営審査後に認証済みバッジが付与されます。' },
-    { num: '03', icon: '🔍', title: '求人・候補者を探す', desc: '求人データベースから紹介受入求人を検索し、マッチする候補者を見つけます。' },
-    { num: '04', icon: '✉️', title: '紹介申請・成約', desc: 'システム利用料¥500で紹介申請を送信。承認後は採用企業と直接契約して成功報酬を受け取ります。' },
+    { num: '01', Icon: FileText, title: 'アカウント作成', desc: '人材紹介会社として登録。基本情報と会社名を入力するだけで、すぐに利用開始できます。' },
+    { num: '02', Icon: ScrollText, title: 'ライセンス申請', desc: '職業紹介事業許可証と許可番号を提出。運営審査後に認証済みバッジが付与されます。' },
+    { num: '03', Icon: Search, title: '求人・候補者を探す', desc: '求人データベースから紹介受入求人を検索し、マッチする候補者を見つけます。' },
+    { num: '04', Icon: Mail, title: '紹介申請・成約', desc: 'システム利用料¥500で紹介申請を送信。承認後は採用企業と直接契約して成功報酬を受け取ります。' },
 ];
 
 const PRICING_ITEMS = [
@@ -165,7 +166,7 @@ export default function ForAgenciesPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
                             {FEATURES.filter(f => f.group === '紹介業務を効率化').map((f, i) => (
                                 <div key={i} className="card card-lift" style={{ padding: 'var(--space-xl)' }}>
-                                    <div style={{ fontSize: 28, marginBottom: 'var(--space-md)' }}>{f.icon}</div>
+                                    <div style={{ marginBottom: 'var(--space-md)' }}><f.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)' }} /></div>
                                     <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>{f.title}</h3>
                                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
                                 </div>
@@ -182,7 +183,7 @@ export default function ForAgenciesPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
                             {FEATURES.filter(f => f.group === '信頼・コスト管理').map((f, i) => (
                                 <div key={i} className="card card-lift" style={{ padding: 'var(--space-xl)' }}>
-                                    <div style={{ fontSize: 28, marginBottom: 'var(--space-md)' }}>{f.icon}</div>
+                                    <div style={{ marginBottom: 'var(--space-md)' }}><f.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)' }} /></div>
                                     <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>{f.title}</h3>
                                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
                                 </div>
@@ -238,7 +239,7 @@ export default function ForAgenciesPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-lg)' }}>
                         {STEPS.map((step, i) => (
                             <div key={i} style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: 36, marginBottom: 'var(--space-sm)' }}>{step.icon}</div>
+                                <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}><step.Icon size={30} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)' }} /></div>
                                 <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-accent)', marginBottom: 'var(--space-xs)', letterSpacing: '0.1em' }}>
                                     STEP {step.num}
                                 </div>
