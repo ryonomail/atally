@@ -388,10 +388,10 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 300;
-  background: rgba(18, 28, 52, 0.95);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(200, 149, 46, 0.15);
+  border-bottom: 1px solid var(--color-border);
   height: 52px;
 }
 
@@ -405,7 +405,7 @@ a:hover {
 .navbar-brand {
   font-size: var(--font-size-xl);
   font-weight: 700;
-  color: #d4a843;
+  color: var(--color-accent);
   letter-spacing: -0.03em;
 }
 
@@ -417,7 +417,7 @@ a:hover {
 }
 
 .navbar-link {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: 500;
   transition: color var(--transition-fast);
@@ -427,7 +427,7 @@ a:hover {
 
 .navbar-link:hover,
 .navbar-link.active {
-  color: #ffffff;
+  color: var(--color-text-primary);
   opacity: 1;
 }
 
@@ -454,11 +454,11 @@ a:hover {
   top: 52px;
   left: 0;
   right: 0;
-  background: rgba(18, 28, 52, 0.96);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(200, 149, 46, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
   z-index: 99;
   padding: var(--space-md) var(--space-lg);
   animation: navbar-slide-down 0.15s ease-out;
@@ -499,7 +499,7 @@ a:hover {
   transition: background 0.2s;
 }
 .navbar-unread-badge-link:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.05);
 }
 
 .navbar-message-icon {
@@ -541,10 +541,10 @@ a:hover {
   top: calc(100% + 8px);
   right: 0;
   min-width: 160px;
-  background: var(--color-bg-elevated, #1a2744);
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-lg);
   z-index: 200;
   padding: var(--space-xs) 0;
   animation: navDropFade 0.15s ease;
@@ -558,7 +558,7 @@ a:hover {
 .navbar-dropdown-item {
   display: block;
   padding: 6px var(--space-md);
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   text-decoration: none;
   white-space: nowrap;
@@ -566,8 +566,8 @@ a:hover {
 }
 
 .navbar-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: var(--color-accent-light);
+  color: var(--color-text-primary);
 }
 
 /* ===========================

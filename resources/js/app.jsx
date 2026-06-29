@@ -270,9 +270,9 @@ function AppRoutes() {
             </Suspense>
             </div>
             <footer style={{
-                borderTop: '1px solid var(--color-border)',
-                padding: 'var(--space-2xl) 0 var(--space-lg)',
-                background: 'var(--color-bg-surface)',
+                borderTop: '1px solid var(--color-divider)',
+                padding: 'var(--space-3xl) 0 var(--space-lg)',
+                background: 'var(--color-bg-secondary)',
                 fontSize: 'var(--font-size-xs)',
                 color: 'var(--color-text-muted)',
             }}>
@@ -345,10 +345,10 @@ function AppRoutes() {
                             ))}
                         </div>
                     </div>
-                    <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-                        <span>&copy; {new Date().getFullYear()} Atally. All rights reserved.</span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 10px', borderRadius: 'var(--radius-full)', background: 'rgba(52,199,89,0.1)', border: '1px solid rgba(52,199,89,0.25)', color: '#1d8f42' }}>
-                            ⚖️ 職業安定法準拠
+                    <div style={{ borderTop: '1px solid var(--color-divider)', paddingTop: 'var(--space-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                        <span>&copy; {new Date().getFullYear()} Atally</span>
+                        <span style={{ color: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
+                            職業安定法準拠 ・ 個人情報保護
                         </span>
                     </div>
                 </div>

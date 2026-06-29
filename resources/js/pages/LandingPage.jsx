@@ -301,22 +301,81 @@ export default function LandingPage() {
 
             {/* ─────────────────────────  履歴書 CTA  ───────────────────────── */}
             <section style={{ borderTop: '1px solid var(--color-divider)', padding: 'var(--space-3xl) 0' }}>
-                <div className="container" style={{ maxWidth: 640, textAlign: 'center' }}>
-                    <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 'var(--space-md)' }}>
-                        まず、履歴書を作ってみませんか。
-                    </h2>
-                    <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)', lineHeight: 1.8, marginBottom: 'var(--space-xl)' }}>
-                        登録不要。入力するだけでJIS規格対応の履歴書が完成し、<br />
-                        そのまま気になる求人に応募できます。
-                    </p>
-                    <Link
-                        to="/resumes/guest"
-                        className="btn btn-primary"
-                        style={{ gap: 8, padding: '13px 32px', fontSize: 'var(--font-size-base)', fontWeight: 600, borderRadius: 'var(--radius-md)' }}
-                    >
-                        今すぐ無料で作る
-                        <ArrowRight size={17} strokeWidth={2.25} />
-                    </Link>
+                <div className="container">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: 'var(--space-2xl)',
+                        alignItems: 'center',
+                        maxWidth: 920, margin: '0 auto',
+                    }}>
+                        {/* 左：コピー */}
+                        <div>
+                            <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 'var(--space-md)', lineHeight: 1.3 }}>
+                                まず、履歴書を<br />作ってみませんか。
+                            </h2>
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)', lineHeight: 1.9, marginBottom: 'var(--space-xl)' }}>
+                                登録不要。入力するだけでJIS規格対応の履歴書が完成し、そのまま気になる求人に応募できます。
+                            </p>
+                            <Link
+                                to="/resumes/guest"
+                                className="btn btn-primary"
+                                style={{ gap: 8, padding: '13px 32px', fontSize: 'var(--font-size-base)', fontWeight: 600, borderRadius: 'var(--radius-md)' }}
+                            >
+                                今すぐ無料で作る
+                                <ArrowRight size={17} strokeWidth={2.25} />
+                            </Link>
+                        </div>
+
+                        {/* 右：履歴書プレビュー */}
+                        <div style={{
+                            background: 'var(--color-bg-secondary)',
+                            borderRadius: 'var(--radius-lg)',
+                            border: '1px solid var(--color-border)',
+                            boxShadow: 'var(--shadow-lg)',
+                            padding: 'var(--space-lg)',
+                            fontSize: 'var(--font-size-xs)',
+                            color: 'var(--color-text-secondary)',
+                            fontFamily: 'serif',
+                            maxWidth: 420,
+                            justifySelf: 'center',
+                            width: '100%',
+                        }}>
+                            <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 'var(--font-size-base)', marginBottom: 'var(--space-md)', color: 'var(--color-text-primary)', letterSpacing: 8 }}>
+                                履 歴 書
+                            </div>
+                            <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                                <div style={{ flex: 1 }}>
+                                    {[
+                                        { label: 'ふりがな', value: 'やまだ はなこ' },
+                                        { label: '氏　　名', value: '山田 花子', large: true },
+                                        { label: '生年月日', value: '1990年 4月 1日生' },
+                                        { label: '現住所', value: '東京都渋谷区○○' },
+                                    ].map((row, i) => (
+                                        <div key={i} style={{ display: 'flex', gap: 8, padding: '5px 0', borderBottom: '1px solid var(--color-divider)' }}>
+                                            <span style={{ minWidth: 56, opacity: 0.55 }}>{row.label}</span>
+                                            <span style={{ fontWeight: row.large ? 700 : 400, color: row.large ? 'var(--color-text-primary)' : undefined }}>
+                                                {row.value}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <img
+                                    src="/images/resume-photo.jpg"
+                                    alt="証明写真"
+                                    style={{
+                                        width: 72, height: 96, flexShrink: 0,
+                                        border: '1px solid var(--color-border)',
+                                        borderRadius: 2, objectFit: 'cover',
+                                        background: 'var(--color-bg-secondary)',
+                                    }}
+                                />
+                            </div>
+                            <div style={{ marginTop: 'var(--space-md)', opacity: 0.5, fontSize: 11 }}>
+                                学歴・職歴 ／ 免許・資格 ／ 志望動機 …
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 

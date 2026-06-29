@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
-import { Bell, MessageSquare, FileText, User, ChevronDown } from 'lucide-react';
+import { Bell, MessageSquare, FileText, User, ChevronDown, Menu, X } from 'lucide-react';
 
 /* ============================================
    通知ベルドロップダウン
@@ -85,7 +85,7 @@ function NotificationBell({ user }) {
                 title="通知"
                 style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    padding: '4px 8px', position: 'relative', color: 'rgba(255,255,255,0.75)',
+                    padding: '4px 8px', position: 'relative', color: 'var(--color-text-secondary)',
                     display: 'flex', alignItems: 'center',
                 }}
             >
@@ -265,7 +265,7 @@ export default function Navbar() {
                     {user && (
                         <Link to={messagesPath} className="navbar-unread-badge-link" title="メッセージ">
                             <span className="navbar-message-icon">
-                                <MessageSquare size={18} strokeWidth={1.75} style={{ color: 'rgba(255,255,255,0.75)', display: 'block' }} />
+                                <MessageSquare size={18} strokeWidth={1.75} style={{ color: 'var(--color-text-secondary)', display: 'block' }} />
                                 {unreadCount > 0 && (
                                     <span className="navbar-unread-badge">
                                         {unreadCount > 99 ? '99+' : unreadCount}
@@ -283,7 +283,7 @@ export default function Navbar() {
                         aria-label="メニューを開く"
                         aria-expanded={menuOpen}
                     >
-                        <span className="navbar-hamburger-icon">{menuOpen ? '✕' : '☰'}</span>
+                        <span className="navbar-hamburger-icon" style={{ display: 'flex' }}>{menuOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}</span>
                     </button>
 
                     {/* デスクトップナビゲーション */}
@@ -384,8 +384,8 @@ function NavLinks({ user, logout, showAll = false }) {
 
             {user && !showAll && (
                 <>
-                    <NavDropdown label={<User size={16} strokeWidth={1.75} style={{ color: 'rgba(255,255,255,0.75)', display: 'block' }} />}>
-                        <div style={{ padding: '6px 16px', fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 4 }}>
+                    <NavDropdown label={<User size={16} strokeWidth={1.75} style={{ color: 'var(--color-text-secondary)', display: 'block' }} />}>
+                        <div style={{ padding: '6px 16px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-divider)', marginBottom: 4 }}>
                             {user.name || 'アカウント'}
                         </div>
                         {user?.role === 'jobseeker' && (
@@ -394,11 +394,8 @@ function NavLinks({ user, logout, showAll = false }) {
                         <Link to="/settings" className="navbar-dropdown-item">設定</Link>
                     </NavDropdown>
                     <li>
-                        <button onClick={logout} className="btn" style={{
+                        <button onClick={logout} className="btn btn-secondary" style={{
                             fontSize: '0.75rem',
-                            background: 'rgba(255,255,255,0.1)',
-                            color: 'rgba(255,255,255,0.8)',
-                            border: '1px solid rgba(255,255,255,0.15)',
                             padding: '4px 10px',
                         }}>
                             ログアウト
@@ -414,11 +411,8 @@ function NavLinks({ user, logout, showAll = false }) {
                     )}
                     <li><Link to="/settings" className="navbar-link">設定</Link></li>
                     <li>
-                        <button onClick={logout} className="btn" style={{
+                        <button onClick={logout} className="btn btn-secondary" style={{
                             fontSize: '0.8rem',
-                            background: 'rgba(255,255,255,0.12)',
-                            color: 'rgba(255,255,255,0.85)',
-                            border: '1px solid rgba(255,255,255,0.2)',
                         }}>
                             ログアウト
                         </button>
