@@ -200,9 +200,8 @@ export default function CompanyJobsPage() {
         const budget = Number(form.daily_budget) || 0;
         clearTimeout(rankTimerRef.current);
         rankTimerRef.current = setTimeout(() => {
-            api.post('/ranking/simulate', { budget })
-                .then(res => setRankResult(res.data))
-                .catch(() => setRankResult(null));
+            // 順位シミュレーション(/ranking/simulate)はMVP期間中は無効化中のため呼ばない
+            setRankResult(null);
         }, 500);
         return () => clearTimeout(rankTimerRef.current);
     }, [form.daily_budget, showForm]);

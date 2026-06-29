@@ -1015,8 +1015,8 @@ function DirectEmployerDashboard() {
             {/* 利用履歴 */}
             <BillingHistorySection />
 
-            {/* チーム管理 */}
-            <TeamSection />
+            {/* チーム管理はMVP期間中は無効化中 */}
+            {false && <TeamSection />}
 
             {/* 品質スコア */}
             <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>

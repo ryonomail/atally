@@ -227,9 +227,7 @@ export default function JobSearchPage() {
         api.get('/my-applications/job-ids')
             .then(res => setAppliedJobIds(res.data))
             .catch(() => {});
-        api.get('/job-alerts')
-            .then(res => setJobAlerts(res.data))
-            .catch(() => {});
+        // 求人アラートはMVP期間中は無効化中のため取得しない
     }, [user]);
 
     // レスポンシブ判定
@@ -643,8 +641,8 @@ export default function JobSearchPage() {
                         </div>
                     )}
 
-                    {/* 求人アラートボタン・トースト */}
-                    {user?.role === 'jobseeker' && (
+                    {/* 求人アラートはMVP期間中は無効化中 */}
+                    {false && user?.role === 'jobseeker' && (
                         <div style={{
                             display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                             marginTop: 'var(--space-md)', flexWrap: 'wrap',
@@ -683,7 +681,7 @@ export default function JobSearchPage() {
                     )}
 
                     {/* アラート一覧パネル */}
-                    {showAlerts && user?.role === 'jobseeker' && (
+                    {false && showAlerts && user?.role === 'jobseeker' && (
                         <div className="animate-fade-in" style={{
                             marginTop: 'var(--space-md)', padding: 'var(--space-md)',
                             background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-lg)',
