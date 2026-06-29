@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CreditCard } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
@@ -80,7 +81,7 @@ export default function PaymentCardSection() {
             {card ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                        <span style={{ fontSize: '1.5rem' }}>💳</span>
+                        <CreditCard size={22} strokeWidth={2} style={{ color: 'var(--color-text-accent)' }} />
                         <div>
                             <p style={{ fontWeight: 600 }}>{card.brand?.toUpperCase()} **** {card.last4}</p>
                             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>有効期限: {card.exp_month}/{card.exp_year}</p>

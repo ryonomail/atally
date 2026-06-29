@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Gift, Zap, Target } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const FAQS = [
@@ -84,12 +85,12 @@ export default function PricingPage() {
                 {/* 3つのポイント */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-3xl)' }}>
                     {[
-                        { icon: '🆓', title: '無料で掲載できる', desc: '求人掲載は無料からスタート可能。有料プランにしたい場合は日額・月額¥500〜から設定できます。' },
-                        { icon: '⚡', title: '有効化即時決済', desc: '有料プランを「配信中」にした瞬間に初回分を即時決済。日額は毎日自動課金、月額は申し込み日から1ヶ月ごとに自動更新。' },
-                        { icon: '🎯', title: '成功報酬なし', desc: '採用が決まっても追加費用は一切かかりません。設定した日額・月額予算のみのシンプルな料金体系。' },
+                        { Icon: Gift, title: '無料で掲載できる', desc: '求人掲載は無料からスタート可能。有料プランにしたい場合は日額・月額¥500〜から設定できます。' },
+                        { Icon: Zap, title: '有効化即時決済', desc: '有料プランを「配信中」にした瞬間に初回分を即時決済。日額は毎日自動課金、月額は申し込み日から1ヶ月ごとに自動更新。' },
+                        { Icon: Target, title: '成功報酬なし', desc: '採用が決まっても追加費用は一切かかりません。設定した日額・月額予算のみのシンプルな料金体系。' },
                     ].map((item, i) => (
                         <div key={i} className="card" style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
-                            <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, color: 'var(--color-accent)', marginBottom: 'var(--space-sm)' }}>{item.icon}</div>
+                            <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}><item.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-accent)' }} /></div>
                             <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>{item.title}</h3>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
                         </div>

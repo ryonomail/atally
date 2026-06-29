@@ -117,9 +117,9 @@ export default function AboutPage() {
                     <div className="card" style={{ padding: 'var(--space-xl)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                             {[
-                                { badge: '⚖️ 職業安定法', desc: '求人情報の明示義務・虚偽求人の排除など、職業安定法の規定に基づいた運営を行っています。' },
-                                { badge: '📋 労働基準法', desc: '最低賃金・労働時間・休暇など、労働基準法に違反する求人は掲載できない仕組みを設けています。' },
-                                { badge: '🔒 個人情報保護法', desc: '求職者・企業の個人情報は個人情報保護法に基づき厳重に管理し、第三者への不正提供は行いません。' },
+                                { badge: '職業安定法', desc: '求人情報の明示義務・虚偽求人の排除など、職業安定法の規定に基づいた運営を行っています。' },
+                                { badge: '労働基準法', desc: '最低賃金・労働時間・休暇など、労働基準法に違反する求人は掲載できない仕組みを設けています。' },
+                                { badge: '個人情報保護法', desc: '求職者・企業の個人情報は個人情報保護法に基づき厳重に管理し、第三者への不正提供は行いません。' },
                             ].map((item, i) => (
                                 <div key={i} style={{ display: 'flex', gap: 'var(--space-md)', paddingBottom: i < 2 ? 'var(--space-md)' : 0, borderBottom: i < 2 ? '1px solid var(--color-border)' : 'none' }}>
                                     <span style={{

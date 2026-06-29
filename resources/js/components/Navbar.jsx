@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
-import { Bell, MessageSquare, FileText, User, ChevronDown, Menu, X } from 'lucide-react';
+import { Bell, MessageSquare, FileText, User, ChevronDown, Menu, X, ClipboardList, Target, Settings, Pin } from 'lucide-react';
 
 /* ============================================
    通知ベルドロップダウン
@@ -55,15 +55,16 @@ function NotificationBell({ user }) {
         }).catch(() => {});
     };
 
-    const typeIcon = (type) => {
-        switch (type) {
-            case 'application': return '📋';
-            case 'message': return '💬';
-            case 'scout': return '🎯';
-            case 'job_alert': return '🔔';
-            case 'system': return '⚙️';
-            default: return '📌';
-        }
+    const TypeIcon = ({ type }) => {
+        const map = {
+            application: ClipboardList,
+            message: MessageSquare,
+            scout: Target,
+            job_alert: Bell,
+            system: Settings,
+        };
+        const Ico = map[type] || Pin;
+        return <Ico size={17} strokeWidth={2} style={{ color: 'var(--color-text-accent)' }} />;
     };
 
     const timeAgo = (dateStr) => {
@@ -153,7 +154,7 @@ function NotificationBell({ user }) {
                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
                                 onMouseLeave={e => e.currentTarget.style.background = n.read_at ? 'transparent' : 'rgba(200,149,46,0.06)'}
                             >
-                                <span style={{ fontSize: '1.2rem', flexShrink: 0, marginTop: 2 }}>{typeIcon(n.type)}</span>
+                                <span style={{ flexShrink: 0, marginTop: 2, display: 'inline-flex' }}><TypeIcon type={n.type} /></span>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <p style={{
                                         margin: 0, fontSize: 'var(--font-size-sm)',
