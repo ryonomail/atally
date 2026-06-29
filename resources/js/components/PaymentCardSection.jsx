@@ -14,16 +14,21 @@ function CardRegistrationForm({ onCardRegistered }) {
     const elements = useElements();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [cardholderName, setCardholderName] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!stripe || !elements) return;
+        if (!cardholderName.trim()) { setError('カード名義人を入力してください。'); return; }
         setLoading(true);
         setError('');
         try {
             const { data } = await api.post('/payment/setup-intent');
             const { error: stripeError, setupIntent } = await stripe.confirmCardSetup(data.client_secret, {
-                payment_method: { card: elements.getElement(CardElement) },
+                payment_method: {
+                    card: elements.getElement(CardElement),
+                    billing_details: { name: cardholderName.trim() },
+                },
             });
             if (stripeError) { setError(stripeError.message); return; }
             await api.post('/payment/confirm-card', { payment_method_id: setupIntent.payment_method });
@@ -37,6 +42,22 @@ function CardRegistrationForm({ onCardRegistered }) {
 
     return (
         <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+                <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>
+                    カード名義人（半角ローマ字 / 例: TARO YAMADA）
+                </label>
+                <input
+                    type="text"
+                    className="form-input"
+                    value={cardholderName}
+                    onChange={e => setCardholderName(e.target.value)}
+                    placeholder="TARO YAMADA"
+                    autoComplete="cc-name"
+                />
+                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                    アカウント名と異なる名義のカードでも登録できます。カード券面どおりに入力してください。
+                </p>
+            </div>
             <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', marginBottom: 'var(--space-md)', background: '#fff' }}>
                 <CardElement options={{ style: { base: { fontSize: '16px', color: '#333', '::placeholder': { color: '#aab7c4' } }, invalid: { color: '#e74c3c' } }, hidePostalCode: true }} />
             </div>
