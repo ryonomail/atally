@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CreditCard, Building2, ClipboardList, FileEdit, Check, TrendingUp, TrendingDown } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import api from '../api';
@@ -129,7 +130,7 @@ function CardSection() {
             {card ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                        <span style={{ fontSize: '1.5rem' }}>💳</span>
+                        <CreditCard size={22} strokeWidth={2} color="var(--color-text-accent)" />
                         <div>
                             <p style={{ fontWeight: 600 }}>{card.brand.toUpperCase()} **** {card.last4}</p>
                             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
@@ -609,7 +610,7 @@ function OverviewStatsSection() {
             <div className="grid grid-4" style={{ marginBottom: 'var(--space-lg)' }}>
                 {[
                     { label: '総閲覧数', value: totalViews.toLocaleString(), color: '#121c34' },
-                    { label: '7日間閲覧数', value: views7d.toLocaleString(), color: '#3b82f6' },
+                    { label: '7日間閲覧数', value: views7d.toLocaleString(), color: '#1a2744' },
                     { label: '総応募数', value: totalApps.toLocaleString(), color: '#10b981' },
                     { label: '平均応募率', value: `${avgRate}%`, color: '#f59e0b' },
                 ].map(c => (
@@ -758,7 +759,9 @@ function DirectEmployerDashboard() {
 
                 {!showRegister ? (
                     <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🏢</div>
+                        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                            <Building2 size={48} strokeWidth={1.5} color="var(--color-text-accent)" />
+                        </div>
                         <h2 style={{ marginBottom: 'var(--space-md)' }}>企業情報を登録してください</h2>
                         <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xl)' }}>
                             求人の公開やスカウト機能を利用するには、企業情報の登録が必要です。
@@ -846,7 +849,7 @@ function DirectEmployerDashboard() {
                         <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
                             <button type="button" className="btn btn-secondary" onClick={() => setShowRegister(false)}>キャンセル</button>
                             <button type="submit" className="btn btn-primary" disabled={saving}>
-                                {saving ? '登録中...' : '🏢 企業情報を登録'}
+                                {saving ? '登録中...' : '企業情報を登録'}
                             </button>
                         </div>
                     </form>
@@ -900,7 +903,7 @@ function DirectEmployerDashboard() {
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>ランキングスコア</p>
-                    <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, background: 'var(--gradient-accent)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-navy)' }}>
                         {rankingScore.toFixed(1)}
                     </p>
                 </div>
@@ -909,11 +912,11 @@ function DirectEmployerDashboard() {
             {/* オンボーディングチェックリスト */}
             {(company.verification_status === 'pending' || !boostBreakdown.length) ? (() => {
                 const steps = [
-                    { label: '企業情報を登録する', done: true, icon: '🏢' },
-                    { label: '審査を通過する', done: company.verification_status === 'approved', icon: '✅' },
-                    { label: 'クレジットカードを登録する', done: company.stripe_customer_id, icon: '💳' },
-                    { label: '最初の求人を作成する', done: boostBreakdown.length > 0, icon: '📋', link: '/company/jobs' },
-                    { label: '企業プロフィールを充実させる', done: company.description && company.industry && company.company_culture, icon: '✏️' },
+                    { label: '企業情報を登録する', done: true, icon: Building2 },
+                    { label: '審査を通過する', done: company.verification_status === 'approved', icon: Check },
+                    { label: 'クレジットカードを登録する', done: company.stripe_customer_id, icon: CreditCard },
+                    { label: '最初の求人を作成する', done: boostBreakdown.length > 0, icon: ClipboardList, link: '/company/jobs' },
+                    { label: '企業プロフィールを充実させる', done: company.description && company.industry && company.company_culture, icon: FileEdit },
                 ];
                 const doneCount = steps.filter(s => s.done).length;
                 if (doneCount === steps.length) return null;
@@ -938,7 +941,11 @@ function DirectEmployerDashboard() {
                                     borderRadius: 'var(--radius-md)', opacity: step.done ? 0.6 : 1,
                                     cursor: step.link ? 'pointer' : 'default',
                                 }} onClick={() => step.link && navigate(step.link)}>
-                                    <span style={{ fontSize: 18 }}>{step.done ? '✅' : step.icon}</span>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                                        {step.done
+                                            ? <Check size={18} strokeWidth={2.5} color="#10b981" />
+                                            : <step.icon size={18} strokeWidth={2} color="var(--color-text-accent)" />}
+                                    </span>
                                     <span style={{
                                         fontSize: 'var(--font-size-sm)', fontWeight: step.done ? 400 : 600,
                                         textDecoration: step.done ? 'line-through' : 'none',
@@ -1005,7 +1012,10 @@ function DirectEmployerDashboard() {
 
             {/* クレジットカード */}
             <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <h3 style={{ marginBottom: 'var(--space-md)' }}>💳 クレジットカード</h3>
+                <h3 style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                    <span style={{ width: 3, height: 16, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                    クレジットカード
+                </h3>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)' }}>
                     求人を掲載（有料）するにはクレジットカードの登録が必要です。
                 </p>
@@ -1049,7 +1059,7 @@ function DirectEmployerDashboard() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
                     <div style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: '#10b981', marginBottom: 'var(--space-sm)' }}>📈 加点要因</h4>
+                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: '#10b981', marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 6 }}><TrendingUp size={16} strokeWidth={2} /> 加点要因</h4>
                         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>24時間以内の返信</span><span style={{ fontWeight: 600, color: '#10b981' }}>×1.10</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>プロフィール完全入力</span><span style={{ fontWeight: 600, color: '#10b981' }}>×1.05</span></div>
@@ -1057,7 +1067,7 @@ function DirectEmployerDashboard() {
                         </div>
                     </div>
                     <div style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: '#ef4444', marginBottom: 'var(--space-sm)' }}>📉 減点要因</h4>
+                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: '#ef4444', marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 6 }}><TrendingDown size={16} strokeWidth={2} /> 減点要因</h4>
                         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>3日以上未読メッセージ</span><span style={{ fontWeight: 600, color: '#ef4444' }}>×0.80</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>7日未対応応募</span><span style={{ fontWeight: 600, color: '#ef4444' }}>×0.90</span></div>

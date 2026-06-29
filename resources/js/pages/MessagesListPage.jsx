@@ -4,6 +4,7 @@ import api from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { STATUS_LABELS } from '../constants/applicationStatus';
+import { MessageSquare, Paperclip, ArrowLeft } from 'lucide-react';
 
 const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
@@ -152,8 +153,9 @@ function ChatPanel({ applicationId, onBack }) {
                 {onBack && (
                     <button onClick={onBack} style={{
                         background: 'none', border: 'none', cursor: 'pointer',
-                        fontSize: 'var(--font-size-lg)', padding: '4px 8px', color: 'var(--color-text-secondary)',
-                    }}>⬅</button>
+                        display: 'inline-flex', alignItems: 'center',
+                        padding: '4px 8px', color: 'var(--color-text-secondary)',
+                    }}><ArrowLeft size={18} strokeWidth={2} /></button>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -181,7 +183,7 @@ function ChatPanel({ applicationId, onBack }) {
             }}>
                 {messages.length === 0 && (
                     <div style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                        <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>💬</div>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-sm)', opacity: 0.4 }}><MessageSquare size={40} strokeWidth={1.5} /></div>
                         <p>まだメッセージはありません</p>
                         {!isScoutPending && <p style={{ fontSize: 'var(--font-size-xs)' }}>最初のメッセージを送ってみましょう</p>}
                     </div>
@@ -211,7 +213,7 @@ function ChatPanel({ applicationId, onBack }) {
                                         background: isMe ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
                                         borderRadius: 8, cursor: 'pointer', fontSize: 'var(--font-size-xs)',
                                     }}>
-                                        <span>📎</span>
+                                        <Paperclip size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
                                         <span style={{ textDecoration: 'underline', wordBreak: 'break-all' }}>{msg.attachment_name}</span>
                                     </div>
                                 )}
@@ -247,7 +249,7 @@ function ChatPanel({ applicationId, onBack }) {
                             background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)',
                             fontSize: 'var(--font-size-xs)',
                         }}>
-                            <span>📎</span>
+                            <Paperclip size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
                             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{attachment.name}</span>
                             <span style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}>{formatFileSize(attachment.size)}</span>
                             <button onClick={() => setAttachment(null)} style={{
@@ -262,8 +264,9 @@ function ChatPanel({ applicationId, onBack }) {
                         <button type="button" onClick={() => fileInputRef.current?.click()} style={{
                             background: 'none', border: '1px solid var(--color-border)',
                             borderRadius: 'var(--radius-sm)', padding: '6px 8px', cursor: 'pointer',
-                            fontSize: '16px', lineHeight: 1,
-                        }} title="ファイルを添付">📎</button>
+                            display: 'inline-flex', alignItems: 'center', lineHeight: 1,
+                            color: 'var(--color-text-secondary)',
+                        }} title="ファイルを添付"><Paperclip size={16} strokeWidth={2} /></button>
                         <textarea className="form-textarea" value={body}
                             onChange={e => setBody(e.target.value)} onKeyDown={handleKeyDown}
                             placeholder="メッセージを入力（Enterで送信）" rows={2}
@@ -378,7 +381,7 @@ export default function MessagesListPage() {
                                 <div style={{ padding: 'var(--space-lg)' }}><div className="skeleton" style={{ height: 200 }} /></div>
                             ) : filtered.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: 'var(--space-2xl)', color: 'var(--color-text-muted)' }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>💬</div>
+                                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-sm)', opacity: 0.4 }}><MessageSquare size={32} strokeWidth={1.5} /></div>
                                     <p style={{ fontSize: 'var(--font-size-sm)' }}>
                                         {search ? '該当なし' : 'メッセージはまだありません'}
                                     </p>
@@ -394,8 +397,8 @@ export default function MessagesListPage() {
                                                 display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                                                 cursor: 'pointer', transition: 'background 0.1s',
                                                 borderBottom: '1px solid var(--color-border)',
-                                                background: isActive ? 'rgba(200,149,46,0.1)' : conv.unread_count > 0 ? 'rgba(200,149,46,0.03)' : 'transparent',
-                                                borderLeft: isActive ? '3px solid var(--color-accent)' : '3px solid transparent',
+                                                background: isActive ? 'rgba(18,28,52,0.05)' : conv.unread_count > 0 ? 'rgba(200,149,46,0.03)' : 'transparent',
+                                                borderLeft: isActive ? '3px solid var(--color-navy)' : '3px solid transparent',
                                             }}
                                             onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
                                             onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = conv.unread_count > 0 ? 'rgba(200,149,46,0.03)' : 'transparent'; }}
@@ -403,7 +406,7 @@ export default function MessagesListPage() {
                                             {/* アバター */}
                                             <div style={{
                                                 width: 40, height: 40, borderRadius: '50%',
-                                                background: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                                                background: isActive ? 'var(--color-navy)' : 'var(--color-text-muted)',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 color: '#fff', fontWeight: 700, fontSize: 'var(--font-size-sm)',
                                                 flexShrink: 0,
@@ -442,7 +445,7 @@ export default function MessagesListPage() {
                                                             fontWeight: conv.unread_count > 0 ? 600 : 400,
                                                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
                                                         }}>
-                                                            {conv.last_message.has_attachment && '📎 '}
+                                                            {conv.last_message.has_attachment && <Paperclip size={12} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 3 }} />}
                                                             {conv.last_message.sender_name}: {conv.last_message.body}
                                                         </span>
                                                         {conv.unread_count > 0 && (
@@ -481,7 +484,7 @@ export default function MessagesListPage() {
                                 alignItems: 'center', justifyContent: 'center',
                                 color: 'var(--color-text-muted)',
                             }}>
-                                <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', opacity: 0.3 }}>💬</div>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-md)', opacity: 0.3 }}><MessageSquare size={64} strokeWidth={1.5} /></div>
                                 <p style={{ fontSize: 'var(--font-size-md)' }}>会話を選択してください</p>
                                 <p style={{ fontSize: 'var(--font-size-xs)' }}>左のリストからメッセージを選んで開始</p>
                             </div>

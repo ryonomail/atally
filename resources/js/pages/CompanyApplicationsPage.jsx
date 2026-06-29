@@ -4,12 +4,13 @@ import api from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { STATUS_LABELS_COMPANY as STATUS_LABELS, STATUS_BADGE_CLASS as STATUS_BADGE } from '../constants/applicationStatus';
 import { useToast } from '../hooks/useToast';
+import { FileText, Users, Award, CheckCircle, X, MessageSquare, Calendar, MapPin, Link2, Inbox } from 'lucide-react';
 const STATUS_FLOW = [
-    { value: 'under_review', label: '書類選考中', icon: '📄' },
-    { value: 'interviewing', label: '面接中', icon: '🤝' },
-    { value: 'offered', label: '内定', icon: '🎉' },
-    { value: 'hired', label: '採用', icon: '✅' },
-    { value: 'rejected', label: '不採用', icon: '✕' },
+    { value: 'under_review', label: '書類選考中', Icon: FileText },
+    { value: 'interviewing', label: '面接中', Icon: Users },
+    { value: 'offered', label: '内定', Icon: Award },
+    { value: 'hired', label: '採用', Icon: CheckCircle },
+    { value: 'rejected', label: '不採用', Icon: X },
 ];
 const REJECTION_REASON_OPTIONS = [
     { value: '', label: '-- 理由を選択 --' },
@@ -256,14 +257,16 @@ export default function CompanyApplicationsPage() {
                             <button key={stage.value} onClick={() => setFilter(isActive ? 'all' : stage.value)} style={{
                                 flex: 1, minWidth: 80, padding: 'var(--space-sm)',
                                 borderRadius: 'var(--radius-md)',
-                                border: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
-                                background: isActive ? 'rgba(200,149,46,0.12)' : 'transparent',
+                                border: isActive ? '1.5px solid var(--color-navy)' : '2px solid transparent',
+                                background: isActive ? 'rgba(18,28,52,0.05)' : 'transparent',
                                 cursor: 'pointer',
                                 textAlign: 'center',
                                 transition: 'all 0.15s',
                             }}>
-                                <div style={{ fontSize: 20, marginBottom: 2 }}>{stage.icon}</div>
-                                <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: isActive ? 'var(--color-accent)' : 'var(--color-text-primary)', marginBottom: 2 }}>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+                                    <stage.Icon size={18} strokeWidth={2} color={isActive ? 'var(--color-navy)' : 'var(--color-text-accent)'} />
+                                </div>
+                                <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: isActive ? 'var(--color-navy)' : 'var(--color-text-primary)', marginBottom: 2 }}>
                                     {stage.label}
                                 </div>
                                 <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
@@ -282,7 +285,9 @@ export default function CompanyApplicationsPage() {
 
             {applications.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📭</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-md)' }}>
+                        <Inbox size={48} strokeWidth={1.5} color="var(--color-text-accent)" />
+                    </div>
                     <h3 style={{ marginBottom: 'var(--space-sm)' }}>まだ応募がありません</h3>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
                         求人が公開されると応募者がここに表示されます
@@ -340,7 +345,7 @@ export default function CompanyApplicationsPage() {
                                     style={{
                                         padding: 'var(--space-md)',
                                         borderRadius: 'var(--radius-lg)',
-                                        border: selectedApp?.id === app.id ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                                        border: selectedApp?.id === app.id ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
                                         background: selectedApp?.id === app.id ? 'rgba(18,28,52,0.06)' : 'var(--color-bg-surface)',
                                         cursor: 'pointer',
                                         display: 'flex', alignItems: 'flex-start', gap: 'var(--space-sm)',
@@ -406,10 +411,10 @@ export default function CompanyApplicationsPage() {
                                     {STATUS_FLOW.map(s => (
                                         <button key={s.value}
                                             className={`btn ${selectedApp.status === s.value ? 'btn-primary' : 'btn-secondary'}`}
-                                            style={{ fontSize: 'var(--font-size-xs)', padding: '4px 10px' }}
+                                            style={{ fontSize: 'var(--font-size-xs)', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                                             disabled={updating || selectedApp.status === s.value}
                                             onClick={() => handleStatusChange(selectedApp.id, s.value)}>
-                                            {s.icon} {s.label}
+                                            <s.Icon size={14} strokeWidth={2} /> {s.label}
                                         </button>
                                     ))}
                                 </div>
@@ -487,8 +492,8 @@ export default function CompanyApplicationsPage() {
                                     borderBottom: '1px solid var(--color-border)',
                                     display: 'flex', gap: 'var(--space-sm)',
                                 }}>
-                                    <Link to={`/messages/${selectedApp.id}`} className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)' }}>
-                                        💬 メッセージを送る
+                                    <Link to={`/messages/${selectedApp.id}`} className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                        <MessageSquare size={16} strokeWidth={2} /> メッセージを送る
                                     </Link>
                                     {selectedApp.status === 'interviewing' && (
                                         <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', alignSelf: 'center' }}>
@@ -599,8 +604,9 @@ export default function CompanyApplicationsPage() {
                                         padding: 'var(--space-lg) var(--space-xl)',
                                         borderBottom: '1px solid var(--color-border)',
                                     }}>
-                                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: 'var(--space-md)' }}>
-                                            📅 面接日程
+                                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                                            面接日程
                                         </h4>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                                             {interviews.map(iv => (
@@ -631,13 +637,13 @@ export default function CompanyApplicationsPage() {
                                                         </span>
                                                     </div>
                                                     {iv.location && (
-                                                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 2 }}>
-                                                            📍 {iv.location}
+                                                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                            <MapPin size={14} strokeWidth={2} style={{ opacity: 0.5, flexShrink: 0 }} /> {iv.location}
                                                         </div>
                                                     )}
                                                     {iv.meeting_url && (
-                                                        <div style={{ fontSize: 'var(--font-size-xs)', marginBottom: 2 }}>
-                                                            🔗 <a href={iv.meeting_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>
+                                                        <div style={{ fontSize: 'var(--font-size-xs)', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                            <Link2 size={14} strokeWidth={2} style={{ color: 'var(--color-text-accent)', flexShrink: 0 }} /> <a href={iv.meeting_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>
                                                                 会議URLを開く
                                                             </a>
                                                         </div>
@@ -651,7 +657,7 @@ export default function CompanyApplicationsPage() {
                                                         {iv.status !== 'cancelled' && (
                                                             <button
                                                                 className="btn btn-secondary"
-                                                                style={{ fontSize: 'var(--font-size-xs)', padding: '2px 8px' }}
+                                                                style={{ fontSize: 'var(--font-size-xs)', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                                                                 onClick={async () => {
                                                                     try {
                                                                         const res = await api.get(`/schedules/${iv.id}/ical`, { responseType: 'blob' });
@@ -664,7 +670,7 @@ export default function CompanyApplicationsPage() {
                                                                     } catch { /* ignore */ }
                                                                 }}
                                                             >
-                                                                📅 カレンダーに追加
+                                                                <Calendar size={14} strokeWidth={2} /> カレンダーに追加
                                                             </button>
                                                         )}
                                                         {iv.status === 'pending' && (
@@ -689,8 +695,9 @@ export default function CompanyApplicationsPage() {
                                         padding: 'var(--space-lg) var(--space-xl)',
                                         borderBottom: '1px solid var(--color-border)',
                                     }}>
-                                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
-                                            ✉️ 志望動機・カバーレター
+                                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                                            志望動機・カバーレター
                                         </h4>
                                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
                                             {selectedApp.cover_letter}
@@ -702,8 +709,9 @@ export default function CompanyApplicationsPage() {
                                 <div style={{ padding: 'var(--space-xl)' }}>
                                     {selectedApp.resume_snapshot ? (
                                         <>
-                                            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-lg)', paddingBottom: 'var(--space-xs)', borderBottom: '2px solid var(--color-accent)' }}>
-                                                📄 提出書類
+                                            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-lg)', paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                                                <span style={{ width: 3, height: 16, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                                                提出書類
                                             </h3>
 
                                             {/* プロフィール情報 */}
@@ -819,7 +827,7 @@ export default function CompanyApplicationsPage() {
                             >
                                 <option value="">ステータス変更</option>
                                 {STATUS_FLOW.map(s => (
-                                    <option key={s.value} value={s.value}>{s.icon} {s.label}</option>
+                                    <option key={s.value} value={s.value}>{s.label}</option>
                                 ))}
                             </select>
                             <button

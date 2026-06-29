@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Clock, FileText, FolderOpen } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../hooks/useAuth';
 
@@ -90,8 +91,10 @@ export default function AgencyBulkUploadPage() {
         return (
             <div className="page container animate-fade-in">
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', maxWidth: 500, margin: '0 auto' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>⏳</div>
-                    <h2 style={{ marginBottom: 'var(--space-md)' }}>企業審査中です</h2>
+                    <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                        <Clock size={40} strokeWidth={2} color="var(--color-text-accent)" />
+                    </div>
+                    <h2 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>企業審査中です</h2>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                         審査が完了すると求人の一括アップロードが可能になります。<br />
                         審査状況はダッシュボードでご確認ください。
@@ -208,7 +211,7 @@ export default function AgencyBulkUploadPage() {
 
     return (
         <div className="page container" style={{ maxWidth: 720 }}>
-            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-lg)' }}>求人一括アップロード</h1>
+            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-lg)', color: 'var(--color-navy)' }}>求人一括アップロード</h1>
 
             <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
                 <h3 style={{ marginBottom: 'var(--space-md)' }}>CSVフォーマット</h3>
@@ -326,7 +329,9 @@ export default function AgencyBulkUploadPage() {
                                 onChange={e => handleFileSelect(e.target.files[0] || null)} />
                             {file ? (
                                 <>
-                                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📄</div>
+                                    <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}>
+                                        <FileText size={32} strokeWidth={2} color="var(--color-text-accent)" />
+                                    </div>
                                     <p style={{ fontWeight: 600 }}>{file.name}</p>
                                     <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                                         {(file.size / 1024).toFixed(1)} KB
@@ -334,7 +339,9 @@ export default function AgencyBulkUploadPage() {
                                 </>
                             ) : (
                                 <>
-                                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📁</div>
+                                    <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}>
+                                        <FolderOpen size={32} strokeWidth={2} color="var(--color-text-secondary)" style={{ opacity: 0.6 }} />
+                                    </div>
                                     <p style={{ color: 'var(--color-text-secondary)' }}>クリックしてCSVファイルを選択</p>
                                     <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>CSV / TXT（最大20MB・5,000件まで）</p>
                                 </>
@@ -498,8 +505,8 @@ export default function AgencyBulkUploadPage() {
                             padding: 'var(--space-sm) var(--space-md)',
                             marginBottom: 'var(--space-md)',
                             borderRadius: 'var(--radius-md)',
-                            background: 'rgba(59, 130, 246, 0.08)',
-                            color: '#2563eb',
+                            background: 'rgba(18, 28, 52, 0.05)',
+                            color: 'var(--color-navy)',
                             fontSize: 'var(--font-size-sm)',
                             display: 'flex',
                             alignItems: 'center',
@@ -509,8 +516,8 @@ export default function AgencyBulkUploadPage() {
                                 display: 'inline-block',
                                 width: 16,
                                 height: 16,
-                                border: '2px solid #93c5fd',
-                                borderTopColor: '#2563eb',
+                                border: '2px solid rgba(18, 28, 52, 0.2)',
+                                borderTopColor: 'var(--color-navy)',
                                 borderRadius: '50%',
                                 animation: 'spin 0.8s linear infinite',
                             }} />

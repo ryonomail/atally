@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -91,7 +92,7 @@ export default function SettingsPage() {
         width: 48,
         height: 26,
         borderRadius: 13,
-        background: enabled ? 'var(--color-primary, #2563eb)' : 'var(--color-border, #d1d5db)',
+        background: enabled ? 'var(--color-navy)' : 'var(--color-border, #d1d5db)',
         cursor: 'pointer',
         transition: 'background 0.2s',
         flexShrink: 0,
@@ -127,12 +128,12 @@ export default function SettingsPage() {
 
     return (
         <div className="page container animate-fade-in">
-            <h1 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 'var(--space-xl)' }}>設定</h1>
+            <h1 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 'var(--space-xl)', color: 'var(--color-navy)' }}>設定</h1>
 
             <div style={{ maxWidth: 600 }}>
                 {/* パスワード変更 */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                    <h3 style={{ marginBottom: 'var(--space-md)' }}>パスワード変更</h3>
+                    <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>パスワード変更</h3>
 
                     <div className="form-group">
                         <label className="form-label">現在のパスワード</label>
@@ -146,8 +147,8 @@ export default function SettingsPage() {
                                 style={{ paddingRight: 42, ...(passwordErrors.current_password ? { borderColor: '#ef4444' } : {}) }}
                             />
                             <button type="button" onClick={() => setShowCurrentPw(v => !v)}
-                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}>
-                                {showCurrentPw ? '🙈' : '👁'}
+                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', lineHeight: 1, padding: 0 }}>
+                                {showCurrentPw ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
                             </button>
                         </div>
                         {passwordErrors.current_password && (
@@ -168,8 +169,8 @@ export default function SettingsPage() {
                                 style={{ paddingRight: 42, ...((passwordErrors.new_password || fieldErrors.new_password) ? { borderColor: '#ef4444' } : {}) }}
                             />
                             <button type="button" onClick={() => setShowNewPw(v => !v)}
-                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}>
-                                {showNewPw ? '🙈' : '👁'}
+                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', lineHeight: 1, padding: 0 }}>
+                                {showNewPw ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
                             </button>
                         </div>
                         {fieldErrors.new_password && (
@@ -193,8 +194,8 @@ export default function SettingsPage() {
                                 style={{ paddingRight: 42, ...(fieldErrors.new_password_confirmation ? { borderColor: '#ef4444' } : {}) }}
                             />
                             <button type="button" onClick={() => setShowNewPwConfirm(v => !v)}
-                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}>
-                                {showNewPwConfirm ? '🙈' : '👁'}
+                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', lineHeight: 1, padding: 0 }}>
+                                {showNewPwConfirm ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
                             </button>
                         </div>
                         {fieldErrors.new_password_confirmation && (
@@ -213,7 +214,7 @@ export default function SettingsPage() {
 
                 {/* 通知設定 */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                    <h3 style={{ marginBottom: 'var(--space-md)' }}>通知設定</h3>
+                    <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>通知設定</h3>
 
                     {notifLoading ? (
                         <div className="skeleton" style={{ height: 160 }} />
@@ -263,7 +264,7 @@ export default function SettingsPage() {
                 {/* 個人データ（求職者のみ） */}
                 {user?.role === 'jobseeker' && (
                     <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                        <h3 style={{ marginBottom: 'var(--space-md)' }}>個人データ</h3>
+                        <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>個人データ</h3>
                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)' }}>
                             あなたのアカウントに保存されている個人情報をJSON形式でダウンロードできます。
                         </p>

@@ -40,14 +40,14 @@ export default function CompanyProfilePage() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-lg)' }}>
                     <div style={{
                         width: 72, height: 72, borderRadius: 12,
-                        background: 'linear-gradient(135deg, var(--color-accent), #e8b94a)',
+                        background: 'var(--color-navy)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 28, fontWeight: 700, color: '#fff', flexShrink: 0,
                     }}>
                         {company.company_name?.charAt(0)}
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 4 }}>
+                        <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 4, color: 'var(--color-navy)' }}>
                             {company.company_name}
                         </h1>
                         {company.industry && (
@@ -68,7 +68,8 @@ export default function CompanyProfilePage() {
                     {/* 企業文化 */}
                     {company.company_culture && (
                         <div className="card" style={{ padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
-                            <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', borderBottom: '2px solid var(--color-accent)', paddingBottom: 'var(--space-xs)' }}>
+                            <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
                                 企業文化・社風
                             </h2>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
@@ -80,7 +81,8 @@ export default function CompanyProfilePage() {
                     {/* 職場環境 */}
                     {company.work_environment && (
                         <div className="card" style={{ padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
-                            <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', borderBottom: '2px solid var(--color-accent)', paddingBottom: 'var(--space-xs)' }}>
+                            <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
                                 職場環境
                             </h2>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
@@ -92,7 +94,8 @@ export default function CompanyProfilePage() {
                     {/* 福利厚生 */}
                     {company.benefits_default && (
                         <div className="card" style={{ padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
-                            <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', borderBottom: '2px solid var(--color-accent)', paddingBottom: 'var(--space-xs)' }}>
+                            <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
                                 福利厚生
                             </h2>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
@@ -103,7 +106,8 @@ export default function CompanyProfilePage() {
 
                     {/* 求人一覧 */}
                     <div className="card" style={{ padding: 'var(--space-lg)' }}>
-                        <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', borderBottom: '2px solid var(--color-accent)', paddingBottom: 'var(--space-xs)' }}>
+                        <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)', paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
                             募集中の求人 ({jobs.length}件)
                         </h2>
                         {jobs.length === 0 ? (

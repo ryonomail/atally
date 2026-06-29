@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Bookmark } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
@@ -45,8 +46,8 @@ export default function SavedJobsPage() {
                         <button key={opt.key} onClick={() => setSortOrder(opt.key)} style={{
                             padding: '4px 12px',
                             borderRadius: 'var(--radius-full)',
-                            border: '1px solid var(--color-border)',
-                            background: sortOrder === opt.key ? 'var(--color-accent)' : 'transparent',
+                            border: sortOrder === opt.key ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                            background: sortOrder === opt.key ? 'var(--color-navy)' : 'transparent',
                             color: sortOrder === opt.key ? '#fff' : 'var(--color-text-secondary)',
                             fontSize: 'var(--font-size-xs)',
                             cursor: 'pointer',
@@ -61,7 +62,9 @@ export default function SavedJobsPage() {
 
             {jobs.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>★</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-md)' }}>
+                        <Bookmark size={40} strokeWidth={1.5} color="var(--color-text-accent)" />
+                    </div>
                     <h3 style={{ marginBottom: 'var(--space-sm)' }}>保存した求人はありません</h3>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
                         気になる求人を保存しておくと、後で簡単に見返せます

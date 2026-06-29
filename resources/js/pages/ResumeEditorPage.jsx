@@ -5,9 +5,10 @@ import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
 import { useToast } from '../hooks/useToast';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { ArrowLeft, Eye, Download, Save, Bell, BellOff, FileText, ClipboardList, BarChart3, User, Paperclip } from 'lucide-react';
 
 const TYPE_LABELS = { resume: 'アルバイト用履歴書', career_resume: '転職用履歴書', cv: '職務経歴書' };
-const TYPE_ICONS = { resume: '📝', career_resume: '📋', cv: '📊' };
+const TYPE_ICONS = { resume: FileText, career_resume: ClipboardList, cv: BarChart3 };
 
 export default function ResumeEditorPage() {
     const { id } = useParams();
@@ -120,19 +121,22 @@ export default function ResumeEditorPage() {
         <div className="page container animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                    <button className="btn btn-secondary" onClick={() => confirmNavigation('/resumes')} style={{ fontSize: 'var(--font-size-sm)' }}>⬅ 戻る</button>
-                    <h1 style={{ fontSize: 'var(--font-size-2xl)' }}>{TYPE_ICONS[resume?.type] || '📝'} {form.title || '履歴書編集'}</h1>
+                    <button className="btn btn-secondary" onClick={() => confirmNavigation('/resumes')} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><ArrowLeft size={16} strokeWidth={2} /> 戻る</button>
+                    <h1 style={{ fontSize: 'var(--font-size-2xl)', color: 'var(--color-navy)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        {(() => { const TypeIcon = TYPE_ICONS[resume?.type] || FileText; return <TypeIcon size={22} strokeWidth={2} color="var(--color-text-accent)" />; })()}
+                        {form.title || '履歴書編集'}
+                    </h1>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
                     {isDirty && <span className="badge badge-warning">未保存</span>}
-                    <button className="btn btn-secondary" onClick={handlePreview}>👁️ プレビュー</button>
+                    <button className="btn btn-secondary" onClick={handlePreview} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Eye size={16} strokeWidth={2} /> プレビュー</button>
                     {showPreview && preview && (
-                        <button className="btn btn-secondary" onClick={handleDownload} disabled={downloading}>
-                            {downloading ? '生成中...' : '📥 PDF'}
+                        <button className="btn btn-secondary" onClick={handleDownload} disabled={downloading} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {downloading ? '生成中...' : <><Download size={16} strokeWidth={2} /> PDF</>}
                         </button>
                     )}
-                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                        {saving ? '保存中...' : '💾 保存'}
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {saving ? '保存中...' : <><Save size={16} strokeWidth={2} /> 保存</>}
                     </button>
                 </div>
             </div>
@@ -144,12 +148,14 @@ export default function ResumeEditorPage() {
                     <div className="card" style={{
                         marginBottom: 'var(--space-lg)',
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        background: resume?.scout_enabled ? 'var(--color-bg-surface)' : undefined,
-                        border: resume?.scout_enabled ? '1px solid var(--color-accent)' : undefined,
+                        background: resume?.scout_enabled ? 'rgba(18,28,52,0.05)' : undefined,
+                        border: resume?.scout_enabled ? '1.5px solid var(--color-navy)' : undefined,
                     }}>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                <span style={{ fontSize: '1.2rem' }}>{resume?.scout_enabled ? '🔔' : '🔕'}</span>
+                                {resume?.scout_enabled
+                                    ? <Bell size={18} strokeWidth={2} color="var(--color-text-accent)" />
+                                    : <BellOff size={18} strokeWidth={2} color="var(--color-text-secondary)" />}
                                 <strong style={{ fontSize: 'var(--font-size-sm)' }}>スカウト受付</strong>
                                 {resume?.scout_enabled && <span className="badge badge-success" style={{ fontSize: 'var(--font-size-xs)' }}>ON</span>}
                             </div>
@@ -174,7 +180,7 @@ export default function ResumeEditorPage() {
 
                     {resume?.scout_enabled && (
                         <div style={{
-                            background: 'linear-gradient(135deg, rgba(200,149,46,0.06) 0%, rgba(16,185,129,0.06) 100%)',
+                            background: 'var(--color-accent-light)',
                             border: '1px solid rgba(200,149,46,0.2)',
                             borderRadius: 'var(--radius-md)',
                             padding: 'var(--space-md) var(--space-lg)',
@@ -231,7 +237,7 @@ export default function ResumeEditorPage() {
                     {/* アルバイト用履歴書の追加フィールド */}
                     {resume?.type === 'resume' && (
                         <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                            <h3 style={{ marginBottom: 'var(--space-md)' }}>📝 アルバイト用 追加情報</h3>
+                            <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />アルバイト用 追加情報</h3>
                             <div className="grid grid-2">
                                 <div className="form-group">
                                     <label className="form-label">通勤時間（時間）</label>
@@ -278,7 +284,7 @@ export default function ResumeEditorPage() {
                     {/* 転職用履歴書の追加フィールド */}
                     {resume?.type === 'career_resume' && (
                         <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                            <h3 style={{ marginBottom: 'var(--space-md)' }}>📋 転職用 追加情報</h3>
+                            <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />転職用 追加情報</h3>
                             <div className="form-group">
                                 <label className="form-label">職務要約</label>
                                 <textarea className="form-textarea" rows={4} value={content.career_summary || ''}
@@ -329,7 +335,7 @@ export default function ResumeEditorPage() {
                     {/* 職務経歴書の追加フィールド */}
                     {resume?.type === 'cv' && (
                         <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                            <h3 style={{ marginBottom: 'var(--space-md)' }}>📊 職務経歴書 詳細</h3>
+                            <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />職務経歴書 詳細</h3>
                             <div className="form-group">
                                 <label className="form-label">職務要約</label>
                                 <textarea className="form-textarea" rows={4} value={content.career_summary || ''}
@@ -361,8 +367,8 @@ export default function ResumeEditorPage() {
                     {/* 親プロフィール参照 */}
                     {resume?.profile && (
                         <div className="card" style={{ opacity: 0.9, marginBottom: 'var(--space-lg)' }}>
-                            <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-text-secondary)' }}>
-                                👤 親プロフィール（自動参照）
+                            <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <User size={18} strokeWidth={2} color="var(--color-text-accent)" /> 親プロフィール（自動参照）
                             </h3>
                             <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                                 <p><strong>氏名:</strong> {resume.profile.full_name || '未入力'}</p>
@@ -378,7 +384,7 @@ export default function ResumeEditorPage() {
 
                     {/* この履歴書専用の追加データ */}
                     <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                        <h3 style={{ marginBottom: 'var(--space-md)' }}>📎 この履歴書専用の追加データ</h3>
+                        <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}><Paperclip size={18} strokeWidth={2} color="var(--color-text-accent)" />この履歴書専用の追加データ</h3>
                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-md)' }}>
                             プロフィールの学歴・職歴・資格に加えて、この履歴書だけに追加したい項目を入力できます。
                         </p>
@@ -534,7 +540,7 @@ export default function ResumeEditorPage() {
                 {showPreview && preview && (
                     <div style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
-                            <h3 style={{ color: 'var(--color-text-secondary)' }}>📄 JIS規格 履歴書プレビュー</h3>
+                            <h3 style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}><FileText size={18} strokeWidth={2} color="var(--color-text-accent)" /> JIS規格 履歴書プレビュー</h3>
                             <button className="btn btn-secondary" onClick={() => setShowPreview(false)} style={{ fontSize: 'var(--font-size-xs)' }}>✕ 閉じる</button>
                         </div>
                         <JisResumePreview data={preview} previewRef={previewRef} />

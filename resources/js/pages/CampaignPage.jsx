@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BarChart3, CreditCard } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
 
@@ -232,7 +233,7 @@ export default function CampaignPage() {
                 {/* ヘッダー */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
                     <div>
-                        <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0, color: 'var(--color-text)' }}>
+                        <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0, color: 'var(--color-navy)' }}>
                             キャンペーン管理
                         </h1>
                         <p style={{ color: 'var(--color-text-secondary)', margin: 'var(--space-xs) 0 0', fontSize: 'var(--font-size-sm)' }}>
@@ -283,9 +284,9 @@ export default function CampaignPage() {
                                                 style={{
                                                     flex: 1, padding: 'var(--space-sm) var(--space-md)',
                                                     borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                                    border: form.billing_period === opt.value ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                                                    background: form.billing_period === opt.value ? 'var(--color-accent)10' : 'var(--color-bg)',
-                                                    color: form.billing_period === opt.value ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                                                    border: form.billing_period === opt.value ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                                    background: form.billing_period === opt.value ? 'rgba(18,28,52,0.05)' : 'var(--color-bg)',
+                                                    color: form.billing_period === opt.value ? 'var(--color-navy)' : 'var(--color-text-secondary)',
                                                     fontWeight: form.billing_period === opt.value ? 700 : 400,
                                                     textAlign: 'left',
                                                 }}>
@@ -404,8 +405,10 @@ export default function CampaignPage() {
                                 background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-lg)',
                                 border: '1px solid var(--color-border)',
                             }}>
-                                <div style={{ fontSize: 48, marginBottom: 'var(--space-md)' }}>📊</div>
-                                <h3 style={{ color: 'var(--color-text)', margin: '0 0 var(--space-sm)' }}>キャンペーンを作成しましょう</h3>
+                                <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                                    <BarChart3 size={40} strokeWidth={1.5} color="var(--color-text-accent)" style={{ opacity: 0.7 }} />
+                                </div>
+                                <h3 style={{ color: 'var(--color-navy)', margin: '0 0 var(--space-sm)' }}>キャンペーンを作成しましょう</h3>
                                 <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', margin: 0 }}>
                                     複数の求人をまとめて日額予算を管理できます。<br />
                                     パフォーマンスに応じた自動配分も可能です。
@@ -416,7 +419,7 @@ export default function CampaignPage() {
                                 {campaigns.map(c => (
                                     <div key={c.id} onClick={() => setSelectedCampaign(c.id)} style={{
                                         background: 'var(--color-bg-surface)',
-                                        border: selectedCampaign === c.id ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                                        border: selectedCampaign === c.id ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
                                         borderRadius: 'var(--radius-lg)', padding: 'var(--space-md)',
                                         cursor: 'pointer', transition: 'all 0.15s',
                                     }}>
@@ -621,8 +624,9 @@ export default function CampaignPage() {
                     padding: 'var(--space-xl)', maxWidth: 440, width: '90%',
                     boxShadow: 'var(--shadow-xl)',
                 }}>
-                    <h3 style={{ margin: '0 0 var(--space-md)', color: 'var(--color-text)', fontSize: 'var(--font-size-lg)' }}>
-                        💳 {confirmPayment.title}
+                    <h3 style={{ margin: '0 0 var(--space-md)', color: 'var(--color-navy)', fontSize: 'var(--font-size-lg)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CreditCard size={18} strokeWidth={2} color="var(--color-text-accent)" />
+                        {confirmPayment.title}
                     </h3>
                     <div style={{
                         background: 'var(--color-bg)', borderRadius: 'var(--radius-md)',

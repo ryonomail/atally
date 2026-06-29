@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { User, Building2, Eye, EyeOff, Scale, ShieldCheck, Lock } from 'lucide-react';
 
 export default function RegisterPage() {
     const { register } = useAuth();
@@ -87,23 +88,23 @@ export default function RegisterPage() {
                         <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
                             <label className="card" style={{
                                 flex: 1, padding: 'var(--space-md)', cursor: 'pointer', textAlign: 'center',
-                                borderColor: form.role === 'jobseeker' ? 'var(--color-accent)' : undefined,
-                                borderWidth: form.role === 'jobseeker' ? 2 : 1,
+                                border: form.role === 'jobseeker' ? '1.5px solid var(--color-navy)' : undefined,
+                                background: form.role === 'jobseeker' ? 'rgba(18,28,52,0.05)' : undefined,
                             }}>
                                 <input type="radio" name="role" value="jobseeker" checked={form.role === 'jobseeker'}
                                     onChange={e => setForm({...form, role: e.target.value})} style={{ display: 'none' }} />
-                                <div style={{ fontSize: '1.5rem' }}>👤</div>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><User size={24} strokeWidth={2} color="var(--color-text-accent)" /></div>
                                 <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>求職者</div>
                                 <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 2 }}>完全無料</div>
                             </label>
                             <label className="card" style={{
                                 flex: 1, padding: 'var(--space-md)', cursor: 'pointer', textAlign: 'center',
-                                borderColor: form.role === 'company' ? 'var(--color-accent)' : undefined,
-                                borderWidth: form.role === 'company' ? 2 : 1,
+                                border: form.role === 'company' ? '1.5px solid var(--color-navy)' : undefined,
+                                background: form.role === 'company' ? 'rgba(18,28,52,0.05)' : undefined,
                             }}>
                                 <input type="radio" name="role" value="company" checked={form.role === 'company'}
                                     onChange={e => setForm({...form, role: e.target.value})} style={{ display: 'none' }} />
-                                <div style={{ fontSize: '1.5rem' }}>🏢</div>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><Building2 size={24} strokeWidth={2} color="var(--color-text-accent)" /></div>
                                 <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>企業</div>
                                 <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 2 }}>無料掲載あり</div>
                             </label>
@@ -140,7 +141,8 @@ export default function RegisterPage() {
                                 <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
                                     <label className="card" style={{
                                         flex: 1, padding: 'var(--space-sm) var(--space-md)', cursor: 'pointer', textAlign: 'center',
-                                        borderColor: form.company_type === 'direct_employer' ? 'var(--color-accent)' : undefined,
+                                        border: form.company_type === 'direct_employer' ? '1.5px solid var(--color-navy)' : undefined,
+                                        background: form.company_type === 'direct_employer' ? 'rgba(18,28,52,0.05)' : undefined,
                                     }}>
                                         <input type="radio" name="company_type" value="direct_employer"
                                             checked={form.company_type === 'direct_employer'}
@@ -150,7 +152,8 @@ export default function RegisterPage() {
                                     </label>
                                     <label className="card" style={{
                                         flex: 1, padding: 'var(--space-sm) var(--space-md)', cursor: 'pointer', textAlign: 'center',
-                                        borderColor: form.company_type === 'recruitment_agency' ? 'var(--color-accent)' : undefined,
+                                        border: form.company_type === 'recruitment_agency' ? '1.5px solid var(--color-navy)' : undefined,
+                                        background: form.company_type === 'recruitment_agency' ? 'rgba(18,28,52,0.05)' : undefined,
                                     }}>
                                         <input type="radio" name="company_type" value="recruitment_agency"
                                             checked={form.company_type === 'recruitment_agency'}
@@ -188,7 +191,7 @@ export default function RegisterPage() {
                         <button type="button" onClick={() => setShowPassword(v => !v)}
                             style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}
                             aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}>
-                            {showPassword ? '🙈' : '👁'}
+                            {showPassword ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
                         </button>
                         </div>
                         {form.password && (() => {
@@ -225,7 +228,7 @@ export default function RegisterPage() {
                         <button type="button" onClick={() => setShowPasswordConfirm(v => !v)}
                             style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}
                             aria-label={showPasswordConfirm ? 'パスワードを隠す' : 'パスワードを表示'}>
-                            {showPasswordConfirm ? '🙈' : '👁'}
+                            {showPasswordConfirm ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
                         </button>
                         </div>
                         {fieldErrors.password_confirmation && <div style={fieldErrorStyle}>{fieldErrors.password_confirmation}</div>}
@@ -243,11 +246,11 @@ export default function RegisterPage() {
                     {/* 安心シグナル */}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginTop: 'var(--space-md)', flexWrap: 'wrap' }}>
                         {[
-                            { icon: '⚖️', label: '職業安定法準拠' },
-                            { icon: '🛡️', label: '個人情報保護方針準拠' },
-                            { icon: '🔒', label: 'SSL/TLS暗号化' },
+                            { icon: <Scale size={14} strokeWidth={2} />, label: '職業安定法準拠' },
+                            { icon: <ShieldCheck size={14} strokeWidth={2} />, label: '個人情報保護方針準拠' },
+                            { icon: <Lock size={14} strokeWidth={2} />, label: 'SSL/TLS暗号化' },
                         ].map((b, i) => (
-                            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--color-text-muted)' }}>
+                            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--color-text-muted)' }}>
                                 {b.icon} {b.label}
                             </span>
                         ))}

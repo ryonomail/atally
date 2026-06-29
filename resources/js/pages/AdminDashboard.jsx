@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
 const TABS = [
-    { key: 'overview', label: '概要', icon: '📊' },
-    { key: 'revenue', label: '売上', icon: '💰' },
-    { key: 'jobseekers', label: '求職者', icon: '👤' },
-    { key: 'all-companies', label: '企業一覧', icon: '🏢' },
-    { key: 'all-jobs', label: '求人一覧', icon: '📋' },
-    { key: 'companies', label: '企業審査', icon: '✅' },
-    { key: 'jobs', label: '求人審査', icon: '📝' },
-    { key: 'licenses', label: 'ライセンス', icon: '📜' },
-    { key: 'reports', label: '通報', icon: '🚨' },
-    { key: 'audit', label: '監査ログ', icon: '📜' },
-    { key: 'settings', label: '設定', icon: '⚙' },
+    { key: 'overview', label: '概要', Icon: BarChart3 },
+    { key: 'revenue', label: '売上', Icon: Wallet },
+    { key: 'jobseekers', label: '求職者', Icon: User },
+    { key: 'all-companies', label: '企業一覧', Icon: Building2 },
+    { key: 'all-jobs', label: '求人一覧', Icon: ClipboardList },
+    { key: 'companies', label: '企業審査', Icon: CheckCircle },
+    { key: 'jobs', label: '求人審査', Icon: FileText },
+    { key: 'licenses', label: 'ライセンス', Icon: ScrollText },
+    { key: 'reports', label: '通報', Icon: AlertTriangle },
+    { key: 'audit', label: '監査ログ', Icon: History },
+    { key: 'settings', label: '設定', Icon: Settings },
 ];
 
 /* ============================================
@@ -32,7 +33,7 @@ function OverviewTab({ stats, statsError, onTabChange, revenueSummary }) {
 
     const cards = [
         { label: '求職者数', value: stats.total_jobseekers, color: '#121c34', tab: 'jobseekers' },
-        { label: '企業数', value: stats.total_companies, color: '#8b5cf6', tab: 'all-companies' },
+        { label: '企業数', value: stats.total_companies, color: '#121c34', tab: 'all-companies' },
         { label: 'アクティブ求人', value: stats.active_jobs, color: '#22c55e', tab: 'all-jobs' },
         { label: '企業審査待ち', value: stats.pending_verifications, color: stats.pending_verifications > 0 ? '#f59e0b' : '#94a3b8', alert: stats.pending_verifications > 0, tab: 'companies' },
         { label: '求人審査待ち', value: stats.pending_job_reviews, color: stats.pending_job_reviews > 0 ? '#f59e0b' : '#94a3b8', alert: stats.pending_job_reviews > 0, tab: 'jobs' },
@@ -50,7 +51,10 @@ function OverviewTab({ stats, statsError, onTabChange, revenueSummary }) {
                     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
-                        <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>💰 今月の売上</h3>
+                        <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                            今月の売上
+                        </h3>
                         <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>詳細を見る →</span>
                     </div>
                     <div style={{ display: 'flex', gap: 'var(--space-xl)', alignItems: 'baseline' }}>
@@ -274,7 +278,7 @@ function ResumeViewModal({ user, onClose }) {
 
                 {loading ? <div className="skeleton" style={{ height: 300 }} /> : resumes.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-                        <p style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>📄</p>
+                        <FileIcon size={40} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)', opacity: 0.5, marginBottom: 'var(--space-sm)' }} />
                         <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4 }}>履歴書が登録されていません</p>
                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>このユーザーはまだ履歴書を作成していません</p>
                     </div>
@@ -286,8 +290,8 @@ function ResumeViewModal({ user, onClose }) {
                                 {resumes.map((res, i) => (
                                     <button key={i} onClick={() => setActiveIdx(i)} style={{
                                         padding: '6px 14px', background: 'none', border: 'none',
-                                        borderBottom: activeIdx === i ? '2px solid var(--color-accent)' : '2px solid transparent',
-                                        color: activeIdx === i ? 'var(--color-text-accent)' : 'var(--color-text-muted)',
+                                        borderBottom: activeIdx === i ? '2px solid var(--color-navy)' : '2px solid transparent',
+                                        color: activeIdx === i ? 'var(--color-navy)' : 'var(--color-text-muted)',
                                         fontWeight: activeIdx === i ? 700 : 400,
                                         cursor: 'pointer', fontSize: 'var(--font-size-sm)', whiteSpace: 'nowrap',
                                         marginBottom: -1,
@@ -917,8 +921,8 @@ function HelloWorkSyncCard() {
         <div className="card" style={{ padding: 'var(--space-lg)', borderLeft: running ? '3px solid var(--color-accent)' : undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        🔄 ハローワーク同期状況
+                    <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                        <RefreshCw size={16} strokeWidth={2} style={{ color: 'var(--color-text-accent)' }} /> ハローワーク同期状況
                         {running && (
                             <span style={{
                                 fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#fff',
@@ -950,14 +954,14 @@ function HelloWorkSyncCard() {
                                         新規 {last.inserted} ／ 更新 {last.updated} ／ 締切 {last.deleted} ／ エラー {last.errors}
                                     </p>
                                     {hasError && (
-                                        <p style={{ margin: '4px 0 0', color: 'var(--color-danger)', fontWeight: 600 }}>
-                                            ⚠️ {last.note || '同期でエラーが発生しています'}
+                                        <p style={{ margin: '4px 0 0', color: 'var(--color-danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <AlertTriangle size={16} strokeWidth={2} /> {last.note || '同期でエラーが発生しています'}
                                         </p>
                                     )}
                                 </>
                             ) : (
-                                <p style={{ margin: '4px 0 0', color: 'var(--color-danger)', fontWeight: 600 }}>
-                                    ⚠️ まだ同期記録がありません（同期がまだ走っていない可能性があります）
+                                <p style={{ margin: '4px 0 0', color: 'var(--color-danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <AlertTriangle size={16} strokeWidth={2} /> まだ同期記録がありません（同期がまだ走っていない可能性があります）
                                 </p>
                             )}
                         </div>
@@ -1107,7 +1111,7 @@ function JobsTab({ initialData }) {
             {jobs.map(j => (
                 <div key={j.id} className="card" style={{
                     borderLeft: selectedIds.includes(j.id)
-                        ? '4px solid var(--color-primary)'
+                        ? '4px solid var(--color-navy)'
                         : j.ng_word_flagged ? '4px solid #ef4444' : undefined,
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1353,7 +1357,7 @@ function LicensesTab({ initialData }) {
                                             color: 'var(--color-text-primary)',
                                         }}
                                     >
-                                        📄 提出書類を確認
+                                        <FileIcon size={16} strokeWidth={2} style={{ color: 'var(--color-text-accent)' }} /> 提出書類を確認
                                     </button>
                                 )}
                                 {!a.license_document_path && (
@@ -1765,7 +1769,9 @@ function UserDetailModal({ userId, onClose }) {
                     <>
                         {/* 基本情報 */}
                         <div style={{ marginBottom: 'var(--space-lg)' }}>
-                            <h3 style={{ fontSize: 'var(--font-size-base)', marginBottom: 'var(--space-sm)', borderBottom: '2px solid var(--color-accent)', paddingBottom: 4 }}>基本情報</h3>
+                            <h3 style={{ fontSize: 'var(--font-size-base)', marginBottom: 'var(--space-sm)', paddingBottom: 4, borderBottom: '1px solid var(--color-border)', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />基本情報
+                            </h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '4px 12px', fontSize: 'var(--font-size-sm)' }}>
                                 <span style={{ color: 'var(--color-text-muted)' }}>名前</span><span>{data.name}</span>
                                 <span style={{ color: 'var(--color-text-muted)' }}>メール</span><span>{data.email}</span>
@@ -1922,12 +1928,13 @@ export default function AdminDashboard() {
                             style={{
                                 padding: '8px 18px', border: 'none', cursor: 'pointer',
                                 borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
-                                background: tab === t.key ? 'var(--color-accent)' : 'transparent',
+                                background: tab === t.key ? 'var(--color-navy)' : 'transparent',
                                 color: tab === t.key ? '#fff' : 'var(--color-text-secondary)',
                                 fontWeight: tab === t.key ? 600 : 400, fontSize: 'var(--font-size-sm)',
                                 position: 'relative', whiteSpace: 'nowrap',
+                                display: 'inline-flex', alignItems: 'center', gap: 6,
                             }}>
-                            {t.icon} {t.label}
+                            <t.Icon size={16} strokeWidth={2} /> {t.label}
                             {badge > 0 && (
                                 <span style={{
                                     position: 'absolute', top: -4, right: -4,

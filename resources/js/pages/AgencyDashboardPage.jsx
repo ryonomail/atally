@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Rocket, ClipboardList, CreditCard } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 import PaymentCardSection from '../components/PaymentCardSection';
@@ -22,7 +23,7 @@ function StatusBadge({ status }) {
         pending:  { bg: 'rgba(245,158,11,0.12)', color: '#d97706', text: '保留中' },
         approved: { bg: 'rgba(34,197,94,0.12)',  color: '#16a34a', text: '承認済' },
         rejected: { bg: 'rgba(239,68,68,0.12)',  color: '#dc2626', text: '拒否' },
-        placed:   { bg: 'rgba(200,149,46,0.12)', color: '#2563eb', text: '成約' },
+        placed:   { bg: 'rgba(200,149,46,0.12)', color: '#c8952e', text: '成約' },
     };
     const s = map[status] || { bg: 'var(--color-bg-secondary)', color: 'var(--color-text-muted)', text: status };
     return (
@@ -110,7 +111,9 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
             {/* スタートガイド（次にやること） */}
             <div className="card" style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <p style={{ fontWeight: 700, margin: '0 0 4px' }}>🚀 次にやること</p>
+                    <p style={{ fontWeight: 700, margin: '0 0 4px', color: 'var(--color-navy)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <Rocket size={16} strokeWidth={2} color="var(--color-accent)" />次にやること
+                    </p>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>{nextStep.text}</p>
                 </div>
                 <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={nextStep.action}>{nextStep.cta}</button>
@@ -152,7 +155,9 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
             {/* 自社が掲載した求人の管理導線 */}
             <div className="card" style={{ marginTop: 'var(--space-lg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <p style={{ fontWeight: 600, marginBottom: 4 }}>📋 自社が掲載した求人の管理</p>
+                    <p style={{ fontWeight: 600, marginBottom: 4, color: 'var(--color-navy)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <ClipboardList size={16} strokeWidth={2} color="var(--color-accent)" />自社が掲載した求人の管理
+                    </p>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
                         投稿した求人の確認・編集・ブースト設定は「求人管理」から行えます。
                     </p>
@@ -162,7 +167,9 @@ function OverviewTab({ stats, licenseVerified, licenseDocSubmitted, verification
 
             {/* クレジットカード（ブースト課金用） */}
             <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
-                <h3 style={{ marginBottom: 'var(--space-sm)' }}>💳 クレジットカード</h3>
+                <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <CreditCard size={18} strokeWidth={2} color="var(--color-accent)" />クレジットカード
+                </h3>
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)' }}>
                     求人を上位表示（ブースト）するにはカード登録が必要です。掲載自体は無料です。
                 </p>
@@ -641,7 +648,7 @@ function JobDatabaseTab() {
                                         <span style={{
                                             display: 'inline-block', marginTop: 4, padding: '2px 8px',
                                             borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-size-xs)',
-                                            fontWeight: 600, background: 'rgba(139,92,246,0.12)', color: '#7c3aed',
+                                            fontWeight: 600, background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)',
                                         }}>紹介可</span>
                                     )}
                                 </div>
@@ -700,7 +707,7 @@ function AnalyticsTab() {
                     { label: '総紹介数', value: performance.total_sent, color: '#121c34' },
                     { label: '承認率', value: `${performance.approval_rate}%`, color: '#22c55e' },
                     { label: '成約率', value: `${performance.placement_rate}%`, color: '#c8952e' },
-                    { label: '平均報酬', value: `¥${performance.avg_fee.toLocaleString()}`, color: '#8b5cf6' },
+                    { label: '平均報酬', value: `¥${performance.avg_fee.toLocaleString()}`, color: '#121c34' },
                 ].map(c => (
                     <div key={c.label} className="card" style={{ textAlign: 'center' }}>
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>{c.label}</p>
@@ -768,7 +775,7 @@ function AnalyticsTab() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                     {[
                         { label: '紹介送信', value: performance.total_sent, color: '#94a3b8' },
-                        { label: '承認済み', value: performance.total_approved, color: '#3b82f6' },
+                        { label: '承認済み', value: performance.total_approved, color: '#1a2744' },
                         { label: '成約', value: performance.total_placed, color: '#22c55e' },
                     ].map(step => {
                         const pct = performance.total_sent > 0 ? (step.value / performance.total_sent * 100) : 0;
@@ -911,7 +918,7 @@ export default function AgencyDashboardPage() {
                     marginBottom: 'var(--space-xl)',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
-                        <span style={{ fontSize: '2rem', lineHeight: 1 }}>📋</span>
+                        <ClipboardList size={32} strokeWidth={2} color="var(--color-accent)" style={{ flexShrink: 0 }} />
                         <div>
                             <h3 style={{ margin: '0 0 var(--space-xs)' }}>職業紹介事業許可証のご提出をお願いします</h3>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>

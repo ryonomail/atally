@@ -1,4 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+    ClipboardList, Wallet, Building2, BarChart3, Sparkles, Lock, Camera,
+    Search, Info, Save, Eye, Target, MapPin, Briefcase, Home, Wallet as WalletIcon,
+    Clock, Timer, Calendar, Users, Handshake, FileText, CheckCircle2, ScrollText,
+    Landmark, AlertTriangle, Hourglass,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
@@ -632,13 +638,13 @@ export default function CompanyJobsPage() {
     };
 
     const TABS = [
-        { key: 'basic', label: '基本情報', icon: '📋', step: 1, required: true, desc: '求人タイトル・仕事内容' },
-        { key: 'salary', label: '給与・待遇', icon: '💰', step: 2, required: true, desc: '給与・福利厚生' },
-        { key: 'work', label: '勤務条件', icon: '🏢', step: 3, required: true, desc: '勤務地・勤務時間' },
-        { key: 'selection', label: '選考', icon: '📊', step: 4, required: false, desc: '選考プロセス' },
-        { key: 'appeal', label: '魅力・その他', icon: '✨', step: 5, required: false, desc: '会社の魅力・PR' },
-        ...(form.listing_type === 'referral' || form.allow_referral ? [{ key: 'agent', label: 'エージェント限定', icon: '🔒', step: 6, required: false, desc: '紹介条件' }] : []),
-        ...(editingJob ? [{ key: 'photos', label: '写真', icon: '📷', step: 7, required: false, desc: '求人画像' }] : []),
+        { key: 'basic', label: '基本情報', Icon: ClipboardList, step: 1, required: true, desc: '求人タイトル・仕事内容' },
+        { key: 'salary', label: '給与・待遇', Icon: Wallet, step: 2, required: true, desc: '給与・福利厚生' },
+        { key: 'work', label: '勤務条件', Icon: Building2, step: 3, required: true, desc: '勤務地・勤務時間' },
+        { key: 'selection', label: '選考', Icon: BarChart3, step: 4, required: false, desc: '選考プロセス' },
+        { key: 'appeal', label: '魅力・その他', Icon: Sparkles, step: 5, required: false, desc: '会社の魅力・PR' },
+        ...(form.listing_type === 'referral' || form.allow_referral ? [{ key: 'agent', label: 'エージェント限定', Icon: Lock, step: 6, required: false, desc: '紹介条件' }] : []),
+        ...(editingJob ? [{ key: 'photos', label: '写真', Icon: Camera, step: 7, required: false, desc: '求人画像' }] : []),
     ];
 
     const currentTabIndex = TABS.findIndex(t => t.key === activeTab);
@@ -655,8 +661,8 @@ export default function CompanyJobsPage() {
         return (
             <div className="page container animate-fade-in">
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', maxWidth: 560, margin: '0 auto' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>⏳</div>
-                    <h2 style={{ marginBottom: 'var(--space-md)' }}>企業審査中です</h2>
+                    <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}><Hourglass size={48} strokeWidth={1.5} color="var(--color-text-accent)" /></div>
+                    <h2 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>企業審査中です</h2>
                     <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
                         審査が完了すると求人の作成・公開が可能になります。<br />
                         通常 1〜3 営業日以内にご連絡いたします。
@@ -766,7 +772,7 @@ export default function CompanyJobsPage() {
                                 placeholder="求人を検索..."
                                 style={{ height: 36, fontSize: 'var(--font-size-sm)', paddingLeft: 32 }}
                             />
-                            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
+                            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none', display: 'inline-flex' }}><Search size={14} strokeWidth={2} /></span>
                         </div>
                         <select
                             className="form-select"
@@ -1018,8 +1024,9 @@ export default function CompanyJobsPage() {
                         </div>
                         {/* 現在のステップ表示 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
-                                {TABS[currentTabIndex]?.icon} ステップ {currentTabIndex + 1}/{TABS.length}: {TABS[currentTabIndex]?.label}
+                            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                {(() => { const I = TABS[currentTabIndex]?.Icon; return I ? <I size={16} strokeWidth={2} color="var(--color-text-accent)" /> : null; })()}
+                                ステップ {currentTabIndex + 1}/{TABS.length}: {TABS[currentTabIndex]?.label}
                                 {TABS[currentTabIndex]?.required && (
                                     <span style={{ fontSize: 'var(--font-size-xs)', color: '#ef4444', marginLeft: 6 }}>必須</span>
                                 )}
@@ -1050,8 +1057,8 @@ export default function CompanyJobsPage() {
                                             <div key={opt.value} onClick={() => set('listing_type', opt.value)}
                                                 style={{
                                                     flex: 1, padding: 'var(--space-md)', borderRadius: 'var(--radius-md)',
-                                                    border: form.listing_type === opt.value ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                                                    background: form.listing_type === opt.value ? 'rgba(200,149,46,0.08)' : 'var(--color-bg-surface)',
+                                                    border: form.listing_type === opt.value ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                                    background: form.listing_type === opt.value ? 'rgba(18,28,52,0.05)' : 'var(--color-bg-surface)',
                                                     cursor: 'pointer', textAlign: 'center',
                                                 }}>
                                                 <div style={{ fontWeight: 600, fontSize: 'var(--font-size-md)' }}>{opt.label}</div>
@@ -1238,7 +1245,7 @@ export default function CompanyJobsPage() {
                             {/* 日額予算（課金設定） */}
                             <div style={{
                                 padding: 'var(--space-md)',
-                                background: 'linear-gradient(135deg, rgba(200,149,46,0.04), rgba(180,130,30,0.04))',
+                                background: 'var(--color-accent-light)',
                                 border: '1px solid rgba(200,149,46,0.15)',
                                 borderRadius: 'var(--radius-md)',
                                 marginBottom: 'var(--space-lg)',
@@ -1944,7 +1951,7 @@ export default function CompanyJobsPage() {
                                 borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)',
                                 color: 'var(--color-text-secondary)', lineHeight: 1.7,
                             }}>
-                                <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
+                                <Info size={18} strokeWidth={2} color="var(--color-text-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
                                 <span>
                                     <strong style={{ color: 'var(--color-text-primary)' }}>無料掲載は30日で自動終了します。</strong><br />
                                     掲載を続けたい場合は、期限内に再掲載するか、キャンペーンでブースト（日額予算を設定）すると掲載が継続し、上位表示されます。NGワードや必須項目に問題がなければ、求人は<strong>自動で公開</strong>されます。
@@ -1954,11 +1961,11 @@ export default function CompanyJobsPage() {
 
                         {/* 保存・送信ボタン */}
                         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <button type="submit" className="btn btn-primary" disabled={saving}>
-                                {saving ? '保存中...' : editingJob ? '💾 求人を更新' : '📋 求人を作成して公開'}
+                            <button type="submit" className="btn btn-primary" disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                {saving ? '保存中...' : editingJob ? <><Save size={16} strokeWidth={2} /> 求人を更新</> : <><ClipboardList size={16} strokeWidth={2} /> 求人を作成して公開</>}
                             </button>
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowPreview(true)}>
-                                👁 プレビュー
+                            <button type="button" className="btn btn-secondary" onClick={() => setShowPreview(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                <Eye size={16} strokeWidth={2} /> プレビュー
                             </button>
                             <button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setEditingJob(null); setForm(INITIAL_FORM); }}>キャンセル</button>
                             {editingJob && (
@@ -1997,8 +2004,8 @@ export default function CompanyJobsPage() {
             {viewMode === 'list' && (
                 jobs.length === 0 && !showForm ? (
                     <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📋</div>
-                        <h3 style={{ marginBottom: 'var(--space-sm)' }}>まだ求人がありません</h3>
+                        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}><ClipboardList size={48} strokeWidth={1.5} color="var(--color-text-accent)" /></div>
+                        <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>まだ求人がありません</h3>
                         <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>最初の求人を作成しましょう。問題がなければ自動で公開され、無料掲載は30日で終了します。</p>
                         <button className="btn btn-primary btn-lg" onClick={() => setShowForm(true)}>最初の求人を作成</button>
                     </div>
@@ -2011,10 +2018,10 @@ export default function CompanyJobsPage() {
                                 padding: 'var(--space-sm) var(--space-md)',
                                 marginBottom: 'var(--space-md)',
                                 background: selectedJobs.length > 0
-                                    ? 'linear-gradient(135deg, rgba(200,149,46,0.08), rgba(180,130,30,0.04))'
+                                    ? 'rgba(18,28,52,0.05)'
                                     : 'var(--color-bg-surface)',
                                 border: selectedJobs.length > 0
-                                    ? '1px solid rgba(200,149,46,0.25)'
+                                    ? '1.5px solid var(--color-navy)'
                                     : '1px solid var(--color-border)',
                                 borderRadius: 'var(--radius-lg)',
                                 transition: 'all var(--transition-fast)',
@@ -2101,7 +2108,7 @@ export default function CompanyJobsPage() {
                         {/* 検索結果が0件 */}
                         {filteredJobs.length === 0 && !showForm && jobs.length > 0 && (
                             <div className="card" style={{ textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--color-text-muted)' }}>
-                                <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>🔍</div>
+                                <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}><Search size={32} strokeWidth={1.5} /></div>
                                 <p>条件に一致する求人がありません</p>
                                 <button
                                     className="btn btn-secondary"
@@ -2160,10 +2167,11 @@ function PreviewSectionHeader({ icon, title }) {
     return (
         <h3 style={{
             fontSize: 'var(--font-size-base)', fontWeight: 700, marginBottom: 'var(--space-md)',
-            color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: 8,
-            paddingBottom: 'var(--space-xs)', borderBottom: '2px solid var(--color-accent)',
+            color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8,
+            paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)',
         }}>
-            <span style={{ fontSize: 16 }}>{icon}</span> {title}
+            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+            {title}
         </h3>
     );
 }
@@ -2206,8 +2214,8 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     background: 'var(--color-accent)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
-                    <span style={{ color: '#fff', fontWeight: 700, fontSize: 'var(--font-size-base)' }}>
-                        👁 求人プレビュー（求職者から見た表示）
+                    <span style={{ color: '#fff', fontWeight: 700, fontSize: 'var(--font-size-base)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <Eye size={16} strokeWidth={2} /> 求人プレビュー（求職者から見た表示）
                     </span>
                     <button onClick={onClose} style={{
                         background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
@@ -2220,29 +2228,29 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* ヘッダーカード */}
                     <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
                         <div style={{ marginBottom: 'var(--space-lg)' }}>
-                            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-sm)', lineHeight: 1.4 }}>
+                            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-sm)', lineHeight: 1.4, color: 'var(--color-navy)' }}>
                                 {form.title || '（求人タイトル未入力）'}
                             </h1>
-                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)' }}>
-                                🏢 {companyName}
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                <Building2 size={16} strokeWidth={2} style={{ opacity: 0.5 }} /> {companyName}
                                 {form.industry && <span style={{ marginLeft: 8, opacity: 0.7 }}>({form.industry})</span>}
                             </p>
                         </div>
                         {/* バッジ */}
                         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                            {form.employment_type && <span className="badge badge-info">👔 {form.employment_type}</span>}
-                            {form.remote_policy && <span className="badge badge-info">🏠 {form.remote_policy}</span>}
-                            {locationText && <span className="badge badge-info">📍 {locationText}</span>}
+                            {form.employment_type && <span className="badge badge-info">{form.employment_type}</span>}
+                            {form.remote_policy && <span className="badge badge-info">{form.remote_policy}</span>}
+                            {locationText && <span className="badge badge-info">{locationText}</span>}
                             {(form.salary_min || form.salary_max) && (
                                 <span className="badge badge-success">
-                                    💰 {form.salary_min ? `${Math.round(Number(form.salary_min) / 10000)}万` : ''}
+                                    {form.salary_min ? `${Math.round(Number(form.salary_min) / 10000)}万` : ''}
                                     {form.salary_min && form.salary_max ? '〜' : ''}
                                     {form.salary_max ? `${Math.round(Number(form.salary_max) / 10000)}万円` : ''}
                                 </span>
                             )}
-                            {form.work_hours && <span className="badge badge-info">🕐 {form.work_hours}</span>}
-                            {form.overtime_average && <span className="badge badge-info">⏱ 残業{form.overtime_average}</span>}
-                            {form.holidays && <span className="badge badge-info">📅 {form.holidays.includes('年間') ? form.holidays.match(/年間休日\d+日/)?.[0] || form.holidays : form.holidays}</span>}
+                            {form.work_hours && <span className="badge badge-info">{form.work_hours}</span>}
+                            {form.overtime_average && <span className="badge badge-info">残業{form.overtime_average}</span>}
+                            {form.holidays && <span className="badge badge-info">{form.holidays.includes('年間') ? form.holidays.match(/年間休日\d+日/)?.[0] || form.holidays : form.holidays}</span>}
                         </div>
                     </div>
 
@@ -2261,7 +2269,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 仕事内容 */}
                     {form.description && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="📋" title="仕事内容" />
+                            <PreviewSectionHeader title="仕事内容" />
                             <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
                                 {form.description}
                             </p>
@@ -2271,7 +2279,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 応募要件 */}
                     {form.requirements && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="✅" title="応募要件" />
+                            <PreviewSectionHeader title="応募要件" />
                             <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
                                 {form.requirements}
                             </p>
@@ -2281,7 +2289,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 給与・待遇 */}
                     {(form.salary_min || form.salary_max || form.salary_details || form.allowances || benefitsText || insuranceText) && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="💰" title="給与・待遇" />
+                            <PreviewSectionHeader title="給与・待遇" />
                             <PreviewInfoRow label="給与" value={
                                 form.salary_details || (form.salary_min || form.salary_max
                                     ? `${form.salary_type || '年収'} ${form.salary_min ? `${(Number(form.salary_min) / 10000).toLocaleString()}万` : ''}${form.salary_min && form.salary_max ? '〜' : ''}${form.salary_max ? `${(Number(form.salary_max) / 10000).toLocaleString()}万円` : ''}`
@@ -2298,7 +2306,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 勤務条件 */}
                     {(form.work_hours || form.holidays || locationText || form.office_address) && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="🏢" title="勤務条件" />
+                            <PreviewSectionHeader title="勤務条件" />
                             <PreviewInfoRow label="勤務時間" value={form.work_hours} />
                             <PreviewInfoRow label="残業" value={form.overtime_average} />
                             <PreviewInfoRow label="休日・休暇" value={form.holidays} />
@@ -2316,7 +2324,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 試用期間 */}
                     {form.probation_period && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="📝" title="試用期間" />
+                            <PreviewSectionHeader title="試用期間" />
                             <PreviewInfoRow label="期間" value={form.probation_period} />
                             <PreviewInfoRow label="条件" value={form.probation_conditions} />
                         </div>
@@ -2325,7 +2333,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 職場環境・社風 */}
                     {(form.work_environment || form.company_culture) && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="👥" title="職場環境・社風" />
+                            <PreviewSectionHeader title="職場環境・社風" />
                             {form.work_environment && (
                                 <>
                                     <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>チーム構成</p>
@@ -2348,7 +2356,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 選考について */}
                     {(form.selection_process || form.required_documents || form.estimated_timeline) && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="📊" title="選考について" />
+                            <PreviewSectionHeader title="選考について" />
                             {form.selection_process && (
                                 <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, marginBottom: 'var(--space-md)' }}>
                                     {form.selection_process}
@@ -2362,7 +2370,7 @@ function JobPreviewModal({ form, companyName, onClose }) {
                     {/* 企業情報 */}
                     {(form.number_of_employees || form.founded_year || form.industry) && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
-                            <PreviewSectionHeader icon="🏛" title="企業情報" />
+                            <PreviewSectionHeader title="企業情報" />
                             <PreviewInfoRow label="会社名" value={companyName} />
                             <PreviewInfoRow label="業界" value={form.industry} />
                             <PreviewInfoRow label="設立" value={form.founded_year} />
@@ -2400,8 +2408,8 @@ function JobCard({ job, statusLabel, onEdit, onDelete, onDuplicate, selected, on
 
     return (
         <div className="card card-glow" style={{
-            borderLeft: selected ? '3px solid var(--color-accent)' : undefined,
-            background: selected ? 'rgba(200,149,46,0.03)' : undefined,
+            borderLeft: selected ? '3px solid var(--color-navy)' : undefined,
+            background: selected ? 'rgba(18,28,52,0.04)' : undefined,
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
@@ -2422,18 +2430,18 @@ function JobCard({ job, statusLabel, onEdit, onDelete, onDuplicate, selected, on
                     )}
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginTop: 'var(--space-sm)' }}>
                         <span className={`badge ${statusLabel[job.status]?.class}`}>{statusLabel[job.status]?.text || job.status}</span>
-                        {job.ng_word_flagged && <span className="badge badge-error">⚠️ NGワード検出</span>}
-                        {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
-                        {job.location && <span className="badge badge-info">📍 {job.location}</span>}
-                        {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}
-                        {job.application_type && <span className="badge badge-info">📋 {job.application_type}</span>}
-                        {job.positions_available && <span className="badge badge-info">👥 {job.positions_available}名</span>}
+                        {job.ng_word_flagged && <span className="badge badge-error">NGワード検出</span>}
+                        {job.employment_type && <span className="badge badge-info">{job.employment_type}</span>}
+                        {job.location && <span className="badge badge-info">{job.location}</span>}
+                        {job.remote_policy && <span className="badge badge-info">{job.remote_policy}</span>}
+                        {job.application_type && <span className="badge badge-info">{job.application_type}</span>}
+                        {job.positions_available && <span className="badge badge-info">{job.positions_available}名</span>}
                         {Number(job.daily_budget) > 0
-                            ? <span className="badge badge-success">💰 ¥{Number(job.daily_budget).toLocaleString()}/日</span>
+                            ? <span className="badge badge-success">¥{Number(job.daily_budget).toLocaleString()}/日</span>
                             : <span className="badge badge-warning">無料枠</span>}
                         {job.agency_client_id && <span className="badge badge-info">人材紹介</span>}
-                        {job.allow_referral && !job.agency_client_id && <span className="badge badge-success">🤝 紹介可</span>}
-                        {job.photos?.length > 0 && <span className="badge badge-success">📷 {job.photos.length}枚</span>}
+                        {job.allow_referral && !job.agency_client_id && <span className="badge badge-success">紹介可</span>}
+                        {job.photos?.length > 0 && <span className="badge badge-success">{job.photos.length}枚</span>}
                     </div>
                     {job.feature_tags?.length > 0 && (
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
@@ -2449,9 +2457,9 @@ function JobCard({ job, statusLabel, onEdit, onDelete, onDuplicate, selected, on
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                    <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }}
+                    <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                         onClick={() => setShowPersona(!showPersona)}>
-                        🎯 ペルソナ
+                        <Target size={14} strokeWidth={2} /> ペルソナ
                     </button>
                     <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }} onClick={onEdit}>編集</button>
                     <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }} onClick={onDuplicate}>複製</button>
@@ -2469,7 +2477,7 @@ function JobCard({ job, statusLabel, onEdit, onDelete, onDuplicate, selected, on
                     { label: '閲覧', count: job.views_count || 0, color: '#94a3b8' },
                     { label: '応募', count: job.applications_count || 0, color: '#6b7280' },
                     { label: '選考中', count: job.reviewing_count || 0, color: '#3b82f6' },
-                    { label: '面接', count: job.interviewing_count || 0, color: '#8b5cf6' },
+                    { label: '面接', count: job.interviewing_count || 0, color: '#1a2744' },
                     { label: '内定', count: job.offered_count || 0, color: '#f59e0b' },
                     { label: '採用', count: job.hired_count || 0, color: '#22c55e' },
                 ];
@@ -2707,11 +2715,12 @@ function PersonaEditor({ jobId, persona: initialPersona, onClose }) {
     return (
         <div className="animate-fade-in" style={{
             marginTop: 'var(--space-md)', paddingTop: 'var(--space-lg)',
-            borderTop: '2px solid var(--color-accent)',
+            borderTop: '1px solid var(--color-border)',
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-accent)', margin: 0 }}>
-                    🎯 ターゲットペルソナ設定
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)', margin: 0 }}>
+                    <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                    ターゲットペルソナ設定
                 </h4>
                 <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }} onClick={onClose}>閉じる</button>
             </div>
@@ -3086,8 +3095,8 @@ function PersonaEditor({ jobId, persona: initialPersona, onClose }) {
 
             {/* 保存・削除ボタン */}
             <div style={{ display: 'flex', gap: 'var(--space-sm)', paddingTop: 'var(--space-lg)', marginTop: 'var(--space-lg)', borderTop: '1px solid var(--color-border)' }}>
-                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                    {saving ? '保存中...' : '💾 ペルソナを保存'}
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    {saving ? '保存中...' : <><Save size={16} strokeWidth={2} /> ペルソナを保存</>}
                 </button>
                 <button className="btn btn-secondary" onClick={handleDelete} style={{ fontSize: 'var(--font-size-xs)' }}>
                     リセット
@@ -3402,8 +3411,8 @@ function CampaignPanel({
                 <div className="card"><div className="skeleton" style={{ height: 200 }} /></div>
             ) : campaigns.length === 0 && !showCampaignForm ? (
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-                    <div style={{ fontSize: 48, marginBottom: 'var(--space-md)' }}>📊</div>
-                    <h3 style={{ marginBottom: 'var(--space-sm)' }}>予算グループを作成しましょう</h3>
+                    <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}><BarChart3 size={48} strokeWidth={1.5} color="var(--color-text-accent)" /></div>
+                    <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>予算グループを作成しましょう</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                         複数の求人をまとめて日額予算を管理できます。<br />パフォーマンスに応じた自動配分も可能です。
                     </p>
@@ -3630,8 +3639,8 @@ function JobAnalyticsPanel({ analytics, funnel, loading, statusLabel }) {
     if (!analytics || analytics.length === 0) {
         return (
             <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📊</div>
-                <h3 style={{ marginBottom: 'var(--space-sm)' }}>分析データがありません</h3>
+                <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}><BarChart3 size={48} strokeWidth={1.5} color="var(--color-text-accent)" /></div>
+                <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>分析データがありません</h3>
                 <p style={{ color: 'var(--color-text-secondary)' }}>求人を作成して公開すると、パフォーマンスデータが表示されます。</p>
             </div>
         );
@@ -3653,7 +3662,7 @@ function JobAnalyticsPanel({ analytics, funnel, loading, statusLabel }) {
                 <SummaryCard label="総閲覧数" value={totalViews} sub={`直近7日: ${totalViews7d}`} color="#121c34" />
                 <SummaryCard label="総応募数" value={totalApps} color="#10b981" />
                 <SummaryCard label="平均応募率" value={`${totalRate}%`} color="#f59e0b" />
-                <SummaryCard label="掲載求人数" value={analytics.length} color="#8b5cf6" />
+                <SummaryCard label="掲載求人数" value={analytics.length} color="#121c34" />
             </div>
 
             {/* 採用ファネル */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, MessageSquare, Paperclip } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -153,7 +154,7 @@ export default function MessagePage() {
         <div className="container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 52px)', paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)', boxSizing: 'border-box', overflow: 'hidden' }}>
             {/* ヘッダー */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexShrink: 0 }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/messages')} style={{ fontSize: 'var(--font-size-sm)' }}>⬅ 戻る</button>
+                <button className="btn btn-secondary" onClick={() => navigate('/messages')} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><ArrowLeft size={16} strokeWidth={2} /> 戻る</button>
                 <div>
                     <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>
                         {application?.job?.id ? (
@@ -182,7 +183,9 @@ export default function MessagePage() {
             }}>
                 {messages.length === 0 && (
                     <div style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                        <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>💬</div>
+                        <div style={{ marginBottom: 'var(--space-sm)', display: 'flex', justifyContent: 'center' }}>
+                            <MessageSquare size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-accent)', opacity: 0.5 }} />
+                        </div>
                         <p>まだメッセージはありません</p>
                         {!isScoutPending && <p style={{ fontSize: 'var(--font-size-xs)' }}>最初のメッセージを送ってみましょう</p>}
                     </div>
@@ -199,7 +202,7 @@ export default function MessagePage() {
                                 maxWidth: '70%',
                                 padding: '10px 14px',
                                 borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                                background: isMe ? 'var(--color-accent)' : 'var(--color-bg-elevated, #e8e8e8)',
+                                background: isMe ? 'var(--color-navy)' : 'var(--color-bg-elevated, #e8e8e8)',
                                 color: isMe ? '#fff' : 'var(--color-text-primary)',
                                 fontSize: 'var(--font-size-sm)',
                                 lineHeight: 1.5,
@@ -221,7 +224,7 @@ export default function MessagePage() {
                                             fontSize: 'var(--font-size-xs)',
                                         }}
                                     >
-                                        <span>📎</span>
+                                        <Paperclip size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
                                         <span style={{ textDecoration: 'underline', wordBreak: 'break-all' }}>
                                             {msg.attachment_name}
                                         </span>
@@ -264,7 +267,7 @@ export default function MessagePage() {
                             background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
                             borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-size-xs)',
                         }}>
-                            <span>📎</span>
+                            <Paperclip size={14} strokeWidth={2} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
                             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {attachment.name}
                             </span>
@@ -298,11 +301,11 @@ export default function MessagePage() {
                             style={{
                                 alignSelf: 'flex-end', background: 'none', border: '1px solid var(--color-border)',
                                 borderRadius: 'var(--radius-sm)', padding: '8px 10px', cursor: 'pointer',
-                                fontSize: '18px', lineHeight: 1,
+                                lineHeight: 1, display: 'inline-flex', alignItems: 'center',
                             }}
                             title="ファイルを添付（PDF, DOC, JPG, PNG / 10MB以下）"
                         >
-                            📎
+                            <Paperclip size={18} strokeWidth={2} style={{ color: 'var(--color-text-secondary)' }} />
                         </button>
                         <textarea
                             className="form-textarea"

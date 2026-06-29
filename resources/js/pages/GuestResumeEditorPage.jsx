@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Send } from 'lucide-react';
+import { Send, Save, Check } from 'lucide-react';
 
 const STORAGE_KEY = 'guest_resume_draft';
 
@@ -162,8 +162,8 @@ export default function GuestResumeEditorPage() {
                             padding: 'var(--space-sm) var(--space-lg)',
                             background: 'none',
                             border: 'none',
-                            borderBottom: activeTab === tab.id ? '2px solid var(--color-accent)' : '2px solid transparent',
-                            color: activeTab === tab.id ? 'var(--color-text-accent)' : 'var(--color-text-secondary)',
+                            borderBottom: activeTab === tab.id ? '2px solid var(--color-navy)' : '2px solid transparent',
+                            color: activeTab === tab.id ? 'var(--color-navy)' : 'var(--color-text-secondary)',
                             fontWeight: activeTab === tab.id ? 700 : 400,
                             cursor: 'pointer',
                             fontSize: 'var(--font-size-sm)',
@@ -368,8 +368,8 @@ export default function GuestResumeEditorPage() {
                         次へ →
                     </button>
                 ) : (
-                    <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => setShowSaveModal(true)}>
-                        💾 保存・応募する
+                    <button className="btn btn-primary" style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7 }} onClick={() => setShowSaveModal(true)}>
+                        <Save size={14} strokeWidth={2} />保存・応募する
                     </button>
                 )}
             </div>
@@ -389,8 +389,7 @@ export default function GuestResumeEditorPage() {
                         </button>
 
                         <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
-                            <div style={{ fontSize: '3rem', marginBottom: 'var(--space-sm)' }}>🎉</div>
-                            <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-sm)' }}>
+                            <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>
                                 履歴書が完成しました！
                             </h2>
                             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginBottom: 'var(--space-md)' }}>
@@ -400,12 +399,15 @@ export default function GuestResumeEditorPage() {
                             {/* 登録メリット */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: 'rgba(52,199,89,0.07)', border: '1px solid rgba(52,199,89,0.2)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
                                 {[
-                                    '✅ 履歴書を何度でも使い回せる（毎回入力不要）',
-                                    '✅ 複数求人にワンクリックで応募できる',
-                                    '✅ 企業からのスカウトが届く',
-                                    '✅ 入力内容はそのまま引き継がれる',
+                                    '履歴書を何度でも使い回せる（毎回入力不要）',
+                                    '複数求人にワンクリックで応募できる',
+                                    '企業からのスカウトが届く',
+                                    '入力内容はそのまま引き継がれる',
                                 ].map((item, i) => (
-                                    <div key={i} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-primary)' }}>{item}</div>
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-primary)' }}>
+                                        <Check size={14} strokeWidth={2.5} style={{ color: 'var(--color-success)', flexShrink: 0 }} />
+                                        {item}
+                                    </div>
                                 ))}
                             </div>
                         </div>

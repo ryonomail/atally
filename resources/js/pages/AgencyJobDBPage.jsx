@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, MapPin, Briefcase, Banknote, Building2, Target, Users, RefreshCw, Paperclip, FileText, CheckSquare, Zap, Hand } from 'lucide-react';
 import api from '../api';
 import { formatSalary } from '../utils/salary';
 
@@ -240,13 +241,13 @@ export default function AgencyJobDBPage() {
                     </div>
                     <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                         <div style={{ flex: '2 1 220px', position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.4 }}>🔍</span>
+                            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', display: 'inline-flex', alignItems: 'center', opacity: 0.5 }}><Search size={16} strokeWidth={2} color="var(--color-text-secondary)" /></span>
                             <input type="text" className="form-input" placeholder="職種・スキル・会社名"
                                 value={inputKeyword} onChange={e => setInputKeyword(e.target.value)}
                                 style={{ paddingLeft: 40, height: 46 }} />
                         </div>
                         <div style={{ flex: '1 1 160px', position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.4 }}>📍</span>
+                            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', display: 'inline-flex', alignItems: 'center', opacity: 0.5 }}><MapPin size={16} strokeWidth={2} color="var(--color-text-secondary)" /></span>
                             <input type="text" className="form-input" placeholder="勤務地"
                                 value={inputLocation} onChange={e => setInputLocation(e.target.value)}
                                 style={{ paddingLeft: 40, height: 46 }} />
@@ -323,9 +324,9 @@ export default function AgencyJobDBPage() {
                             }}
                             style={{
                                 padding: '4px 12px', borderRadius: 'var(--radius-full)',
-                                border: filters.location === area ? '1px solid var(--color-accent)' : '1px solid var(--color-border)',
-                                background: filters.location === area ? 'rgba(18,28,52,0.15)' : 'transparent',
-                                color: filters.location === area ? 'var(--color-text-accent)' : 'var(--color-text-secondary)',
+                                border: filters.location === area ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                background: filters.location === area ? 'rgba(18,28,52,0.05)' : 'transparent',
+                                color: filters.location === area ? 'var(--color-navy)' : 'var(--color-text-secondary)',
                                 cursor: 'pointer', fontSize: 'var(--font-size-xs)', transition: 'all var(--transition-fast)',
                             }}>{area}</button>
                     ))}
@@ -343,9 +344,9 @@ export default function AgencyJobDBPage() {
                                 <span style={{ color: 'var(--color-text-accent)', fontWeight: 700, fontSize: 'var(--font-size-xl)' }}>{total}</span> 件
                             </p>
                         )}
-                        {filters.keyword && <FilterBadge icon="🔍" label={filters.keyword} onRemove={() => { setInputKeyword(''); updateFilter('keyword', ''); }} />}
-                        {filters.employment_type && <FilterBadge icon="👔" label={filters.employment_type} onRemove={() => updateFilter('employment_type', '')} />}
-                        {filters.salary_min && <FilterBadge icon="💰" label={SALARY_OPTIONS.find(o => o.value === filters.salary_min)?.label} color="green" onRemove={() => updateFilter('salary_min', '')} />}
+                        {filters.keyword && <FilterBadge icon={<Search size={12} strokeWidth={2} />} label={filters.keyword} onRemove={() => { setInputKeyword(''); updateFilter('keyword', ''); }} />}
+                        {filters.employment_type && <FilterBadge icon={<Briefcase size={12} strokeWidth={2} />} label={filters.employment_type} onRemove={() => updateFilter('employment_type', '')} />}
+                        {filters.salary_min && <FilterBadge icon={<Banknote size={12} strokeWidth={2} />} label={SALARY_OPTIONS.find(o => o.value === filters.salary_min)?.label} color="green" onRemove={() => updateFilter('salary_min', '')} />}
                     </div>
                 </div>
 
@@ -376,7 +377,7 @@ export default function AgencyJobDBPage() {
                             </div>
                         ) : jobs.length === 0 ? (
                             <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                                <div style={{ fontSize: 48, marginBottom: 'var(--space-md)' }}>🔍</div>
+                                <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}><Search size={48} strokeWidth={1.5} color="var(--color-text-muted)" /></div>
                                 <h3 style={{ marginBottom: 'var(--space-sm)' }}>条件に合う求人が見つかりませんでした</h3>
                                 <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
                                     キーワードや条件を変更してお試しください
@@ -450,7 +451,7 @@ export default function AgencyJobDBPage() {
                                 />
                             ) : (
                                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                                    <div style={{ fontSize: 48, marginBottom: 'var(--space-md)', opacity: 0.4 }}>👈</div>
+                                    <div style={{ marginBottom: 'var(--space-md)', opacity: 0.4, display: 'flex', justifyContent: 'center' }}><Hand size={48} strokeWidth={1.5} /></div>
                                     <p>左のリストから求人をクリックしてください</p>
                                 </div>
                             )}
@@ -510,7 +511,7 @@ export default function AgencyJobDBPage() {
                                             </div>
                                             <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                                                 {c.desired_job_type && <span>希望: {c.desired_job_type}</span>}
-                                                {c.location && <span>📍 {c.location}</span>}
+                                                {c.location && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><MapPin size={12} strokeWidth={2} style={{ opacity: 0.5 }} /> {c.location}</span>}
                                             </div>
                                             {c.skills && (
                                                 <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '4px 0 0',
@@ -568,8 +569,8 @@ function JobListCard({ job, isSelected, onClick }) {
             style={{
                 padding: 'var(--space-md)',
                 borderRadius: 'var(--radius-lg)',
-                border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                background: isSelected ? 'rgba(18,28,52,0.06)' : 'var(--color-bg-surface)',
+                border: isSelected ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                background: isSelected ? 'rgba(18,28,52,0.05)' : 'var(--color-bg-surface)',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
                 boxShadow: isSelected ? '0 0 0 1px rgba(18,28,52,0.2)' : 'none',
@@ -578,12 +579,12 @@ function JobListCard({ job, isSelected, onClick }) {
             onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = 'var(--color-border)'; }}
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xs)' }}>
-                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    🏢 {job.company?.company_name || '企業名非公開'}
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Building2 size={13} strokeWidth={2} style={{ opacity: 0.6 }} /> {job.company?.company_name || '企業名非公開'}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                     {job.company?.company_type === 'recruitment_agency'
-                        ? <span className="badge" style={{ fontSize: 10, padding: '1px 6px', background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 'var(--radius-full)' }}>エージェント案件</span>
+                        ? <span className="badge" style={{ fontSize: 10, padding: '1px 6px', background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)', borderRadius: 'var(--radius-full)' }}>エージェント案件</span>
                         : <span className="badge" style={{ fontSize: 10, padding: '1px 6px', background: 'rgba(18,28,52,0.08)', color: 'var(--color-primary)', border: '1px solid rgba(18,28,52,0.2)', borderRadius: 'var(--radius-full)' }}>直接採用</span>
                     }
                     {job.employment_type && <span className="badge badge-info" style={{ fontSize: 10, padding: '1px 6px' }}>{job.employment_type}</span>}
@@ -601,13 +602,13 @@ function JobListCard({ job, isSelected, onClick }) {
 
             <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginBottom: 'var(--space-xs)' }}>
                 {job.location && (
-                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                        📍 {job.location}
+                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <MapPin size={12} strokeWidth={2} style={{ opacity: 0.5 }} /> {job.location}
                     </span>
                 )}
                 {(job.salary_min || job.salary_max) && (
-                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)', fontWeight: 600 }}>
-                        💰 {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
+                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Banknote size={12} strokeWidth={2} /> {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
                         {job.salary_min && job.salary_max ? '〜' : ''}
                         {job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}
                     </span>
@@ -634,7 +635,7 @@ function JobListCard({ job, isSelected, onClick }) {
                     color: 'var(--color-text-secondary)',
                     alignItems: 'center',
                 }}>
-                    <span style={{ color: 'var(--color-text-accent)', fontWeight: 700 }}>🎯</span>
+                    <span style={{ color: 'var(--color-text-accent)', display: 'inline-flex', alignItems: 'center' }}><Target size={13} strokeWidth={2} /></span>
                     {(job.persona.age_min || job.persona.age_max) && (
                         <span>{job.persona.age_min || '?'}〜{job.persona.age_max || '?'}歳</span>
                     )}
@@ -645,10 +646,10 @@ function JobListCard({ job, isSelected, onClick }) {
                         <span style={{ fontWeight: 600 }}>{job.persona.target_skills.slice(0, 4).join(' / ')}{job.persona.target_skills.length > 4 ? ` +${job.persona.target_skills.length - 4}` : ''}</span>
                     )}
                     {job.persona.target_locations?.length > 0 && (
-                        <span>📍{job.persona.target_locations.slice(0, 2).join(',')}{job.persona.target_locations.length > 2 ? '...' : ''}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}><MapPin size={11} strokeWidth={2} style={{ opacity: 0.5 }} />{job.persona.target_locations.slice(0, 2).join(',')}{job.persona.target_locations.length > 2 ? '...' : ''}</span>
                     )}
                     {parseFloat(job.persona.boost_factor) > 1.0 && (
-                        <span style={{ color: '#d97706', fontWeight: 700 }}>⚡{job.persona.boost_factor}x</span>
+                        <span style={{ color: '#d97706', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}><Zap size={11} strokeWidth={2} />{job.persona.boost_factor}x</span>
                     )}
                 </div>
             )}
@@ -659,14 +660,14 @@ function JobListCard({ job, isSelected, onClick }) {
 /* ============================================
    セクションヘッダー
    ============================================ */
-function SectionHeader({ icon, title }) {
+function SectionHeader({ title }) {
     return (
         <h3 style={{
             fontSize: 'var(--font-size-sm)', fontWeight: 700, marginBottom: 'var(--space-sm)',
-            color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: 6,
-            paddingBottom: 'var(--space-xs)', borderBottom: '2px solid var(--color-accent)',
+            color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 8,
+            paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--color-border)',
         }}>
-            <span style={{ fontSize: 14 }}>{icon}</span> {title}
+            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} /> {title}
         </h3>
     );
 }
@@ -694,25 +695,25 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                 borderBottom: '1px solid var(--color-border)',
                 background: 'var(--color-bg-secondary)',
             }}>
-                <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)', lineHeight: 1.4 }}>
+                <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--space-xs)', lineHeight: 1.4, color: 'var(--color-navy)' }}>
                     {job.title}
                 </h2>
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                    🏢 {job.company?.company_name || '企業名非公開'}
-                    {job.industry && <span style={{ marginLeft: 8, opacity: 0.7 }}>({job.industry})</span>}
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Building2 size={14} strokeWidth={2} style={{ opacity: 0.6 }} /> {job.company?.company_name || '企業名非公開'}
+                    {job.industry && <span style={{ marginLeft: 4, opacity: 0.7 }}>({job.industry})</span>}
                 </p>
 
                 <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginTop: 'var(--space-md)' }}>
                     {isDirect
-                        ? <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-primary)', border: '1px solid rgba(18,28,52,0.2)' }}>🏢 直接採用（パターン1）</span>
-                        : <span className="badge" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)' }}>🤝 エージェント案件（レベニューシェア）</span>
+                        ? <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Building2 size={13} strokeWidth={2} /> 直接採用（パターン1）</span>
+                        : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Users size={13} strokeWidth={2} /> エージェント案件（レベニューシェア）</span>
                     }
-                    {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
-                    {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}
-                    {job.location && <span className="badge badge-info">📍 {job.location}</span>}
+                    {job.employment_type && <span className="badge badge-info">{job.employment_type}</span>}
+                    {job.remote_policy && <span className="badge badge-info">{job.remote_policy}</span>}
+                    {job.location && <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><MapPin size={12} strokeWidth={2} /> {job.location}</span>}
                     {(job.salary_min || job.salary_max) && (
-                        <span className="badge badge-success">
-                            💰 {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
+                        <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Banknote size={12} strokeWidth={2} /> {job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}
                             {job.salary_min && job.salary_max ? '〜' : ''}
                             {job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}
                         </span>
@@ -780,8 +781,8 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                                 background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)',
                                 borderRadius: 'var(--radius-md)',
                             }}>
-                                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                    📄 {resumeFile.name} ({(resumeFile.size / 1024 / 1024).toFixed(1)}MB)
+                                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                    <FileText size={14} strokeWidth={2} style={{ opacity: 0.6 }} /> {resumeFile.name} ({(resumeFile.size / 1024 / 1024).toFixed(1)}MB)
                                 </span>
                                 <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', padding: '2px 10px' }}
                                     onClick={() => setResumeFile(null)}>削除</button>
@@ -797,7 +798,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--color-accent)'}
                             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
                             >
-                                📎 PDFファイルを選択（最大10MB）
+                                <Paperclip size={16} strokeWidth={2} style={{ opacity: 0.6 }} /> PDFファイルを選択（最大10MB）
                                 <input type="file" accept=".pdf" style={{ display: 'none' }}
                                     onChange={e => {
                                         const file = e.target.files?.[0];
@@ -839,7 +840,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: 'var(--space-sm)', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-size-xs)', color: '#166534', lineHeight: 1.6 }}>
-                                    <span>✅</span>
+                                    <CheckSquare size={14} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1 }} />
                                     <span>パターン1（直接紹介）: 採用成功時に採用企業から紹介手数料を全額受け取ります。シェア分配はありません。</span>
                                 </div>
                             </div>
@@ -847,7 +848,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                             /* パターン2: エージェント間レベニューシェア */
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: 'var(--space-sm)', background: 'rgba(18,28,52,0.05)', border: '1px solid rgba(18,28,52,0.18)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-navy)', lineHeight: 1.6, marginBottom: 'var(--space-md)' }}>
-                                    <span>🔄</span>
+                                    <RefreshCw size={14} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1 }} />
                                     <span>パターン2（レベニューシェア）: 採用企業が紹介元エージェントに支払う手数料を、紹介元と紹介者で分配します。</span>
                                 </div>
                                 {/* 手数料タイプ切替 */}
@@ -857,9 +858,9 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                                             onClick={() => setReferralForm(f => ({ ...f, fee_type: opt.value }))}
                                             style={{
                                                 flex: 1, padding: '6px', borderRadius: 'var(--radius-md)',
-                                                border: referralForm.fee_type === opt.value ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                                                background: referralForm.fee_type === opt.value ? 'rgba(18,28,52,0.08)' : 'transparent',
-                                                color: referralForm.fee_type === opt.value ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                                                border: referralForm.fee_type === opt.value ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                                background: referralForm.fee_type === opt.value ? 'rgba(18,28,52,0.05)' : 'transparent',
+                                                color: referralForm.fee_type === opt.value ? 'var(--color-navy)' : 'var(--color-text-secondary)',
                                                 fontWeight: referralForm.fee_type === opt.value ? 700 : 400,
                                                 fontSize: 'var(--font-size-xs)', cursor: 'pointer',
                                             }}>
@@ -962,7 +963,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
 
                     {/* 仕事内容 */}
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
-                        <SectionHeader icon="📋" title="仕事内容" />
+                        <SectionHeader title="仕事内容" />
                         <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)' }}>
                             {job.description}
                         </p>
@@ -971,7 +972,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                     {/* 応募要件 */}
                     {job.requirements && (
                         <div style={{ marginBottom: 'var(--space-xl)' }}>
-                            <SectionHeader icon="✅" title="応募要件" />
+                            <SectionHeader title="応募要件" />
                             <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)' }}>
                                 {job.requirements}
                             </p>
@@ -981,7 +982,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                     {/* 給与・待遇 */}
                     {(job.salary_min || job.salary_max || job.salary_details) && (
                         <div style={{ marginBottom: 'var(--space-xl)' }}>
-                            <SectionHeader icon="💰" title="給与・待遇" />
+                            <SectionHeader title="給与・待遇" />
                             <InfoRow label="給与" value={job.salary_details || formatSalary(job) || null} />
                             <InfoRow label="手数料" value={job.fee_display} />
                             <InfoRow label="紹介条件" value={job.referral_conditions} />
@@ -991,7 +992,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                     {/* 勤務条件 */}
                     {(job.work_hours || job.holidays || job.remote_policy || job.office_address) && (
                         <div style={{ marginBottom: 'var(--space-xl)' }}>
-                            <SectionHeader icon="🏢" title="勤務条件" />
+                            <SectionHeader title="勤務条件" />
                             <InfoRow label="勤務時間" value={job.work_hours} />
                             <InfoRow label="残業" value={job.overtime_average} />
                             <InfoRow label="休日・休暇" value={job.holidays} />
@@ -1003,7 +1004,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                     {/* 選考情報 */}
                     {job.selection_process && (
                         <div style={{ marginBottom: 'var(--space-xl)' }}>
-                            <SectionHeader icon="📊" title="選考について" />
+                            <SectionHeader title="選考について" />
                             <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)' }}>
                                 {job.selection_process}
                             </p>
@@ -1013,7 +1014,7 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                     {/* ペルソナ（ターゲット人材） */}
                     {job.persona && (
                         <div style={{ marginBottom: 'var(--space-xl)' }}>
-                            <SectionHeader icon="🎯" title="ターゲット人材" />
+                            <SectionHeader title="ターゲット人材" />
                             <div style={{
                                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)',
                                 fontSize: 'var(--font-size-sm)',
@@ -1074,8 +1075,9 @@ function AgencyJobDetailPanel({ job, showReferral, setShowReferral, referralForm
                                     marginTop: 'var(--space-sm)', padding: 'var(--space-xs) var(--space-sm)',
                                     background: 'rgba(245,158,11,0.08)', borderRadius: 'var(--radius-md)',
                                     fontSize: 'var(--font-size-xs)', color: '#d97706', fontWeight: 600,
+                                    display: 'inline-flex', alignItems: 'center', gap: 4,
                                 }}>
-                                    ⚡ ブースト {job.persona.boost_factor}x（この求人は優先表示されています）
+                                    <Zap size={13} strokeWidth={2} /> ブースト {job.persona.boost_factor}x（この求人は優先表示されています）
                                 </div>
                             )}
                         </div>

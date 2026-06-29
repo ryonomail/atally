@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 import { STATUS_LABELS, STATUS_COLORS } from '../constants/applicationStatus';
+import { User, FileText, Bookmark, Inbox, Bell, ClipboardList, Search, MessageSquare, Check, ArrowRight } from 'lucide-react';
 
 export default function DashboardPage() {
     const { user } = useAuth();
@@ -60,7 +61,7 @@ export default function DashboardPage() {
                 const motivationMsg = motivations[new Date().getDate() % motivations.length];
                 return (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
-                        <h1 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 4 }}>
+                        <h1 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 4, color: 'var(--color-navy)' }}>
                             {greeting}、{user?.name}さん
                         </h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
@@ -89,11 +90,11 @@ export default function DashboardPage() {
                     </div>
                     <div className="card" style={{ textAlign: 'center' }}>
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>応募数</p>
-                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: '#3b82f6', margin: 0 }}>{apps.length}</p>
+                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: 'var(--color-navy)', margin: 0 }}>{apps.length}</p>
                     </div>
                     <div className="card" style={{ textAlign: 'center' }}>
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>選考中</p>
-                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: '#f59e0b', margin: 0 }}>
+                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: 'var(--color-accent)', margin: 0 }}>
                             {(statusCounts.pending || 0) + (statusCounts.under_review || 0) + (statusCounts.interviewing || 0)}
                         </p>
                     </div>
@@ -109,11 +110,11 @@ export default function DashboardPage() {
             {/* オンボーディングチェックリスト */}
             {!loadingApps && completionPct < 100 && apps.length < 3 && (() => {
                 const steps = [
-                    { label: 'プロフィールを入力する', done: completionPct >= 50, link: '/profile', icon: '👤' },
-                    { label: '履歴書を作成する', done: hasResume, link: '/resumes', icon: '📄' },
-                    { label: '気になる求人を保存する', done: savedJobCount > 0, link: '/jobs', icon: '🔖' },
-                    { label: '求人に応募する', done: apps.length > 0, link: '/jobs', icon: '📮' },
-                    { label: '通知設定を確認する', done: apps.length > 0, link: '/settings', icon: '🔔' },
+                    { label: 'プロフィールを入力する', done: completionPct >= 50, link: '/profile', icon: User },
+                    { label: '履歴書を作成する', done: hasResume, link: '/resumes', icon: FileText },
+                    { label: '気になる求人を保存する', done: savedJobCount > 0, link: '/jobs', icon: Bookmark },
+                    { label: '求人に応募する', done: apps.length > 0, link: '/jobs', icon: Inbox },
+                    { label: '通知設定を確認する', done: apps.length > 0, link: '/settings', icon: Bell },
                 ];
                 const doneCount = steps.filter(s => s.done).length;
                 if (doneCount === steps.length) return null;
@@ -143,7 +144,11 @@ export default function DashboardPage() {
                                     borderRadius: 'var(--radius-md)', textDecoration: 'none', color: 'inherit',
                                     opacity: step.done ? 0.6 : 1,
                                 }}>
-                                    <span style={{ fontSize: 18 }}>{step.done ? '✅' : step.icon}</span>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 18, flexShrink: 0, color: step.done ? '#10b981' : 'var(--color-text-accent)' }}>
+                                        {step.done
+                                            ? <Check size={18} strokeWidth={2} />
+                                            : <step.icon size={18} strokeWidth={2} />}
+                                    </span>
                                     <span style={{
                                         fontSize: 'var(--font-size-sm)', fontWeight: step.done ? 400 : 600,
                                         textDecoration: step.done ? 'line-through' : 'none',
@@ -195,7 +200,9 @@ export default function DashboardPage() {
             {/* 最近の応募 */}
             {recentApps.length === 0 && (
                 <div className="card" style={{ marginBottom: 'var(--space-xl)', textAlign: 'center', padding: 'var(--space-2xl)' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>📋</div>
+                    <div style={{ marginBottom: 'var(--space-md)', color: 'var(--color-text-accent)' }}>
+                        <ClipboardList size={40} strokeWidth={1.75} />
+                    </div>
                     <h3 style={{ marginBottom: 'var(--space-sm)' }}>まだ応募がありません</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
                         気になる求人を見つけて応募してみましょう
@@ -242,10 +249,10 @@ export default function DashboardPage() {
             {/* 今日のアクション */}
             {!loadingApps && (() => {
                 const actions = [];
-                if (completionPct < 50) actions.push({ icon: '👤', label: 'プロフィールを入力する', sub: '基本情報だけでOK・2分で完了', to: '/profile', color: '#3b82f6' });
-                if (!hasResume) actions.push({ icon: '📝', label: '履歴書を作成する', sub: 'テンプレートで簡単作成', to: '/resumes', color: '#8b5cf6' });
-                if (apps.length === 0 && completionPct >= 50) actions.push({ icon: '🔍', label: '求人を探して応募する', sub: '1万件以上の求人から検索', to: '/jobs', color: '#22c55e' });
-                if (apps.length > 0 && upcomingInterviews.length === 0) actions.push({ icon: '📨', label: '応募状況を確認する', sub: '企業からの返信をチェック', to: '/applications', color: '#f59e0b' });
+                if (completionPct < 50) actions.push({ icon: User, label: 'プロフィールを入力する', sub: '基本情報だけでOK・2分で完了', to: '/profile' });
+                if (!hasResume) actions.push({ icon: FileText, label: '履歴書を作成する', sub: 'テンプレートで簡単作成', to: '/resumes' });
+                if (apps.length === 0 && completionPct >= 50) actions.push({ icon: Search, label: '求人を探して応募する', sub: '1万件以上の求人から検索', to: '/jobs' });
+                if (apps.length > 0 && upcomingInterviews.length === 0) actions.push({ icon: Inbox, label: '応募状況を確認する', sub: '企業からの返信をチェック', to: '/applications' });
                 if (actions.length === 0) return null;
                 return (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
@@ -257,28 +264,30 @@ export default function DashboardPage() {
                                 <Link key={i} to={action.to} style={{
                                     display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
                                     padding: 'var(--space-md) var(--space-lg)',
-                                    background: `${action.color}08`,
-                                    border: `1px solid ${action.color}30`,
+                                    background: 'var(--color-bg-secondary)',
+                                    border: '1px solid var(--color-border)',
                                     borderRadius: 'var(--radius-lg)',
                                     textDecoration: 'none', color: 'inherit',
                                     flex: '1 1 280px', transition: 'all 0.2s',
                                 }}
-                                onMouseEnter={e => { e.currentTarget.style.background = `${action.color}12`; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = `${action.color}08`; e.currentTarget.style.transform = 'none'; }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(18,28,52,0.05)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-bg-secondary)'; e.currentTarget.style.transform = 'none'; }}
                                 >
                                     <div style={{
                                         width: 40, height: 40, borderRadius: 'var(--radius-md)',
-                                        background: `${action.color}15`,
+                                        background: 'var(--color-accent-light)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '1.2rem', flexShrink: 0,
+                                        color: 'var(--color-text-accent)', flexShrink: 0,
                                     }}>
-                                        {action.icon}
+                                        <action.icon size={18} strokeWidth={2} />
                                     </div>
                                     <div>
                                         <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{action.label}</p>
                                         <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{action.sub}</p>
                                     </div>
-                                    <span style={{ marginLeft: 'auto', color: action.color, fontSize: '1rem', flexShrink: 0 }}>→</span>
+                                    <span style={{ marginLeft: 'auto', color: 'var(--color-text-accent)', display: 'inline-flex', flexShrink: 0 }}>
+                                        <ArrowRight size={16} strokeWidth={2} />
+                                    </span>
                                 </Link>
                             ))}
                         </div>
@@ -287,40 +296,40 @@ export default function DashboardPage() {
             })()}
 
             {/* クイックアクセス */}
-            <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-md)' }}>メニュー</h2>
+            <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>メニュー</h2>
             <div className="grid grid-3">
                 <Link to="/profile" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>👤</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><User size={28} strokeWidth={1.75} /></div>
                     <h3>プロフィール</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>基本情報・学歴・職歴の管理</p>
                 </Link>
                 <Link to="/resumes" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📝</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><FileText size={28} strokeWidth={1.75} /></div>
                     <h3>履歴書</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>履歴書の作成・編集・PDF出力</p>
                 </Link>
                 <Link to="/jobs" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>🔍</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><Search size={28} strokeWidth={1.75} /></div>
                     <h3>求人検索</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>求人を探して応募する</p>
                 </Link>
                 <Link to="/applications" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📨</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><Inbox size={28} strokeWidth={1.75} /></div>
                     <h3>応募・スカウト</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>応募状況の確認・スカウト管理</p>
                 </Link>
                 <Link to="/messages" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>💬</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><MessageSquare size={28} strokeWidth={1.75} /></div>
                     <h3>メッセージ</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>企業との連絡・やりとり</p>
                 </Link>
                 <Link to="/saved-jobs" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>★</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><Bookmark size={28} strokeWidth={1.75} /></div>
                     <h3>保存した求人</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>ブックマークした求人の一覧</p>
                 </Link>
                 <Link to="/job-alerts" className="card card-glow" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>🔔</div>
+                    <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-text-accent)' }}><Bell size={28} strokeWidth={1.75} /></div>
                     <h3>求人アラート</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>条件に合う新着求人の通知設定</p>
                 </Link>

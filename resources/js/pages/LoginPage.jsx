@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, User, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 function GoogleRoleModal({ onSelect, onClose }) {
@@ -18,13 +19,13 @@ function GoogleRoleModal({ onSelect, onClose }) {
                     すでにアカウントをお持ちの方は、登録時の種別が自動的に引き継がれます。
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                    <button className="btn btn-primary" style={{ padding: 'var(--space-md)', fontSize: 'var(--font-size-base)' }}
+                    <button className="btn btn-primary" style={{ padding: 'var(--space-md)', fontSize: 'var(--font-size-base)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                         onClick={() => onSelect('jobseeker')}>
-                        👤 求職者として登録・ログイン
+                        <User size={18} strokeWidth={2} /> 求職者として登録・ログイン
                     </button>
-                    <button className="btn btn-secondary" style={{ padding: 'var(--space-md)', fontSize: 'var(--font-size-base)' }}
+                    <button className="btn btn-secondary" style={{ padding: 'var(--space-md)', fontSize: 'var(--font-size-base)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                         onClick={() => onSelect('company')}>
-                        🏢 企業担当者として登録・ログイン
+                        <Building2 size={18} strokeWidth={2} /> 企業担当者として登録・ログイン
                     </button>
                 </div>
             </div>
@@ -83,7 +84,7 @@ export default function LoginPage() {
                 />
             )}
             <div className="card animate-fade-in" style={{ maxWidth: 440, width: '100%' }}>
-                <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-xl)', textAlign: 'center' }}>
+                <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-xl)', textAlign: 'center', color: 'var(--color-navy)' }}>
                     ログイン
                 </h1>
 
@@ -121,9 +122,9 @@ export default function LoginPage() {
                                 required
                                 style={{ paddingRight: 42, ...(fieldErrors.password ? { borderColor: '#ef4444' } : {}) }} />
                             <button type="button" onClick={() => setShowPassword(v => !v)}
-                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}
+                                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1, padding: 0, display: 'inline-flex', alignItems: 'center' }}
                                 aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}>
-                                {showPassword ? '🙈' : '👁'}
+                                {showPassword ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
                             </button>
                         </div>
                         {fieldErrors.password && <div style={fieldErrorStyle}>{fieldErrors.password}</div>}

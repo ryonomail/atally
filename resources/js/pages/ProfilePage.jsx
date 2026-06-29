@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Save, Camera, GraduationCap, Briefcase, ScrollText, Wrench, Plus, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
@@ -215,8 +216,9 @@ export default function ProfilePage() {
                 <h1 style={{ fontSize: 'var(--font-size-3xl)' }}>プロフィール</h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
                     {isDirty && <span className="badge badge-warning">未保存の変更あり</span>}
-                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                        {saving ? '保存中...' : '💾 保存'}
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {saving ? '保存中...' : <><Save size={16} strokeWidth={2} /> 保存</>}
                     </button>
                 </div>
             </div>
@@ -237,7 +239,7 @@ export default function ProfilePage() {
                     { label: '資格', done: form.licenses.length > 0, pts: 5 },
                 ];
                 const incomplete = items.filter(i => !i.done);
-                const barColor = pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#3b82f6';
+                const barColor = pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : 'var(--color-navy)';
                 return (
                     <div style={{ marginBottom: 'var(--space-xl)', maxWidth: 700 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -301,7 +303,7 @@ export default function ProfilePage() {
                         border: '1px solid rgba(16,185,129,0.2)',
                         display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
                     }}>
-                        <span style={{ fontSize: '1.5rem' }}>✓</span>
+                        <Check size={24} strokeWidth={2.5} color="#10b981" style={{ flexShrink: 0 }} />
                         <div>
                             <p style={{ fontWeight: 600, margin: '0 0 2px 0', fontSize: 'var(--font-size-sm)' }}>
                                 基本情報が入力されました！ 応募を始められます
@@ -315,7 +317,10 @@ export default function ProfilePage() {
 
                 {/* 証明写真 */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                    <h3 style={{ marginBottom: 'var(--space-md)' }}>📷 証明写真</h3>
+                    <h3 style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                        <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                        証明写真
+                    </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)' }}>
                         <div style={{
                             width: 120, height: 150, border: '2px dashed var(--color-border)',
@@ -328,8 +333,8 @@ export default function ProfilePage() {
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                                 <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: 4 }}>📷</div>
-                                    3cm × 4cm
+                                    <Camera size={28} strokeWidth={1.75} style={{ marginBottom: 4, opacity: 0.5 }} />
+                                    <div>3cm × 4cm</div>
                                 </div>
                             )}
                         </div>
@@ -343,8 +348,8 @@ export default function ProfilePage() {
                             <input type="file" ref={photoInputRef} accept="image/jpeg,image/png"
                                 style={{ display: 'none' }} onChange={handlePhotoUpload} />
                             <button className="btn btn-secondary" onClick={() => photoInputRef.current?.click()}
-                                disabled={uploading} style={{ fontSize: 'var(--font-size-sm)' }}>
-                                {uploading ? 'アップロード中...' : (photoPath ? '📷 写真を変更' : '📷 写真をアップロード')}
+                                disabled={uploading} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                {uploading ? 'アップロード中...' : <><Camera size={16} strokeWidth={2} /> {photoPath ? '写真を変更' : '写真をアップロード'}</>}
                             </button>
                         </div>
                     </div>
@@ -433,7 +438,7 @@ export default function ProfilePage() {
                         }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--color-accent)'}
                         onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-border)'}>
-                        ＋ 学歴・職歴・スキルを追加する（任意）
+                        <Plus size={16} strokeWidth={2} /> 学歴・職歴・スキルを追加する（任意）
                     </button>
                 ) : (
                 <>
@@ -441,8 +446,11 @@ export default function ProfilePage() {
                 {/* 学歴 */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                        <h3>🎓 学歴</h3>
-                        <button className="btn btn-secondary" onClick={addEducation} style={{ fontSize: 'var(--font-size-sm)' }}>＋ 追加</button>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                            <GraduationCap size={18} strokeWidth={2} color="var(--color-text-accent)" /> 学歴
+                        </h3>
+                        <button className="btn btn-secondary" onClick={addEducation} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Plus size={15} strokeWidth={2} /> 追加</button>
                     </div>
                     {form.education.length === 0 && (
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>学歴を追加してください</p>
@@ -478,8 +486,11 @@ export default function ProfilePage() {
                 {/* 職歴 */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                        <h3>💼 職歴</h3>
-                        <button className="btn btn-secondary" onClick={addWorkHistory} style={{ fontSize: 'var(--font-size-sm)' }}>＋ 追加</button>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                            <Briefcase size={18} strokeWidth={2} color="var(--color-text-accent)" /> 職歴
+                        </h3>
+                        <button className="btn btn-secondary" onClick={addWorkHistory} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Plus size={15} strokeWidth={2} /> 追加</button>
                     </div>
                     {form.work_history.length === 0 && (
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>職歴を追加してください</p>
@@ -519,8 +530,11 @@ export default function ProfilePage() {
                 {/* 免許・資格 */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                        <h3>📜 免許・資格</h3>
-                        <button className="btn btn-secondary" onClick={addLicense} style={{ fontSize: 'var(--font-size-sm)' }}>＋ 追加</button>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                            <ScrollText size={18} strokeWidth={2} color="var(--color-text-accent)" /> 免許・資格
+                        </h3>
+                        <button className="btn btn-secondary" onClick={addLicense} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Plus size={15} strokeWidth={2} /> 追加</button>
                     </div>
                     {form.licenses.length === 0 && (
                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>免許・資格を追加してください</p>
@@ -544,7 +558,10 @@ export default function ProfilePage() {
 
                 {/* スキル */}
                 <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                    <h3 style={{ marginBottom: 'var(--space-md)' }}>🛠️ スキル</h3>
+                    <h3 style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-navy)' }}>
+                        <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
+                        <Wrench size={18} strokeWidth={2} color="var(--color-text-accent)" /> スキル
+                    </h3>
                     <div className="form-group">
                         <input className="form-input" placeholder="カンマ区切りで入力 例: JavaScript, React, Laravel"
                             value={form.skills.join(', ')}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
@@ -64,7 +65,7 @@ function ClientFormModal({ client, onClose, onSaved }) {
                 width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto',
                 margin: 'var(--space-md)',
             }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-lg)' }}>
+                <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-lg)', color: 'var(--color-navy)' }}>
                     {isEdit ? 'クライアントを編集' : '新規クライアント'}
                 </h2>
 
@@ -173,7 +174,7 @@ function DeleteConfirmModal({ client, onClose, onConfirm, deleting }) {
             <div className="card" style={{
                 width: '100%', maxWidth: 420, margin: 'var(--space-md)',
             }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-md)' }}>
+                <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-md)', color: 'var(--color-navy)' }}>
                     削除の確認
                 </h2>
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
@@ -256,12 +257,12 @@ export default function AgencyClientsPage() {
         <div className="page container animate-fade-in">
             {/* ヘッダー */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/company')} style={{ fontSize: 'var(--font-size-sm)' }}>
-                    ← 戻る
+                <button className="btn btn-secondary" onClick={() => navigate('/company')} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <ArrowLeft size={16} strokeWidth={2} /> 戻る
                 </button>
-                <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0, flex: 1 }}>クライアント管理</h1>
-                <button className="btn btn-primary" onClick={() => setFormModal({})}>
-                    + 新規クライアント
+                <h1 style={{ fontSize: 'var(--font-size-2xl)', margin: 0, flex: 1, color: 'var(--color-navy)' }}>クライアント管理</h1>
+                <button className="btn btn-primary" onClick={() => setFormModal({})} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Plus size={16} strokeWidth={2} /> 新規クライアント
                 </button>
             </div>
 
@@ -285,8 +286,8 @@ export default function AgencyClientsPage() {
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
                         「新規クライアント」ボタンから最初のクライアントを追加しましょう。
                     </p>
-                    <button className="btn btn-primary" onClick={() => setFormModal({})}>
-                        + 新規クライアント
+                    <button className="btn btn-primary" onClick={() => setFormModal({})} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <Plus size={16} strokeWidth={2} /> 新規クライアント
                     </button>
                 </div>
             )}
@@ -297,7 +298,7 @@ export default function AgencyClientsPage() {
                     {clients.map(client => (
                         <div key={client.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <h3 style={{ fontSize: 'var(--font-size-lg)', margin: 0, wordBreak: 'break-word' }}>
+                                <h3 style={{ fontSize: 'var(--font-size-lg)', margin: 0, wordBreak: 'break-word', color: 'var(--color-navy)' }}>
                                     {client.client_name}
                                 </h3>
                                 <div style={{ display: 'flex', gap: 'var(--space-xs)', flexShrink: 0 }}>

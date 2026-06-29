@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 import { STATUS_LABELS, STATUS_BADGE_CLASS as STATUS_BADGE, STATUS_COLORS as STATUS_DOT_COLOR } from '../constants/applicationStatus';
+import { ClipboardList, Bell, MessageSquare, Calendar, MapPin, Link2 } from 'lucide-react';
 
 const REJECTION_REASON_LABELS = {
     experience_mismatch: '経験不一致',
@@ -297,7 +298,7 @@ export default function MyApplicationsPage() {
                     onClick={() => setTab('applications')}
                     style={{
                         padding: '8px 20px', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
-                        background: tab === 'applications' ? 'var(--color-accent)' : 'transparent',
+                        background: tab === 'applications' ? 'var(--color-navy)' : 'transparent',
                         color: tab === 'applications' ? '#fff' : 'var(--color-text-secondary)',
                         fontWeight: tab === 'applications' ? 600 : 400, fontSize: 'var(--font-size-sm)',
                     }}>
@@ -307,7 +308,7 @@ export default function MyApplicationsPage() {
                     onClick={() => setTab('scouts')}
                     style={{
                         padding: '8px 20px', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
-                        background: tab === 'scouts' ? 'var(--color-accent)' : 'transparent',
+                        background: tab === 'scouts' ? 'var(--color-navy)' : 'transparent',
                         color: tab === 'scouts' ? '#fff' : 'var(--color-text-secondary)',
                         fontWeight: tab === 'scouts' ? 600 : 400, fontSize: 'var(--font-size-sm)',
                         position: 'relative',
@@ -327,7 +328,9 @@ export default function MyApplicationsPage() {
             {tab === 'applications' && (
                 myApplications.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📋</div>
+                        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                            <ClipboardList size={48} strokeWidth={1.5} color="var(--color-text-accent)" />
+                        </div>
                         <h3 style={{ marginBottom: 'var(--space-sm)' }}>応募履歴がありません</h3>
                         <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
                             求人を探して応募してみましょう
@@ -390,8 +393,9 @@ export default function MyApplicationsPage() {
                                         >
                                             {timelineAppId === app.id ? '閉じる' : '進捗確認'}
                                         </button>
-                                        <Link to={`/messages/${app.id}`} className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }}>
-                                            💬 メッセージ
+                                        <Link to={`/messages/${app.id}`} className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                            <MessageSquare size={16} strokeWidth={2} />
+                                            メッセージ
                                         </Link>
                                         {['pending', 'under_review', 'interviewing', 'offered'].includes(app.status) && (
                                             <button className="btn btn-danger" style={{ fontSize: 'var(--font-size-xs)' }}
@@ -449,8 +453,9 @@ export default function MyApplicationsPage() {
                                         background: 'rgba(18,28,52,0.04)', borderRadius: 'var(--radius-md)',
                                         border: '1px solid var(--color-border)',
                                     }}>
-                                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
-                                            📅 面接日程
+                                        <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <Calendar size={16} strokeWidth={2} color="var(--color-text-accent)" />
+                                            面接日程
                                         </h4>
                                         {app.interview_schedules.filter(s => s.status !== 'cancelled').map(iv => (
                                             <div key={iv.id} style={{
@@ -469,13 +474,15 @@ export default function MyApplicationsPage() {
                                                             })}
                                                         </div>
                                                         {iv.location && (
-                                                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: 2 }}>
-                                                                📍 {iv.location}
+                                                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                <MapPin size={14} strokeWidth={2} style={{ opacity: 0.5, flexShrink: 0 }} />
+                                                                {iv.location}
                                                             </div>
                                                         )}
                                                         {iv.meeting_url && (
-                                                            <div style={{ fontSize: 'var(--font-size-xs)', marginTop: 2 }}>
-                                                                🔗 <a href={iv.meeting_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>
+                                                            <div style={{ fontSize: 'var(--font-size-xs)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                <Link2 size={14} strokeWidth={2} style={{ color: 'var(--color-text-accent)', flexShrink: 0 }} />
+                                                                <a href={iv.meeting_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>
                                                                     会議URLを開く
                                                                 </a>
                                                             </div>
@@ -508,7 +515,6 @@ export default function MyApplicationsPage() {
                                                         )}
                                                         <button
                                                             className="btn btn-secondary"
-                                                            style={{ fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}
                                                             onClick={async () => {
                                                                 try {
                                                                     const res = await api.get(`/schedules/${iv.id}/ical`, { responseType: 'blob' });
@@ -520,8 +526,10 @@ export default function MyApplicationsPage() {
                                                                     window.URL.revokeObjectURL(url);
                                                                 } catch { /* ignore */ }
                                                             }}
+                                                            style={{ fontSize: 'var(--font-size-xs)', padding: '4px 8px', display: 'inline-flex', alignItems: 'center' }}
+                                                            title="カレンダーに追加"
                                                         >
-                                                            📅
+                                                            <Calendar size={16} strokeWidth={2} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -541,7 +549,9 @@ export default function MyApplicationsPage() {
             {tab === 'scouts' && (
                 scouts.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🔔</div>
+                        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                            <Bell size={48} strokeWidth={1.5} color="var(--color-text-accent)" />
+                        </div>
                         <h3 style={{ marginBottom: 'var(--space-sm)' }}>スカウトはまだありません</h3>
                         <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
                             履歴書のスカウト設定をONにすると、企業からスカウトが届きます
@@ -557,7 +567,7 @@ export default function MyApplicationsPage() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
-                                            {scout.status === 'pending' && <span style={{ fontSize: '1.2rem' }}>🔔</span>}
+                                            {scout.status === 'pending' && <Bell size={18} strokeWidth={2} color="var(--color-text-accent)" style={{ flexShrink: 0 }} />}
                                             <h3 style={{ margin: 0 }}>{scout.job?.title || 'スカウト求人'}</h3>
                                         </div>
                                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xs)' }}>
@@ -577,8 +587,9 @@ export default function MyApplicationsPage() {
                                     </div>
                                     <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
                                         {scout.status === 'accepted' && (
-                                            <Link to={`/messages/${scout.id}`} className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }}>
-                                                💬 メッセージ
+                                            <Link to={`/messages/${scout.id}`} className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                                <MessageSquare size={16} strokeWidth={2} />
+                                                メッセージ
                                             </Link>
                                         )}
                                         {scout.status === 'pending' && (
@@ -621,7 +632,8 @@ export default function MyApplicationsPage() {
                                                     <label key={r.id} style={{
                                                         display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                                                         padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-                                                        border: selectedResumeId === r.id ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                                                        border: selectedResumeId === r.id ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                                        background: selectedResumeId === r.id ? 'rgba(18,28,52,0.05)' : undefined,
                                                         cursor: 'pointer', fontSize: 'var(--font-size-sm)',
                                                     }}>
                                                         <input type="radio" name="resume" value={r.id}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList, MessageSquare, Target, Bell, Settings, Pin } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
@@ -12,11 +13,11 @@ const TYPE_LABELS = {
 };
 
 const TYPE_ICONS = {
-    application: '📋',
-    message: '💬',
-    scout: '🎯',
-    job_alert: '🔔',
-    system: '⚙️',
+    application: ClipboardList,
+    message: MessageSquare,
+    scout: Target,
+    job_alert: Bell,
+    system: Settings,
 };
 
 function timeAgo(dateStr) {
@@ -85,7 +86,7 @@ export default function NotificationsPage() {
     return (
         <div className="page container animate-fade-in">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-xl)', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
-                <h1 style={{ fontSize: 'var(--font-size-3xl)', margin: 0 }}>通知</h1>
+                <h1 style={{ fontSize: 'var(--font-size-3xl)', margin: 0, color: 'var(--color-navy)' }}>通知</h1>
                 {unreadTotal > 0 && (
                     <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }} onClick={handleMarkAllRead}>
                         すべて既読にする
@@ -111,7 +112,9 @@ export default function NotificationsPage() {
 
             {filtered.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🔔</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-md)' }}>
+                        <Bell size={40} strokeWidth={1.5} color="var(--color-text-accent)" />
+                    </div>
                     <h3 style={{ marginBottom: 'var(--space-sm)' }}>
                         {filter === 'unread' ? '未読の通知はありません' : '通知はありません'}
                     </h3>
@@ -137,9 +140,14 @@ export default function NotificationsPage() {
                             onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
                             <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'flex-start' }}>
-                                <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>
-                                    {TYPE_ICONS[n.type] || '📌'}
-                                </span>
+                                {(() => {
+                                    const TypeIcon = TYPE_ICONS[n.type] || Pin;
+                                    return (
+                                        <span style={{ display: 'inline-flex', flexShrink: 0, marginTop: 2 }}>
+                                            <TypeIcon size={18} strokeWidth={2} color="var(--color-text-accent)" />
+                                        </span>
+                                    );
+                                })()}
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
                                         <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', fontWeight: n.read_at ? 400 : 600 }}>

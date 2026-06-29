@@ -5,11 +5,12 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useToast } from '../hooks/useToast';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { FileText, ClipboardList, BarChart3, Mail, BookmarkCheck, Bell, Eye, Download, CheckCircle2 } from 'lucide-react';
 
 const RESUME_TYPES = [
-    { key: 'resume', label: 'アルバイト用履歴書', icon: '📝', description: 'アルバイト・パート応募向け' },
-    { key: 'career_resume', label: '転職用履歴書', icon: '📋', description: '正社員・転職応募向け' },
-    { key: 'cv', label: '職務経歴書', icon: '📊', description: '詳細な職務経歴・実績をまとめる書類' },
+    { key: 'resume', label: 'アルバイト用履歴書', icon: FileText, description: 'アルバイト・パート応募向け' },
+    { key: 'career_resume', label: '転職用履歴書', icon: ClipboardList, description: '正社員・転職応募向け' },
+    { key: 'cv', label: '職務経歴書', icon: BarChart3, description: '詳細な職務経歴・実績をまとめる書類' },
 ];
 
 const TYPE_LABELS = { resume: 'アルバイト用', career_resume: '転職用履歴書', cv: '職務経歴書' };
@@ -201,7 +202,7 @@ export default function ResumeListPage() {
                     gap: 'var(--space-md)',
                     flexWrap: 'wrap',
                 }}>
-                    <span style={{ fontSize: 24 }}>✉️</span>
+                    <Mail size={24} strokeWidth={2} color="var(--color-text-accent)" style={{ flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, marginBottom: 2, color: 'var(--color-text-accent)' }}>
                             スカウトを受け取る準備ができています
@@ -210,8 +211,8 @@ export default function ResumeListPage() {
                             「デフォルト設定」した履歴書は応募時に自動選択され、企業からのスカウトにも活用されます。
                         </div>
                     </div>
-                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', background: 'rgba(200,149,46,0.1)', padding: '4px 10px', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap' }}>
-                        ★ マークでデフォルト設定
+                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', background: 'rgba(200,149,46,0.1)', padding: '4px 10px', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <BookmarkCheck size={14} strokeWidth={2} color="var(--color-text-accent)" /> マークでデフォルト設定
                     </div>
                 </div>
             )}
@@ -228,13 +229,13 @@ export default function ResumeListPage() {
                     fontSize: 'var(--font-size-sm)',
                     color: 'var(--color-success)',
                 }}>
-                    <span>✅</span>
+                    <CheckCircle2 size={16} strokeWidth={2} style={{ flexShrink: 0 }} />
                     デフォルト履歴書が設定されています。スカウト受信・応募時に自動使用されます。
                 </div>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
-                <h1 style={{ fontSize: 'var(--font-size-3xl)' }}>履歴書一覧</h1>
+                <h1 style={{ fontSize: 'var(--font-size-3xl)', color: 'var(--color-navy)' }}>履歴書一覧</h1>
                 <div style={{ position: 'relative' }}>
                     <button className="btn btn-primary" onClick={() => setShowTypeSelector(!showTypeSelector)} disabled={creating}>
                         {creating ? '作成中...' : '＋ 新規作成'}
@@ -253,7 +254,7 @@ export default function ResumeListPage() {
                                 onMouseEnter={e => e.currentTarget.style.background = 'var(--color-bg-surface)'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'none'}
                                 >
-                                    <span style={{ fontSize: 24 }}>{t.icon}</span>
+                                    <t.icon size={22} strokeWidth={2} color="var(--color-text-accent)" style={{ flexShrink: 0 }} />
                                     <div>
                                         <div style={{ fontWeight: 600 }}>{t.label}</div>
                                         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>{t.description}</div>
@@ -267,15 +268,17 @@ export default function ResumeListPage() {
 
             {resumes.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📝</div>
-                    <h3 style={{ marginBottom: 'var(--space-sm)' }}>履歴書がありません</h3>
+                    <div style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                        <FileText size={48} strokeWidth={1.5} color="var(--color-text-accent)" />
+                    </div>
+                    <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>履歴書がありません</h3>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
                         親プロフィールから子履歴書をワンタップで作成できます
                     </p>
                     <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
                         {RESUME_TYPES.map(t => (
-                            <button key={t.key} className="btn btn-primary" onClick={() => createResume(t.key)}>
-                                {t.icon} {t.label}を作成
+                            <button key={t.key} className="btn btn-primary" onClick={() => createResume(t.key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                <t.icon size={16} strokeWidth={2} /> {t.label}を作成
                             </button>
                         ))}
                     </div>
@@ -286,13 +289,13 @@ export default function ResumeListPage() {
                         <div key={resume.id} className="card card-glow">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
-                                    <h3 style={{ marginBottom: 'var(--space-xs)' }}>{resume.title}</h3>
+                                    <h3 style={{ marginBottom: 'var(--space-xs)', color: 'var(--color-navy)' }}>{resume.title}</h3>
                                     <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center', marginBottom: 'var(--space-xs)' }}>
                                         <span className={`badge ${TYPE_BADGE_CLASS[resume.type] || 'badge-info'}`}>
                                             {TYPE_LABELS[resume.type] || 'アルバイト用'}
                                         </span>
-                                        {defaultResumeId === resume.id && <span className="badge badge-success">&#9733; デフォルト</span>}
-                                        {resume.scout_enabled && <span className="badge badge-info">🔔 スカウトON</span>}
+                                        {defaultResumeId === resume.id && <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><BookmarkCheck size={12} strokeWidth={2} /> デフォルト</span>}
+                                        {resume.scout_enabled && <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Bell size={12} strokeWidth={2} /> スカウトON</span>}
                                     </div>
                                     <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                                         更新: {new Date(resume.updated_at).toLocaleDateString('ja-JP')}
@@ -306,12 +309,12 @@ export default function ResumeListPage() {
                             )}
                             <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-md)', flexWrap: 'wrap' }}>
                                 <Link to={`/resumes/${resume.id}`} className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)' }}>編集</Link>
-                                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }} onClick={() => handlePreview(resume.id)}>
-                                    {previewResumeId === resume.id ? '✕ 閉じる' : '👁️ プレビュー'}
+                                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={() => handlePreview(resume.id)}>
+                                    {previewResumeId === resume.id ? '✕ 閉じる' : <><Eye size={14} strokeWidth={2} /> プレビュー</>}
                                 </button>
-                                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }}
+                                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                                     onClick={() => handleDownload(resume.id)} disabled={downloadingId === resume.id}>
-                                    {downloadingId === resume.id ? '生成中...' : '📥 PDF'}
+                                    {downloadingId === resume.id ? '生成中...' : <><Download size={14} strokeWidth={2} /> PDF</>}
                                 </button>
                                 <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }} onClick={() => duplicateResume(resume.id)}>複製</button>
                                 {resume.type !== 'cv' && (
@@ -319,9 +322,9 @@ export default function ResumeListPage() {
                                 )}
                                 <button
                                     className={defaultResumeId === resume.id ? 'btn btn-primary' : 'btn btn-secondary'}
-                                    style={{ fontSize: 'var(--font-size-xs)' }}
+                                    style={{ fontSize: 'var(--font-size-xs)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                                     onClick={() => handleSetDefault(resume.id)}>
-                                    {defaultResumeId === resume.id ? '&#9733; デフォルト' : 'デフォルトに設定'}
+                                    {defaultResumeId === resume.id ? <><BookmarkCheck size={14} strokeWidth={2} /> デフォルト</> : 'デフォルトに設定'}
                                 </button>
                                 <button className="btn btn-danger" style={{ fontSize: 'var(--font-size-xs)' }} onClick={() => deleteResume(resume.id)}>削除</button>
                             </div>
@@ -340,11 +343,11 @@ export default function ResumeListPage() {
                 }} onClick={(e) => { if (e.target === e.currentTarget) { setPreviewData(null); setPreviewResumeId(null); } }}>
                     <div style={{ position: 'relative', maxWidth: '850px', width: '100%' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                            <h3 style={{ color: '#fff', margin: 0 }}>📄 プレビュー</h3>
+                            <h3 style={{ color: '#fff', margin: 0, display: 'inline-flex', alignItems: 'center', gap: 8 }}><FileText size={18} strokeWidth={2} /> プレビュー</h3>
                             <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                                 <button className="btn btn-secondary" onClick={() => handleDownload(previewResumeId)}
-                                    disabled={downloadingId === previewResumeId} style={{ fontSize: 'var(--font-size-sm)' }}>
-                                    {downloadingId === previewResumeId ? '生成中...' : '📥 PDFダウンロード'}
+                                    disabled={downloadingId === previewResumeId} style={{ fontSize: 'var(--font-size-sm)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                    {downloadingId === previewResumeId ? '生成中...' : <><Download size={16} strokeWidth={2} /> PDFダウンロード</>}
                                 </button>
                                 <button className="btn btn-secondary" onClick={() => { setPreviewData(null); setPreviewResumeId(null); }}
                                     style={{ fontSize: 'var(--font-size-sm)' }}>✕ 閉じる</button>
