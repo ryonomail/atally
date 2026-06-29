@@ -4,8 +4,9 @@ import { useAuth } from '../hooks/useAuth';
 import api from '../api';
 import SEO from '../components/SEO';
 import { formatSalary } from '../utils/salary';
+import { ArrowLeft, Bookmark, BookmarkCheck, FileText, MapPin } from 'lucide-react';
 
-function SectionHeader({ icon, title }) {
+function SectionHeader({ title }) {
     return (
         <div style={{
             display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
@@ -13,10 +14,10 @@ function SectionHeader({ icon, title }) {
             borderBottom: '1px solid var(--color-border)',
             background: 'var(--color-bg-secondary)',
         }}>
-            <span style={{ fontSize: '1rem', opacity: 0.75 }}>{icon}</span>
+            <span style={{ width: 3, height: 14, background: 'var(--color-accent)', borderRadius: 2, flexShrink: 0 }} />
             <h3 style={{
                 fontSize: 'var(--font-size-sm)', fontWeight: 700, margin: 0,
-                color: 'var(--color-text-primary)', letterSpacing: 0.2,
+                color: 'var(--color-navy)', letterSpacing: 0.2,
             }}>
                 {title}
             </h3>
@@ -118,8 +119,8 @@ function ReportModal({ jobId, onClose }) {
                                     <label key={r.value} style={{
                                         display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                                         padding: '8px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                        border: reason === r.value ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                                        background: reason === r.value ? 'rgba(18,28,52,0.06)' : 'transparent',
+                                        border: reason === r.value ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                        background: reason === r.value ? 'rgba(18,28,52,0.05)' : 'transparent',
                                         fontSize: 'var(--font-size-sm)',
                                     }}>
                                         <input type="radio" name="report_reason" value={r.value}
@@ -247,7 +248,7 @@ function ApplyModal({ job, onClose, onApplied }) {
                     <div className="skeleton" style={{ height: 100 }} />
                 ) : resumes.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
-                        <p style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📄</p>
+                        <FileText size={28} strokeWidth={1.75} style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }} />
                         <p style={{ fontWeight: 600, marginBottom: 'var(--space-xs)' }}>履歴書がありません</p>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
                             応募するには履歴書を作成してください
@@ -265,8 +266,8 @@ function ApplyModal({ job, onClose, onApplied }) {
                                     <label key={r.id} style={{
                                         display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                                         padding: '10px 14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                        border: selectedResumeId === r.id ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                                        background: selectedResumeId === r.id ? 'rgba(18,28,52,0.06)' : 'transparent',
+                                        border: selectedResumeId === r.id ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                        background: selectedResumeId === r.id ? 'rgba(18,28,52,0.05)' : 'transparent',
                                     }}>
                                         <input type="radio" name="resume" value={r.id}
                                             checked={selectedResumeId === r.id}
@@ -528,7 +529,9 @@ export default function JobDetailPage() {
         <div className="page container animate-fade-in">
             <SEO title={seoTitle} description={seoDesc} type="website" jsonLd={jobJsonLd} />
             <div style={{ marginBottom: 'var(--space-md)' }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/jobs')} style={{ fontSize: 'var(--font-size-sm)' }}>← 求人一覧に戻る</button>
+                <button className="btn btn-secondary" onClick={() => navigate('/jobs')} style={{ fontSize: 'var(--font-size-sm)', gap: 6 }}>
+                    <ArrowLeft size={15} strokeWidth={2} /> 求人一覧に戻る
+                </button>
             </div>
 
             <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -537,9 +540,9 @@ export default function JobDetailPage() {
                 <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-xl)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)' }}>
                         <div>
-                            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-sm)', lineHeight: 1.4 }}>{job.title}</h1>
+                            <h1 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--space-sm)', lineHeight: 1.4, color: 'var(--color-navy)' }}>{job.title}</h1>
                             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-base)' }}>
-                                🏢 {job.source === 'hellowork'
+                                {job.source === 'hellowork'
                                     ? <span>{job.employer_name || job.company?.company_name}</span>
                                     : <Link to={`/companies/${job.company?.id}`} style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline', textUnderlineOffset: 3 }}>{job.company?.company_name}</Link>}
                                 {job.industry && <span style={{ marginLeft: 8, opacity: 0.7 }}>({job.industry})</span>}
@@ -556,7 +559,7 @@ export default function JobDetailPage() {
                                 marginTop: 'var(--space-xs)',
                                 cursor: 'default',
                             }}>
-                                ⚖️ 職業安定法準拠
+                                職業安定法準拠
                             </span>
                         </div>
                         {job.source === 'hellowork' ? (
@@ -567,7 +570,7 @@ export default function JobDetailPage() {
                                     background: 'rgba(0,112,185,0.08)', border: '1px solid rgba(0,112,185,0.25)',
                                     fontSize: 'var(--font-size-xs)', color: '#0070b9', fontWeight: 600,
                                 }}>
-                                    🏢 ハローワーク掲載求人
+                                    ハローワーク掲載求人
                                 </span>
                                 {job.hellowork_id && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -613,15 +616,16 @@ export default function JobDetailPage() {
                                         color: saved ? 'var(--color-accent)' : 'var(--color-text-secondary)',
                                         fontWeight: saved ? 600 : 400,
                                         transition: 'all 0.2s',
+                                        display: 'inline-flex', alignItems: 'center', gap: 6,
                                     }}
                                 >
-                                    {saved ? '★ 保存済み' : '☆ 保存する'}
+                                    {saved ? <><BookmarkCheck size={15} strokeWidth={2} /> 保存済み</> : <><Bookmark size={15} strokeWidth={2} /> 保存する</>}
                                 </button>
                             </div>
                         ) : !user && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
-                                <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)}>
-                                    📝 履歴書を作って応募する
+                                <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)} style={{ gap: 8 }}>
+                                    <FileText size={17} strokeWidth={2} /> 履歴書を作って応募する
                                 </button>
                                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                                     登録不要・無料 /{' '}
@@ -647,24 +651,24 @@ export default function JobDetailPage() {
                                 background: 'rgba(0,112,185,0.08)', border: '1px solid rgba(0,112,185,0.25)',
                                 fontSize: 'var(--font-size-xs)', color: '#0070b9', fontWeight: 600,
                             }}>
-                                🏢 ハローワーク掲載
+                                ハローワーク掲載
                             </span>
                         )}
                         {job.is_agency_job && <span className="badge badge-warning">人材紹介</span>}
                         {job.application_type && <span className="badge badge-info">{job.application_type}</span>}
-                        {job.employment_type && <span className="badge badge-info">👔 {job.employment_type}</span>}
-                        {job.remote_policy && <span className="badge badge-info">🏠 {job.remote_policy}</span>}
-                        {job.location && <span className="badge badge-info">📍 {job.location}</span>}
+                        {job.employment_type && <span className="badge badge-info">{job.employment_type}</span>}
+                        {job.remote_policy && <span className="badge badge-info">{job.remote_policy}</span>}
+                        {job.location && <span className="badge badge-info">{job.location}</span>}
                         <span className="badge badge-success">
                             {(job.salary_min || job.salary_max)
-                                ? `💰 ${job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}${job.salary_min && job.salary_max ? '〜' : ''}${job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}`
-                                : '💰 給与非公開'}
+                                ? `${job.salary_min ? `${Math.round(job.salary_min / 10000)}万` : ''}${job.salary_min && job.salary_max ? '〜' : ''}${job.salary_max ? `${Math.round(job.salary_max / 10000)}万円` : ''}`
+                                : '給与非公開'}
                         </span>
                         {job.positions_available && <span className="badge badge-info">採用{job.positions_available}名</span>}
-                        {job.work_hours && <span className="badge badge-info">🕐 {job.work_hours}</span>}
-                        {job.overtime_average && <span className="badge badge-info">⏱ 残業{job.overtime_average}</span>}
-                        {job.holidays && <span className="badge badge-info">📅 {job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
-                        {job.dormitory && job.dormitory !== 'なし' && <span className="badge badge-info">🏠 寮あり</span>}
+                        {job.work_hours && <span className="badge badge-info">{job.work_hours}</span>}
+                        {job.overtime_average && <span className="badge badge-info">残業 {job.overtime_average}</span>}
+                        {job.holidays && <span className="badge badge-info">{job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
+                        {job.dormitory && job.dormitory !== 'なし' && <span className="badge badge-info">寮あり</span>}
                     </div>
 
                     {/* 特徴タグ */}
@@ -936,7 +940,7 @@ export default function JobDetailPage() {
                                     rel="noopener noreferrer"
                                     style={{ display: 'inline-block', marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent)' }}
                                 >
-                                    🗺 Googleマップで開く
+                                    Googleマップで開く →
                                 </a>
                             </div>
                         );
@@ -1133,7 +1137,7 @@ export default function JobDetailPage() {
                 {job.agency_display && (
                     <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: 'var(--color-bg-surface)' }}>
                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                            ⚖️ {job.agency_display}
+                            {job.agency_display}
                         </p>
                     </div>
                 )}
@@ -1187,27 +1191,27 @@ export default function JobDetailPage() {
                 {!user && job.source !== 'hellowork' && (
                     <div className="card" style={{
                         padding: 'var(--space-xl)',
-                        background: 'linear-gradient(135deg, rgba(0,112,185,0.07) 0%, rgba(52,199,89,0.05) 100%)',
-                        border: '1px solid rgba(0,112,185,0.2)',
+                        background: 'var(--color-accent-light)',
+                        border: '1px solid var(--color-border)',
                         textAlign: 'center',
                     }}>
-                        <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📝</div>
-                        <h3 style={{ marginBottom: 'var(--space-sm)' }}>この求人に応募するには履歴書が必要です</h3>
+                        <FileText size={28} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)' }} />
+                        <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>この求人に応募するには履歴書が必要です</h3>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)', lineHeight: 1.7 }}>
                             Atallyでは登録不要・無料で履歴書が作成できます。<br />
                             作成後そのままこの求人に応募できます。
                         </p>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
-                            {['📝 履歴書を無料で作る', '✅ この求人に応募する'].map((step, i) => (
+                            {['履歴書を無料で作る', 'この求人に応募する'].map((step, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                                     {i > 0 && <span style={{ color: 'var(--color-border)' }}>→</span>}
-                                    <span style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '4px 10px' }}>{step}</span>
+                                    <span style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '4px 10px' }}>{step}</span>
                                 </div>
                             ))}
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)}>
-                                📝 履歴書を無料で作る
+                            <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)} style={{ gap: 8 }}>
+                                <FileText size={17} strokeWidth={2} /> 履歴書を無料で作る
                             </button>
                             <button className="btn btn-secondary" onClick={() => navigate('/login')}>
                                 ログインして応募
@@ -1249,14 +1253,14 @@ export default function JobDetailPage() {
                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-border)'; }}>
                                         <p style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', margin: '0 0 4px 0' }}>{sj.title}</p>
                                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 6px 0' }}>
-                                            🏢 {sj.company?.company_name}
+                                            {sj.company?.company_name}
                                         </p>
                                         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                                             {sj.employment_type && <span className="badge badge-info" style={{ fontSize: 'var(--font-size-xs)' }}>{sj.employment_type}</span>}
-                                            {sj.location && <span className="badge badge-info" style={{ fontSize: 'var(--font-size-xs)' }}>📍 {sj.location}</span>}
+                                            {sj.location && <span className="badge badge-info" style={{ fontSize: 'var(--font-size-xs)' }}>{sj.location}</span>}
                                             {(sj.salary_min || sj.salary_max) && (
                                                 <span className="badge badge-success" style={{ fontSize: 'var(--font-size-xs)' }}>
-                                                    💰 {sj.salary_min ? `${Math.round(sj.salary_min / 10000)}万` : ''}
+                                                    {sj.salary_min ? `${Math.round(sj.salary_min / 10000)}万` : ''}
                                                     {sj.salary_min && sj.salary_max ? '〜' : ''}
                                                     {sj.salary_max ? `${Math.round(sj.salary_max / 10000)}万円` : ''}
                                                 </span>
