@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Search } from 'lucide-react';
+import { Search, MessageSquare, Mail, FileText, Lock } from 'lucide-react';
 
 const FAQS = {
     jobseeker: [
@@ -152,28 +152,28 @@ export default function HelpPage() {
                 {/* クイックリンク */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-3xl)' }}>
                     {[
-                        { icon: '💬', title: 'チャットサポート', desc: 'リアルタイムで相談', action: () => {
+                        { Icon: MessageSquare, title: 'チャットサポート', desc: 'リアルタイムで相談', action: () => {
             if (window.$crisp) {
                 window.$crisp.push(['do', 'chat:open']);
             } else {
                 window.location.href = 'mailto:support@atally.jp';
             }
         }},
-                        { icon: '📧', title: 'メールで問い合わせ', desc: 'support@atally.jp', action: () => window.location.href = 'mailto:support@atally.jp' },
-                        { icon: '📋', title: '利用規約', desc: '規約・ポリシー確認', link: '/terms' },
-                        { icon: '🔒', title: 'プライバシー', desc: '個人情報の取り扱い', link: '/privacy' },
+                        { Icon: Mail, title: 'メールで問い合わせ', desc: 'support@atally.jp', action: () => window.location.href = 'mailto:support@atally.jp' },
+                        { Icon: FileText, title: '利用規約', desc: '規約・ポリシー確認', link: '/terms' },
+                        { Icon: Lock, title: 'プライバシー', desc: '個人情報の取り扱い', link: '/privacy' },
                     ].map((card, i) => (
                         card.link ? (
                             <Link key={i} to={card.link} style={{ textDecoration: 'none' }}>
                                 <div className="card card-lift" style={{ textAlign: 'center', padding: 'var(--space-lg)', cursor: 'pointer' }}>
-                                    <div style={{ fontSize: 28, marginBottom: 'var(--space-sm)' }}>{card.icon}</div>
+                                    <card.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)' }} />
                                     <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', marginBottom: 4 }}>{card.title}</div>
                                     <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{card.desc}</div>
                                 </div>
                             </Link>
                         ) : (
                             <div key={i} className="card card-lift" style={{ textAlign: 'center', padding: 'var(--space-lg)', cursor: 'pointer' }} onClick={card.action}>
-                                <div style={{ fontSize: 28, marginBottom: 'var(--space-sm)' }}>{card.icon}</div>
+                                <card.Icon size={26} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)' }} />
                                 <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', marginBottom: 4 }}>{card.title}</div>
                                 <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{card.desc}</div>
                             </div>
@@ -189,8 +189,8 @@ export default function HelpPage() {
                 {/* タブ */}
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-xl)', borderBottom: '2px solid var(--color-border)', paddingBottom: 0 }}>
                     {[
-                        { key: 'jobseeker', label: '👤 求職者の方' },
-                        { key: 'company', label: '🏢 企業の方' },
+                        { key: 'jobseeker', label: '求職者の方' },
+                        { key: 'company', label: '企業の方' },
                     ].map(t => (
                         <button key={t.key} onClick={() => { setTab(t.key); setSearch(''); }} style={{
                             background: 'none', border: 'none', cursor: 'pointer',
@@ -212,8 +212,8 @@ export default function HelpPage() {
                         filtered.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)
                     ) : (
                         <div style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
-                            <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>🔍</div>
-                            「{search}」に一致する質問が見つかりませんでした
+                            <Search size={32} strokeWidth={1.5} style={{ opacity: 0.5, marginBottom: 'var(--space-sm)' }} />
+                            <div>「{search}」に一致する質問が見つかりませんでした</div>
                         </div>
                     )}
                 </div>
@@ -227,8 +227,8 @@ export default function HelpPage() {
                     padding: 'var(--space-2xl)',
                     textAlign: 'center',
                 }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>💬</div>
-                    <h3 style={{ marginBottom: 'var(--space-sm)' }}>解決しない場合はチャットへ</h3>
+                    <MessageSquare size={30} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)' }} />
+                    <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>解決しない場合はチャットへ</h3>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)', fontSize: 'var(--font-size-sm)' }}>
                         営業時間内（平日 10:00〜17:00）はチャットでリアルタイムにご対応します。<br />
                         時間外はメッセージを残していただければ翌営業日にご返信します。

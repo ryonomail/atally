@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Hand, User, FileText, Search, Building2, ClipboardList } from 'lucide-react';
 
 const STEPS_JOBSEEKER = [
     {
-        icon: '👋',
+        Icon: Hand,
         title: 'Atallyへようこそ！',
         desc: 'ぴったり合う仕事探し、はじめましょう。まずは基本的な使い方をご紹介します。',
         tip: null,
     },
     {
-        icon: '👤',
+        Icon: User,
         title: 'プロフィールを充実させよう',
         desc: 'プロフィールを80%以上入力すると、企業からスカウトが届きやすくなります。スキルや経験を詳しく記入しましょう。',
         tip: { label: 'プロフィールを設定する', path: '/profile' },
     },
     {
-        icon: '📝',
+        Icon: FileText,
         title: '履歴書を作成しよう',
         desc: '履歴書はアルバイト用・転職用・職務経歴書の3種類から選べます。デフォルト設定すると応募時に自動入力されます。',
         tip: { label: '履歴書を作成する', path: '/resumes' },
     },
     {
-        icon: '🔍',
+        Icon: Search,
         title: '求人を探してみよう',
         desc: '職種・勤務地・給与など条件を絞って求人を検索できます。気になる求人は「保存」して後で見返せます。',
         tip: { label: '求人を探す', path: '/jobs' },
@@ -31,28 +32,22 @@ const STEPS_JOBSEEKER = [
 
 const STEPS_COMPANY = [
     {
-        icon: '👋',
+        Icon: Hand,
         title: 'Atallyへようこそ！',
         desc: 'ぴったりの人材を、見つけましょう。まずは基本的な使い方をご紹介します。',
         tip: null,
     },
     {
-        icon: '🏢',
+        Icon: Building2,
         title: '会社プロフィールを設定しよう',
         desc: '会社の基本情報を入力することで、求職者に信頼感を与えられます。ロゴや会社の雰囲気も登録できます。',
         tip: null,
     },
     {
-        icon: '📋',
+        Icon: ClipboardList,
         title: '求人票を作成しよう',
         desc: '「求人管理」から新しい求人を作成できます。下書き保存・プレビュー確認後に公開できるので安心です。',
         tip: { label: '求人を作成する', path: '/company/jobs' },
-    },
-    {
-        icon: '✉️',
-        title: 'スカウトで先手を打とう',
-        desc: 'スカウト機能（有料）では、条件に合う求職者へ直接アプローチできます。待つだけでなく能動的な採用が可能です。',
-        tip: { label: 'スカウトを使う', path: '/company/scout' },
     },
 ];
 
@@ -124,8 +119,8 @@ export default function OnboardingModal() {
                 }}>×</button>
 
                 {/* アイコン */}
-                <div style={{ fontSize: '3.5rem', marginBottom: 'var(--space-lg)', lineHeight: 1 }}>
-                    {current.icon}
+                <div style={{ marginBottom: 'var(--space-lg)', display: 'flex', justifyContent: 'center' }}>
+                    {current.Icon && <current.Icon size={44} strokeWidth={1.75} color="var(--color-accent)" />}
                 </div>
 
                 {/* タイトル */}
@@ -146,7 +141,7 @@ export default function OnboardingModal() {
                         </button>
                     )}
                     <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%' }}>
-                        {isLast ? '使い始める 🎉' : '次へ'}
+                        {isLast ? '使い始める' : '次へ'}
                     </button>
                 </div>
 

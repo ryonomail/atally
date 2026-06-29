@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '../api';
 
 export default function ForgotPasswordPage() {
@@ -162,8 +163,8 @@ export default function ForgotPasswordPage() {
                                     style={{ paddingRight: 42, ...(fieldErrors.password ? { borderColor: '#ef4444' } : {}) }}
                                 />
                                 <button type="button" onClick={() => setShowPassword(v => !v)}
-                                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}>
-                                    {showPassword ? '🙈' : '👁'}
+                                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1, padding: 0, display: 'inline-flex' }}>
+                                    {showPassword ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
                                 </button>
                             </div>
                             <span style={{ fontSize: 'var(--font-size-xs)', color: fieldErrors.password ? '#ef4444' : 'var(--color-text-muted)' }}>8文字以上</span>
@@ -183,8 +184,8 @@ export default function ForgotPasswordPage() {
                                     style={{ paddingRight: 42, ...(fieldErrors.passwordConfirmation ? { borderColor: '#ef4444' } : {}) }}
                                 />
                                 <button type="button" onClick={() => setShowPasswordConfirm(v => !v)}
-                                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 16, lineHeight: 1, padding: 0 }}>
-                                    {showPasswordConfirm ? '🙈' : '👁'}
+                                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1, padding: 0, display: 'inline-flex' }}>
+                                    {showPasswordConfirm ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
                                 </button>
                             </div>
                             {fieldErrors.passwordConfirmation && <div style={fieldErrorStyle}>{fieldErrors.passwordConfirmation}</div>}

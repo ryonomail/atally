@@ -122,7 +122,7 @@ function Section({ section }) {
         );
         case 'caution': return (
             <div style={{ background: '#fff5f5', border: '1px solid #fed7d7', borderRadius: 'var(--radius-md)', padding: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
-                <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#c53030', marginBottom: 'var(--space-xs)' }}>⚠️ 注意</div>
+                <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#c53030', marginBottom: 'var(--space-xs)' }}>注意</div>
                 <div style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8, fontSize: 'var(--font-size-sm)', whiteSpace: 'pre-wrap' }}>{section.content}</div>
             </div>
         );
@@ -199,14 +199,13 @@ export default function ColumnPage() {
 
                         {/* CTA */}
                         <div className="card" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-xl)', textAlign: 'center', background: 'var(--color-accent-light)', border: '1px solid var(--color-border)' }}>
-                            <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>📝</div>
-                            <h3 style={{ marginBottom: 'var(--space-sm)' }}>実際に履歴書を作ってみましょう</h3>
+                            <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>実際に履歴書を作ってみましょう</h3>
                             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)', lineHeight: 1.7 }}>
                                 Atallyの無料履歴書作成ツールなら、この記事の内容をそのまま活かして<br />
                                 プロ品質の履歴書が登録不要・無料で作れます。
                             </p>
                             <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                <Link to="/resumes/guest" className="btn btn-primary btn-lg">📝 今すぐ無料で作る</Link>
+                                <Link to="/resumes/guest" className="btn btn-primary btn-lg">今すぐ無料で作る</Link>
                                 <Link to="/jobs" className="btn btn-secondary">求人を探す</Link>
                             </div>
                         </div>
@@ -223,8 +222,8 @@ export default function ColumnPage() {
                                 </Link>
                             ))}
                         </div>
-                        <div className="card" style={{ padding: 'var(--space-lg)', textAlign: 'center', background: 'rgba(0,112,185,0.04)', border: '1px solid rgba(0,112,185,0.15)' }}>
-                            <div style={{ fontWeight: 700, fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-sm)' }}>📝 履歴書を無料作成</div>
+                        <div className="card" style={{ padding: 'var(--space-lg)', textAlign: 'center', background: 'var(--color-accent-light)', border: '1px solid var(--color-border)' }}>
+                            <div style={{ fontWeight: 700, fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>履歴書を無料作成</div>
                             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)', lineHeight: 1.7 }}>登録不要・完全無料<br />作成後そのまま求人に応募可</p>
                             <Link to="/resumes/guest" className="btn btn-primary" style={{ width: '100%', display: 'block' }}>今すぐ作る</Link>
                         </div>
