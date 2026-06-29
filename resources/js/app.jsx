@@ -270,56 +270,56 @@ function AppRoutes() {
             </Suspense>
             </div>
             <footer style={{
-                borderTop: '1px solid var(--color-divider)',
+                borderTop: '1px solid rgba(200, 149, 46, 0.25)',
                 padding: 'var(--space-3xl) 0 var(--space-lg)',
-                background: 'var(--color-bg-secondary)',
+                background: 'var(--color-navy)',
                 fontSize: 'var(--font-size-xs)',
-                color: 'var(--color-text-muted)',
+                color: 'rgba(255, 255, 255, 0.55)',
             }}>
                 <div className="container">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-xl)', marginBottom: 'var(--space-xl)' }}>
                         <div>
-                            <div style={{ fontWeight: 700, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-sm)' }}>Atally</div>
+                            <div style={{ fontWeight: 700, fontSize: 'var(--font-size-base)', color: '#d4a843', marginBottom: 'var(--space-sm)', letterSpacing: '-0.02em' }}>Atally</div>
                             <p style={{ lineHeight: 1.8, margin: 0 }}>ぴったり合う仕事探し、はじめよう。</p>
                         </div>
                         <div>
-                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>求職者の方</div>
+                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>求職者の方</div>
                             {[
                                 { to: '/jobs', label: '求人を探す' },
                                 { to: '/register', label: '無料登録' },
                                 { to: '/resumes/guest', label: '履歴書作成（無料）' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
-                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                    <Link to={l.to} style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>{l.label}</Link>
                                 </div>
                             ))}
                         </div>
                         <div>
-                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>企業の方</div>
+                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>企業の方</div>
                             {[
                                 { to: '/for-companies', label: '採用担当者へ' },
                                 { to: '/pricing', label: '料金プラン' },
                                 { to: '/register?role=company', label: '企業登録' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
-                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                    <Link to={l.to} style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>{l.label}</Link>
                                 </div>
                             ))}
                         </div>
                         <div>
-                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>人材紹介会社の方</div>
+                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>人材紹介会社の方</div>
                             {[
                                 { to: '/for-agencies', label: '紹介会社向けサービス' },
                                 { to: '/pricing', label: '料金プラン' },
                                 { to: '/register?role=company', label: '紹介会社登録' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
-                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                    <Link to={l.to} style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>{l.label}</Link>
                                 </div>
                             ))}
                         </div>
                         <div>
-                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>お役立ちコラム</div>
+                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>お役立ちコラム</div>
                             {[
                                 { to: '/column/rirekisho-kakikata', label: '履歴書の書き方' },
                                 { to: '/column/shibo-doki-kakikata', label: '志望動機の書き方' },
@@ -327,12 +327,12 @@ function AppRoutes() {
                                 { to: '/column', label: 'コラム一覧' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
-                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                    <Link to={l.to} style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>{l.label}</Link>
                                 </div>
                             ))}
                         </div>
                         <div>
-                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>サポート</div>
+                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'rgba(255,255,255,0.75)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>サポート</div>
                             {[
                                 { to: '/help', label: 'ヘルプセンター' },
                                 { to: '/about', label: 'Atallyについて' },
@@ -340,14 +340,14 @@ function AppRoutes() {
                                 { to: '/privacy', label: 'プライバシーポリシー' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
-                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                    <Link to={l.to} style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>{l.label}</Link>
                                 </div>
                             ))}
                         </div>
                     </div>
-                    <div style={{ borderTop: '1px solid var(--color-divider)', paddingTop: 'var(--space-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-                        <span>&copy; {new Date().getFullYear()} Atally</span>
-                        <span style={{ color: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 'var(--space-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.4)' }}>&copy; {new Date().getFullYear()} Atally</span>
+                        <span style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '0.04em' }}>
                             職業安定法準拠 ・ 個人情報保護
                         </span>
                     </div>

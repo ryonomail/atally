@@ -74,6 +74,7 @@ export default function LandingPage() {
                         lineHeight: 1.18,
                         letterSpacing: '-0.02em',
                         margin: '0 0 var(--space-lg)',
+                        color: 'var(--color-navy)',
                     }}>
                         履歴書を作って、<br />仕事を探そう。
                     </h1>

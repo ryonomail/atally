@@ -11,6 +11,10 @@
   --color-bg-glass: rgba(255, 255, 255, 0.65);
   --color-bg-sidebar: rgba(246, 246, 248, 0.85);
 
+  /* Navy — Premium ink (used sparingly: footer, headlines) */
+  --color-navy: #121c34;
+  --color-navy-soft: #1a2744;
+
   /* Accent — Navy + Gold (Premium) */
   --color-accent: #c8952e;
   --color-accent-hover: #b07f1f;
