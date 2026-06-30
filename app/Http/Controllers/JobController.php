@@ -955,6 +955,13 @@ class JobController extends Controller
                         $job->id,
                         "Charged ¥{$dailyBudget} for activation (pi: {$intent->id})"
                     );
+                    \App\Models\PaymentTransaction::record([
+                        'company_id' => $company->id,
+                        'job_id' => $job->id,
+                        'amount' => $dailyBudget,
+                        'type' => 'job_activation',
+                        'stripe_payment_intent_id' => $intent->id,
+                    ]);
                 } catch (\Stripe\Exception\CardException $e) {
                     return response()->json([
                         'message' => 'カードが拒否されました: ' . $e->getMessage(),

@@ -52,6 +52,13 @@ class ChargeDailyBilling extends Command
 
                     if ($result['success']) {
                         $charged++;
+                        \App\Models\PaymentTransaction::record([
+                            'company_id' => $job->company->id,
+                            'job_id' => $job->id,
+                            'amount' => $amount,
+                            'type' => 'daily_billing',
+                            'stripe_payment_intent_id' => $result['payment_intent_id'] ?? null,
+                        ]);
                         AdminAuditLog::logSystem(
                             'daily_billing_charged',
                             'Job',
@@ -95,6 +102,13 @@ class ChargeDailyBilling extends Command
 
                     if ($result['success']) {
                         $charged++;
+                        \App\Models\PaymentTransaction::record([
+                            'company_id' => $campaign->company->id,
+                            'campaign_id' => $campaign->id,
+                            'amount' => $amount,
+                            'type' => 'campaign_billing',
+                            'stripe_payment_intent_id' => $result['payment_intent_id'] ?? null,
+                        ]);
                         // 月額の場合: 課金成功後に次回請求日を +1ヶ月更新
                         if ($campaign->billing_period === 'monthly') {
                             $campaign->update([

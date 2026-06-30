@@ -94,6 +94,14 @@ class CampaignController extends Controller
         AdminAuditLog::logSystem('campaign_charged', 'Campaign', $campaign->id,
             "Charged ¥{$amount} for campaign activation (pi: {$intent->id}) company#{$company->id}");
 
+        \App\Models\PaymentTransaction::record([
+            'company_id' => $company->id,
+            'campaign_id' => $campaign->id ?: null,
+            'amount' => $amount,
+            'type' => 'campaign_activation',
+            'stripe_payment_intent_id' => $intent->id,
+        ]);
+
         return ['success' => true];
     }
 

@@ -56,11 +56,12 @@ class AdminController extends Controller
 
             $openReports = DB::table('reports')->where('status', 'open')->count();
 
-            // 今月・先月の売上を1クエリで取得
-            $revenueSums = DB::table('daily_usages')
+            // 今月・先月の売上を1クエリで取得（実際のStripe課金＝決済台帳から集計）
+            $revenueSums = DB::table('payment_transactions')
+                ->where('status', 'succeeded')
                 ->selectRaw("
-                    SUM(max_budget_amount) FILTER (WHERE EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?) AS this_month,
-                    SUM(max_budget_amount) FILTER (WHERE EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?) AS last_month
+                    SUM(amount) FILTER (WHERE EXTRACT(YEAR FROM charged_at) = ? AND EXTRACT(MONTH FROM charged_at) = ?) AS this_month,
+                    SUM(amount) FILTER (WHERE EXTRACT(YEAR FROM charged_at) = ? AND EXTRACT(MONTH FROM charged_at) = ?) AS last_month
                 ", [
                     $today->year, $today->month,
                     $today->copy()->subMonth()->year, $today->copy()->subMonth()->month,
@@ -598,26 +599,29 @@ class AdminController extends Controller
         $data = Cache::remember('admin_revenue', 300, function () {
             $today = now();
 
-            $thisMonth = DailyUsage::whereYear('date', $today->year)
-                ->whereMonth('date', $today->month)
-                ->sum('max_budget_amount');
+            // 実際のStripe課金（決済台帳）から集計
+            $base = fn() => \App\Models\PaymentTransaction::where('status', 'succeeded');
 
-            $lastMonth = DailyUsage::whereYear('date', $today->copy()->subMonth()->year)
-                ->whereMonth('date', $today->copy()->subMonth()->month)
-                ->sum('max_budget_amount');
+            $thisMonth = $base()->whereYear('charged_at', $today->year)
+                ->whereMonth('charged_at', $today->month)
+                ->sum('amount');
 
-            $daily = DailyUsage::where('date', '>=', $today->copy()->subDays(30)->toDateString())
-                ->selectRaw("TO_CHAR(date, 'YYYY-MM-DD') as date, SUM(max_budget_amount) as total")
-                ->groupBy('date')
+            $lastMonth = $base()->whereYear('charged_at', $today->copy()->subMonth()->year)
+                ->whereMonth('charged_at', $today->copy()->subMonth()->month)
+                ->sum('amount');
+
+            $daily = $base()->where('charged_at', '>=', $today->copy()->subDays(30)->startOfDay())
+                ->selectRaw("TO_CHAR(charged_at, 'YYYY-MM-DD') as date, SUM(amount) as total")
+                ->groupByRaw("TO_CHAR(charged_at, 'YYYY-MM-DD')")
                 ->orderBy('date')
                 ->get()
                 ->map(fn($r) => ['date' => $r->date, 'total' => (int) $r->total])
                 ->values()
                 ->all();
 
-            $topCompanies = DailyUsage::whereYear('date', $today->year)
-                ->whereMonth('date', $today->month)
-                ->select('company_id', DB::raw("SUM(max_budget_amount) as total"))
+            $topCompanies = $base()->whereYear('charged_at', $today->year)
+                ->whereMonth('charged_at', $today->month)
+                ->select('company_id', DB::raw("SUM(amount) as total"))
                 ->groupBy('company_id')
                 ->orderByDesc('total')
                 ->limit(10)
@@ -631,9 +635,9 @@ class AdminController extends Controller
                 ->values()
                 ->all();
 
-            $monthly = DailyUsage::where('date', '>=', $today->copy()->subMonths(6)->startOfMonth()->toDateString())
-                ->selectRaw("TO_CHAR(date, 'YYYY-MM') as month, SUM(max_budget_amount) as total")
-                ->groupByRaw("TO_CHAR(date, 'YYYY-MM')")
+            $monthly = $base()->where('charged_at', '>=', $today->copy()->subMonths(6)->startOfMonth())
+                ->selectRaw("TO_CHAR(charged_at, 'YYYY-MM') as month, SUM(amount) as total")
+                ->groupByRaw("TO_CHAR(charged_at, 'YYYY-MM')")
                 ->orderBy('month')
                 ->get()
                 ->map(fn($r) => ['month' => $r->month, 'total' => (int) $r->total])
