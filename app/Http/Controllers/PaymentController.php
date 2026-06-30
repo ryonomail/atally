@@ -118,7 +118,8 @@ class PaymentController extends Controller
         }
 
         try {
-            $customer = Customer::retrieve($company->stripe_customer_id, [
+            $customer = Customer::retrieve([
+                'id' => $company->stripe_customer_id,
                 'expand' => ['invoice_settings.default_payment_method'],
             ]);
 

@@ -898,7 +898,8 @@ class JobController extends Controller
             $paymentMethodId = null;
             if ($company->stripe_customer_id) {
                 try {
-                    $customer = \Stripe\Customer::retrieve($company->stripe_customer_id, [
+                    $customer = \Stripe\Customer::retrieve([
+                        'id' => $company->stripe_customer_id,
                         'expand' => ['invoice_settings.default_payment_method'],
                     ]);
                     $pm = $customer->invoice_settings->default_payment_method;

@@ -63,7 +63,8 @@ class CampaignController extends Controller
     {
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        $customer = Customer::retrieve($company->stripe_customer_id, [
+        $customer = Customer::retrieve([
+            'id' => $company->stripe_customer_id,
             'expand' => ['invoice_settings.default_payment_method'],
         ]);
         $pm = $customer->invoice_settings->default_payment_method;
