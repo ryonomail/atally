@@ -472,6 +472,9 @@ class AgencyController extends Controller
             '手数料タイプ'          => 'referral_fee_type',
             '手数料'                => 'referral_fee',
             '紹介条件'              => 'referral_conditions',
+            '求人種別'              => 'listing_type',
+            '派遣元企業名'          => 'dispatch_client_name',
+            '派遣元（雇用主）企業名' => 'dispatch_client_name',
             'ペルソナ_対象年齢下限'       => 'persona_age_min',
             'ペルソナ_対象年齢上限'       => 'persona_age_max',
             'ペルソナ_経験年数下限'       => 'persona_experience_min',
@@ -529,8 +532,9 @@ class AgencyController extends Controller
             'number_of_employees', 'founded_year', 'industry',
             // その他
             'appeal_points', 'notes',
-            // 人材紹介
+            // 人材紹介・派遣
             'allow_referral', 'referral_fee_type', 'referral_fee', 'referral_conditions',
+            'listing_type', 'dispatch_client_name',
             // ペルソナ設定
             'persona_age_min', 'persona_age_max', 'persona_experience_min', 'persona_experience_max',
             'persona_target_skills', 'persona_target_locations', 'persona_target_job_types',
@@ -615,6 +619,19 @@ class AgencyController extends Controller
             $filtered['company_id'] = $company->id;
             $filtered['status'] = 'pending_review';
             $filtered['ng_word_flagged'] = $hasNgWord;
+
+            // 求人種別: 日本語表記を正規化。未指定なら紹介会社は referral、それ以外は direct
+            $ltRaw = trim((string) ($filtered['listing_type'] ?? ''));
+            $ltMap = ['直接' => 'direct', '自社採用' => 'direct', '派遣' => 'dispatch', '紹介' => 'referral', '人材紹介' => 'referral'];
+            $lt = $ltMap[$ltRaw] ?? (in_array($ltRaw, ['direct', 'dispatch', 'referral'], true) ? $ltRaw : '');
+            if ($lt === '') {
+                $lt = $company->company_type === 'recruitment_agency' ? 'referral' : 'direct';
+            }
+            $filtered['listing_type'] = $lt;
+            // 派遣元（雇用主）名があれば求人詳細に公開
+            if (!empty($filtered['dispatch_client_name'])) {
+                $filtered['show_dispatch_client'] = true;
+            }
 
             // ペルソナフィールドを分離
             $personaFields = [];
