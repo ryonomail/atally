@@ -90,6 +90,11 @@ class JobController extends Controller
             $query->where('jobs.location', 'like', "%{$request->location}%");
         }
 
+        // 都道府県フィルタ（SEOの都道府県ランディング /jobs?prefecture=◯◯県 用）
+        if ($request->filled('prefecture')) {
+            $query->where('jobs.prefecture', $request->prefecture);
+        }
+
         if ($request->filled('employment_type')) {
             $query->where('jobs.employment_type', $request->employment_type);
         }
