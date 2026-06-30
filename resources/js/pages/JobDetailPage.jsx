@@ -700,6 +700,7 @@ export default function JobDetailPage() {
                         <InfoTable>
                             <InfoRow label="派遣元事業主" value={job.company?.company_name} />
                             <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                            <InfoRow label="電話番号" value={job.company?.phone} />
                             <InfoRow label="派遣事業許可番号" value={job.company?.dispatch_license_number} />
                             <InfoRow label="派遣先" value={job.show_dispatch_client && job.dispatch_client_name ? job.dispatch_client_name : '非公開'} />
                         </InfoTable>
@@ -723,6 +724,7 @@ export default function JobDetailPage() {
                         <InfoTable>
                             <InfoRow label="紹介事業者（紹介元）" value={job.company?.company_name} />
                             <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                            <InfoRow label="電話番号" value={job.company?.phone} />
                             <InfoRow label="職業紹介事業 許可番号" value={job.company?.permit_number} />
                             {job.employment_type?.includes('派遣') && (
                                 <InfoRow label="紹介先（雇用主＝派遣元）" value={job.dispatch_client_name || job.client_company?.name || '非公開'} />
@@ -1105,6 +1107,25 @@ export default function JobDetailPage() {
                                         </a>
                                     </div>
                                 )}
+                            </InfoTable>
+                        </div>
+                    )
+                ) : (job.listing_type === 'referral' || job.listing_type === 'dispatch') ? (
+                    /* 紹介/派遣: 就業先（紹介先/派遣先）の情報のみ。紹介元/派遣元の連絡先・許可番号は上部に表示済み */
+                    (job.industry || job.number_of_employees || (job.show_dispatch_client && job.dispatch_client_name)) && (
+                        <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
+                            <SectionHeader title={job.listing_type === 'dispatch' ? '就業先（派遣先）情報' : '就業先（紹介先）情報'} />
+                            <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
+                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
+                                    {job.listing_type === 'dispatch' ? '派遣元' : '紹介元'}（会社名・所在地・電話番号・許可番号）は上部に記載しています。
+                                </p>
+                            </div>
+                            <InfoTable>
+                                {(job.show_dispatch_client && job.dispatch_client_name) && (
+                                    <InfoRow label={job.listing_type === 'dispatch' ? '派遣先' : '紹介先'} value={job.dispatch_client_name} />
+                                )}
+                                <InfoRow label="業界" value={job.industry} />
+                                <InfoRow label="従業員数" value={job.number_of_employees} />
                             </InfoTable>
                         </div>
                     )
