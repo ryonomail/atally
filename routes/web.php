@@ -235,6 +235,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-29T00:00:00+09:00',
             'modified'    => '2026-06-29T00:00:00+09:00',
         ],
+        'rirekisho-honnin-kibo-kakikata' => [
+            'title'       => '履歴書の本人希望記入欄の書き方【記入例・NG例・書かない場合も解説】 | Atally',
+            'description' => '履歴書の本人希望記入欄の書き方を解説。「特になし」「貴社規定に従います」の使い分け、希望職種・勤務地・勤務時間・給与の記入例、パートや転職者向けの書き方まで網羅。本人希望記入欄 書き方の完全ガイド。',
+            'published'   => '2026-06-30T00:00:00+09:00',
+            'modified'    => '2026-06-30T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -587,6 +593,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/daini-shinsotsu-tenshoku', 'monthly', '0.8'],
             ['/column/mensetsu-jikoshokai', 'monthly', '0.8'],
             ['/column/rirekisho-mail-okurikata', 'monthly', '0.8'],
+            ['/column/rirekisho-honnin-kibo-kakikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
