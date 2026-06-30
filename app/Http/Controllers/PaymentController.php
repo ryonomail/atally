@@ -43,12 +43,16 @@ class PaymentController extends Controller
             ]);
             $company->update(['stripe_customer_id' => $customer->id]);
 
-            AdminAuditLog::logSystem(
-                'stripe_customer_created',
-                'Company',
-                $company->id,
-                "Stripe customer created: {$customer->id} by user #{$request->user()->id}"
-            );
+            try {
+                AdminAuditLog::logSystem(
+                    'stripe_customer_created',
+                    'Company',
+                    $company->id,
+                    "Stripe customer created: {$customer->id} by user #{$request->user()->id}"
+                );
+            } catch (\Throwable $e) {
+                Log::warning('audit log failed (stripe_customer_created): '.$e->getMessage());
+            }
         }
 
         $setupIntent = SetupIntent::create([
@@ -83,12 +87,16 @@ class PaymentController extends Controller
             ],
         ]);
 
-        AdminAuditLog::logSystem(
-            'payment_method_registered',
-            'Company',
-            $company->id,
-            "Card registered (pm: {$request->payment_method_id}) by user #{$request->user()->id}"
-        );
+        try {
+            AdminAuditLog::logSystem(
+                'payment_method_registered',
+                'Company',
+                $company->id,
+                "Card registered (pm: {$request->payment_method_id}) by user #{$request->user()->id}"
+            );
+        } catch (\Throwable $e) {
+            Log::warning('audit log failed (payment_method_registered): '.$e->getMessage());
+        }
 
         return response()->json(['message' => 'カードが登録されました。']);
     }

@@ -44,12 +44,12 @@ class AdminAuditLog extends Model
     }
 
     /**
-     * システムイベント用ログ（admin_id = 0 はシステム操作を示す）
+     * システムイベント用ログ（admin_id = null はシステム操作を示す）
      */
     public static function logSystem(string $action, ?string $targetType = null, ?int $targetId = null, ?string $details = null): self
     {
         return self::create([
-            'admin_id' => 0,
+            'admin_id' => null,
             'action' => $action,
             'target_type' => $targetType,
             'target_id' => $targetId,
