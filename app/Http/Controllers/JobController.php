@@ -33,7 +33,8 @@ class JobController extends Controller
         'jobs.last_company_action_at', 'jobs.status',
         'jobs.description', 'jobs.requirements', 'jobs.prefecture', 'jobs.city',
         'jobs.work_hours', 'jobs.holidays', 'jobs.benefits', 'jobs.agency_client_id',
-        'jobs.scope_of_change',
+        'jobs.scope_of_change', 'jobs.overtime_average',
+        'jobs.listing_type', 'jobs.dispatch_client_name', 'jobs.show_dispatch_client',
     ];
 
     public function index(Request $request)

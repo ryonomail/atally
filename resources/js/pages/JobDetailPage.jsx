@@ -6,6 +6,14 @@ import SEO from '../components/SEO';
 import { formatSalary } from '../utils/salary';
 import { ArrowLeft, Bookmark, BookmarkCheck, FileText, MapPin } from 'lucide-react';
 
+// 残業表記の正規化：重複（月平均月平均…時間時間）を圧縮し、数字のみには単位を補う
+function formatOvertime(v) {
+    if (v == null || v === '') return v;
+    let s = String(v).trim().replace(/(月平均)+/g, '月平均').replace(/(時間)+/g, '時間');
+    if (/^\d+(\.\d+)?$/.test(s)) s = s + '時間';
+    return s;
+}
+
 function SectionHeader({ title }) {
     return (
         <div style={{
@@ -654,7 +662,8 @@ export default function JobDetailPage() {
                                 ハローワーク掲載
                             </span>
                         )}
-                        {job.is_agency_job && <span className="badge badge-warning">人材紹介</span>}
+                        {job.listing_type === 'referral' && job.source !== 'hellowork' && <span className="badge badge-warning">人材紹介</span>}
+                        {job.listing_type === 'dispatch' && job.source !== 'hellowork' && <span className="badge badge-warning">派遣</span>}
                         {job.application_type && <span className="badge badge-info">{job.application_type}</span>}
                         {job.employment_type && <span className="badge badge-info">{job.employment_type}</span>}
                         {job.remote_policy && <span className="badge badge-info">{job.remote_policy}</span>}
@@ -666,7 +675,7 @@ export default function JobDetailPage() {
                         </span>
                         {job.positions_available && <span className="badge badge-info">採用{job.positions_available}名</span>}
                         {job.work_hours && <span className="badge badge-info">{job.work_hours}</span>}
-                        {job.overtime_average && <span className="badge badge-info">残業 {job.overtime_average}</span>}
+                        {job.overtime_average && <span className="badge badge-info">残業 {formatOvertime(job.overtime_average)}</span>}
                         {job.holidays && <span className="badge badge-info">{job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
                         {job.dormitory && job.dormitory !== 'なし' && <span className="badge badge-info">寮あり</span>}
                     </div>
@@ -934,7 +943,7 @@ export default function JobDetailPage() {
                     <SectionHeader icon="🏢" title="勤務条件" />
                     <InfoTable>
                         <InfoRow label="勤務時間" value={job.work_hours} />
-                        <InfoRow label="残業" value={job.overtime_average} />
+                        <InfoRow label="残業" value={formatOvertime(job.overtime_average)} />
                         <InfoRow label="休日・休暇" value={job.holidays} />
                         <InfoRow label="休暇詳細" value={job.holiday_details} />
                         <InfoRow label="リモート" value={job.remote_policy} />

@@ -9,6 +9,14 @@ import { JOB_CATEGORY_MAJORS } from '../data/jobCategories';
 import { formatSalary } from '../utils/salary';
 import { Search, MapPin, Bookmark, BookmarkCheck, X } from 'lucide-react';
 
+// 残業表記の正規化：ハローワーク由来の重複（月平均月平均…時間時間）を圧縮し、数字のみには単位を補う
+function formatOvertime(v) {
+    if (v == null || v === '') return v;
+    let s = String(v).trim().replace(/(月平均)+/g, '月平均').replace(/(時間)+/g, '時間');
+    if (/^\d+(\.\d+)?$/.test(s)) s = s + '時間';
+    return s;
+}
+
 const EMPLOYMENT_TYPES = [
     { value: '', label: 'すべて' },
     { value: '正社員', label: '正社員' },
@@ -1022,7 +1030,8 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                     {isApplied && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 'var(--radius-full)', background: 'rgba(16,185,129,0.15)', color: '#059669', fontWeight: 700, border: '1px solid rgba(16,185,129,0.3)' }}>応募済み</span>}
                     {job.source === 'hellowork' && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 'var(--radius-full)', background: 'rgba(0,112,185,0.08)', color: '#0070b9', fontWeight: 600, border: '1px solid rgba(0,112,185,0.25)' }}>ハローワーク</span>}
-                    {job.is_agency_job && <span className="badge badge-warning" style={{ fontSize: 10, padding: '1px 6px' }}>人材紹介</span>}
+                    {job.listing_type === 'referral' && job.source !== 'hellowork' && <span className="badge badge-warning" style={{ fontSize: 10, padding: '1px 6px' }}>人材紹介</span>}
+                    {job.listing_type === 'dispatch' && job.source !== 'hellowork' && <span className="badge badge-warning" style={{ fontSize: 10, padding: '1px 6px' }}>派遣</span>}
                     {job.employment_type && <span className="badge badge-info" style={{ fontSize: 10, padding: '1px 6px' }}>{job.employment_type}</span>}
                     <button onClick={e => { e.stopPropagation(); onToggleSave(); }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', display: 'inline-flex', color: isSaved ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
@@ -1158,9 +1167,11 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginTop: 'var(--space-md)' }}>
                     {job.source === 'hellowork'
                         ? <span className="badge" style={{ background: 'rgba(0,112,185,0.08)', color: '#0070b9', border: '1px solid rgba(0,112,185,0.25)' }}>ハローワーク掲載</span>
-                        : job.is_agency_job
-                            ? <span className="badge" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.3)' }}>エージェント求人</span>
-                            : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)' }}>直接採用</span>
+                        : job.listing_type === 'referral'
+                            ? <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)' }}>人材紹介</span>
+                            : job.listing_type === 'dispatch'
+                                ? <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)' }}>派遣</span>
+                                : <span className="badge" style={{ background: 'rgba(18,28,52,0.08)', color: 'var(--color-navy)', border: '1px solid rgba(18,28,52,0.2)' }}>直接採用</span>
                     }
                     {job.employment_type && <span className="badge badge-info">{job.employment_type}</span>}
                     {job.remote_policy && <span className="badge badge-info">{job.remote_policy}</span>}
@@ -1168,7 +1179,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     {formatSalary(job) && (
                         <span className="badge badge-success">{formatSalary(job)}</span>
                     )}
-                    {job.overtime_average && <span className="badge badge-info">残業 {job.overtime_average}</span>}
+                    {job.overtime_average && <span className="badge badge-info">残業 {formatOvertime(job.overtime_average)}</span>}
                     {job.holidays && <span className="badge badge-info">{job.holidays.includes('年間') ? job.holidays.match(/年間休日\d+日/)?.[0] || job.holidays : job.holidays}</span>}
                     {job.application_type && <span className="badge badge-info">{job.application_type}</span>}
                     {job.positions_available && <span className="badge badge-info">{job.positions_available}名募集</span>}
@@ -1364,7 +1375,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         {job.nearest_station && <InfoRow label="最寄り駅" value={job.nearest_station} />}
                         {job.access_info && <InfoRow label="アクセス" value={job.access_info} />}
                         <InfoRow label="勤務時間" value={job.work_hours} />
-                        <InfoRow label="残業" value={job.overtime_average} />
+                        <InfoRow label="残業" value={formatOvertime(job.overtime_average)} />
                         <InfoRow label="休日・休暇" value={job.holidays} />
                         <InfoRow label="休暇詳細" value={job.holiday_details} />
                         <InfoRow label="リモート" value={job.remote_policy} />

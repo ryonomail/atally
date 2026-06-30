@@ -600,9 +600,12 @@ class HelloWorkService
     private function buildOvertime(callable $get): ?string
     {
         $umu   = $get('jkgi_umu_n');
-        $tsuki = $get('jkgi_thkinjn_ji_n');
+        $tsuki = trim((string) $get('jkgi_thkinjn_ji_n'));
         if (str_contains($umu, 'なし')) return 'なし';
-        if ($tsuki !== '') return "月平均{$tsuki}時間";
+        if ($tsuki !== '') {
+            // 値が数字のみなら単位を補い、既に「月平均/時間」等を含む場合は二重化しない
+            return preg_match('/^\d+(\.\d+)?$/', $tsuki) ? "月平均{$tsuki}時間" : $tsuki;
+        }
         return $umu ?: null;
     }
 
