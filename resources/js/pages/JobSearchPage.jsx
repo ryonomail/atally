@@ -1439,11 +1439,25 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                     </div>
                 )}
 
-                {/* 企業情報 */}
-                {(job.number_of_employees || job.founded_year || job.industry ||
+                {/* 企業情報 / 就業先情報（種別で出し分け）。紹介・派遣は就業先の属性のみ（紹介元/派遣元は上部参照） */}
+                {(job.listing_type === 'referral' || job.listing_type === 'dispatch') && job.source !== 'hellowork' ? (
+                    (job.industry || job.number_of_employees || (job.show_dispatch_client && job.dispatch_client_name)) && (
+                        <div style={{ marginBottom: 'var(--space-xl)' }}>
+                            <SectionHeader title={job.listing_type === 'dispatch' ? '就業先（派遣先）情報' : '就業先（紹介先）情報'} />
+                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 6px' }}>
+                                {job.listing_type === 'dispatch' ? '派遣元' : '紹介元'}（会社名・所在地・電話番号・許可番号）は上部に記載しています。
+                            </p>
+                            {(job.show_dispatch_client && job.dispatch_client_name) && (
+                                <InfoRow label={job.listing_type === 'dispatch' ? '派遣先' : '紹介先'} value={job.dispatch_client_name} />
+                            )}
+                            <InfoRow label="業界" value={job.industry} />
+                            <InfoRow label="従業員数" value={job.number_of_employees} />
+                        </div>
+                    )
+                ) : (job.number_of_employees || job.founded_year || job.industry ||
                   job.company?.description || job.company?.website || job.company?.address) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
-                        <SectionHeader icon="🏛" title="企業情報" />
+                        <SectionHeader title="企業情報" />
                         <InfoRow label="業界" value={job.industry || job.company?.industry} />
                         <InfoRow label="従業員数" value={job.number_of_employees || job.company?.number_of_employees} />
                         <InfoRow label="設立" value={job.founded_year} />
