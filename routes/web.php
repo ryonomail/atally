@@ -229,6 +229,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-27T00:00:00+09:00',
             'modified'    => '2026-06-27T00:00:00+09:00',
         ],
+        'rirekisho-mail-okurikata' => [
+            'title'       => '履歴書をメールで送る方法【件名・本文 例文付き】送り方マナー完全ガイド | Atally',
+            'description' => '履歴書をメールで送る件名・本文の書き方を例文付きで解説。ファイル名の付け方・PDF形式の使い方・送信前チェックリストまで。転職・就活・バイト応募の「履歴書 メール 送り方」ならAtally。',
+            'published'   => '2026-06-29T00:00:00+09:00',
+            'modified'    => '2026-06-29T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -580,6 +586,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-shumi-tokugi', 'monthly', '0.8'],
             ['/column/daini-shinsotsu-tenshoku', 'monthly', '0.8'],
             ['/column/mensetsu-jikoshokai', 'monthly', '0.8'],
+            ['/column/rirekisho-mail-okurikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
