@@ -16,18 +16,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('companies', function (Blueprint $table) {
-            $table->string('dispatch_license_number')->nullable()->after('permit_number');
+            if (!Schema::hasColumn('companies', 'dispatch_license_number')) {
+                $table->string('dispatch_license_number')->nullable()->after('permit_number');
+            }
         });
 
         Schema::table('jobs', function (Blueprint $table) {
-            $table->string('listing_type', 20)->default('direct')->after('employment_type');
-            $table->string('dispatch_client_name')->nullable()->after('listing_type');
-            $table->boolean('show_dispatch_client')->default(false)->after('dispatch_client_name');
+            if (!Schema::hasColumn('jobs', 'listing_type')) {
+                $table->string('listing_type', 20)->default('direct')->after('employment_type');
+            }
+            if (!Schema::hasColumn('jobs', 'dispatch_client_name')) {
+                $table->string('dispatch_client_name')->nullable()->after('listing_type');
+            }
+            if (!Schema::hasColumn('jobs', 'show_dispatch_client')) {
+                $table->boolean('show_dispatch_client')->default(false)->after('dispatch_client_name');
+            }
         });
 
-        // 既存求人の種別を推定してバックフィル
-        DB::table('jobs')->where('is_agency_job', true)->update(['listing_type' => 'referral']);
-        DB::table('jobs')->where('employment_type', '派遣')->where('is_agency_job', false)->update(['listing_type' => 'dispatch']);
+        // 既存求人の種別を推定してバックフィル（紹介は agency_client_id で判定。is_agency_job は実カラムでない）
+        DB::table('jobs')->whereNotNull('agency_client_id')->update(['listing_type' => 'referral']);
+        DB::table('jobs')->where('employment_type', '派遣')->whereNull('agency_client_id')->update(['listing_type' => 'dispatch']);
     }
 
     public function down(): void
