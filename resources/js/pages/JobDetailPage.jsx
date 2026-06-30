@@ -736,7 +736,7 @@ export default function JobDetailPage() {
                             <InfoRow label="電話番号" value={job.company?.phone} />
                             <InfoRow label="職業紹介事業 許可番号" value={job.company?.permit_number} />
                             {job.employment_type?.includes('派遣') && (
-                                <InfoRow label="紹介先（雇用主＝派遣元）" value={job.dispatch_client_name || job.client_company?.name || '非公開'} />
+                                <InfoRow label="派遣元（雇用主）" value={job.dispatch_client_name || job.client_company?.name} />
                             )}
                         </InfoTable>
                     </div>

@@ -493,10 +493,14 @@ export default function CompanyJobsPage() {
                 payload.client_company_industry = null;
                 payload.client_company_employees = null;
             }
-            // 派遣以外では派遣先名・公開フラグはクリア
-            if (payload.listing_type !== 'dispatch') {
+            // 直接雇用では派遣先/派遣元名・公開フラグはクリア（派遣＝派遣先名／紹介＝派遣元名 として保持）
+            if (payload.listing_type === 'direct') {
                 payload.dispatch_client_name = null;
                 payload.show_dispatch_client = false;
+            }
+            // 紹介（雇用主＝派遣元の名称）は常に公開扱い
+            if (payload.listing_type === 'referral') {
+                payload.show_dispatch_client = true;
             }
             // listing_type は実カラムとして保存する（削除しない）
             // フロント専用フィールドを除去
@@ -1116,6 +1120,19 @@ export default function CompanyJobsPage() {
                                             <h4 style={{ fontSize: 'var(--font-size-md)', marginBottom: 'var(--space-md)' }}>
                                                 紹介先企業情報（職業安定法による明示義務）
                                             </h4>
+
+                                            {/* 派遣社員の紹介: 雇用主＝派遣元の社名（求職者がどの会社の雇用かを把握できるよう表示） */}
+                                            {form.employment_type?.includes('派遣') && (
+                                                <div className="form-group">
+                                                    <label className="form-label">派遣元（雇用主）企業名</label>
+                                                    <input className="form-input" value={form.dispatch_client_name || ''}
+                                                        onChange={e => set('dispatch_client_name', e.target.value)}
+                                                        placeholder="例: ◯◯スタッフ株式会社（派遣社員として雇用する会社）" />
+                                                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                                        派遣社員の雇用主＝派遣元の社名。求人詳細に表示されます（派遣先＝就業先は表示しません）。
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {/* 既存クライアントから選択 */}
                                             {agencyClients.length > 0 && (
