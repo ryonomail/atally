@@ -1187,6 +1187,34 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 )}
             </div>
 
+            {/* 派遣: 派遣元情報（自社設定から自動表示。外部求人は対象外） */}
+            {job.listing_type === 'dispatch' && job.source !== 'hellowork' && (
+                <div style={{ padding: 'var(--space-md) var(--space-xl)', borderBottom: '1px solid var(--color-border)' }}>
+                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 6px' }}>派遣元情報（労働者派遣）</p>
+                    <InfoRow label="派遣元事業主" value={job.company?.company_name} />
+                    <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                    <InfoRow label="派遣事業許可番号" value={job.company?.dispatch_license_number} />
+                    <InfoRow label="派遣先" value={job.show_dispatch_client && job.dispatch_client_name ? job.dispatch_client_name : '非公開'} />
+                </div>
+            )}
+
+            {/* 紹介: 紹介元（職業紹介事業者）。紹介×派遣も明示 */}
+            {job.listing_type === 'referral' && job.source !== 'hellowork' && (
+                <div style={{ padding: 'var(--space-md) var(--space-xl)', borderBottom: '1px solid var(--color-border)' }}>
+                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 6px' }}>紹介元（職業紹介事業者）</p>
+                    {job.employment_type?.includes('派遣') && (
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', margin: '0 0 6px', lineHeight: 1.6 }}>
+                            就業形態は{job.employment_type}（実際の雇用主は紹介先＝派遣元）です。
+                        </p>
+                    )}
+                    <InfoRow label="紹介事業者" value={job.company?.company_name} />
+                    <InfoRow label="許可番号" value={job.company?.permit_number} />
+                    {job.employment_type?.includes('派遣') && (
+                        <InfoRow label="紹介先（雇用主）" value={job.dispatch_client_name || job.client_company?.name || '非公開'} />
+                    )}
+                </div>
+            )}
+
             {/* アピールポイント */}
             {job.appeal_points && (
                 <div style={{

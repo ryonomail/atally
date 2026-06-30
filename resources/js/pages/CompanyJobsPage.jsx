@@ -514,6 +514,10 @@ export default function CompanyJobsPage() {
                 // 新規作成成功時に下書きをクリア
                 localStorage.removeItem(DRAFT_KEY);
                 lastSavedForm.current = null;
+                // 作成後そのまま画像を追加できるよう、編集モードに移行して「写真」タブを開く
+                setEditingJob(res.data);
+                setActiveTab('photos');
+                return; // フォームは閉じず写真追加へ
             }
             setShowForm(false);
             setForm(INITIAL_FORM);
@@ -1936,11 +1940,16 @@ export default function CompanyJobsPage() {
 
                     {/* ===== 写真タブ（編集時のみ） ===== */}
                     {activeTab === 'photos' && editingJob && (
+                        <>
+                        <div style={{ padding: 'var(--space-sm) var(--space-md)', marginBottom: 'var(--space-md)', background: 'var(--color-accent-light)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+                            求人を保存しました。ここで<strong>画像を追加</strong>できます（任意）。画像は求人詳細に表示されます。完了したら「閉じる」で終了してください。
+                        </div>
                         <JobPhotoManager jobId={editingJob.id} photos={editingJob.photos || []} onUpdate={(photos) => {
                             const updated = { ...editingJob, photos };
                             setEditingJob(updated);
                             setJobs(jobs.map(j => j.id === editingJob.id ? { ...j, photos } : j));
                         }} />
+                        </>
                     )}
 
                     {/* 自動保存インジケーター */}
