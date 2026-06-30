@@ -488,7 +488,7 @@ class JobController extends Controller
             'city' => 'required|string|max:100',                         // 市区町村
             'office_address' => 'required|string|max:255',               // 詳細住所
             'location' => 'nullable|string|max:255',                     // 就業場所（自動生成も可）
-            'employment_type' => 'required|string|in:正社員,契約社員,パート,派遣,業務委託,インターン', // 雇用形態
+            'employment_type' => 'required|string|in:正社員,契約社員,パート,派遣,紹介予定派遣,業務委託,インターン', // 雇用形態
             'salary_type' => 'required|string|in:年収,月給,日給,時給',     // 賃金形態
             'salary_min' => 'required|integer|min:0',                    // 賃金下限
             'salary_max' => 'nullable|integer|min:0|gte:salary_min',
@@ -759,7 +759,7 @@ class JobController extends Controller
             'city' => 'required|string|max:100',
             'office_address' => 'required|string|max:255',
             'location' => 'nullable|string|max:255',
-            'employment_type' => 'required|string|in:正社員,契約社員,パート,派遣,業務委託,インターン',
+            'employment_type' => 'required|string|in:正社員,契約社員,パート,派遣,紹介予定派遣,業務委託,インターン',
             'salary_type' => 'required|string|in:年収,月給,日給,時給',
             'salary_min' => 'required|integer|min:0',
             'salary_max' => 'nullable|integer|min:0|gte:salary_min',

@@ -714,11 +714,19 @@ export default function JobDetailPage() {
                             <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
                                 これは職業紹介です
                             </span>
+                            {(job.employment_type === '派遣' || job.employment_type === '紹介予定派遣') && (
+                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 'var(--space-sm) 0 0', lineHeight: 1.7 }}>
+                                    就業形態は<strong>{job.employment_type}</strong>です。実際の雇用主は紹介先（派遣元となる企業）となります。
+                                </p>
+                            )}
                         </div>
                         <InfoTable>
-                            <InfoRow label="紹介事業者" value={job.company?.company_name} />
+                            <InfoRow label="紹介事業者（紹介元）" value={job.company?.company_name} />
                             <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
                             <InfoRow label="職業紹介事業 許可番号" value={job.company?.permit_number} />
+                            {(job.employment_type === '派遣' || job.employment_type === '紹介予定派遣') && (
+                                <InfoRow label="紹介先（雇用主＝派遣元）" value={job.dispatch_client_name || job.client_company?.name || (job.show_dispatch_client === false ? '非公開' : null)} />
+                            )}
                         </InfoTable>
                     </div>
                 )}

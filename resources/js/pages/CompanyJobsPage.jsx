@@ -1389,6 +1389,7 @@ export default function CompanyJobsPage() {
                                         <option value="契約社員">契約社員</option>
                                         <option value="パート">パート・アルバイト</option>
                                         <option value="派遣">派遣社員</option>
+                                        <option value="紹介予定派遣">紹介予定派遣</option>
                                         <option value="業務委託">業務委託</option>
                                         <option value="インターン">インターン</option>
                                     </select>

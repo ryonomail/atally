@@ -15,6 +15,7 @@ const EMPLOYMENT_TYPES = [
     { value: '契約社員', label: '契約社員' },
     { value: 'パート', label: 'パート・アルバイト' },
     { value: '派遣', label: '派遣社員' },
+    { value: '紹介予定派遣', label: '紹介予定派遣' },
     { value: '業務委託', label: '業務委託' },
     { value: 'インターン', label: 'インターン' },
 ];
