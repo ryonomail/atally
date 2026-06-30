@@ -182,6 +182,12 @@ class HelloWorkService
      */
     private function prepareRow(array $data): ?array
     {
+        // ハローワーク提供データにはUTF-8として不正なバイト（Shift-JIS由来の 0x92 等）が
+        // 混入することがあり、そのままだとPostgresへのupsertが
+        // SQLSTATE[22021] invalid byte sequence で失敗し、バッチ全体（最大100件）が
+        // 保存されない。全文字列を浄化して取りこぼしを防ぐ。
+        $data = $this->scrubUtf8($data);
+
         $helloworkId = $data['hellowork_id'] ?? null;
         if (!$helloworkId) return null;
 
@@ -513,6 +519,23 @@ class HelloWorkService
     // ----------------------------------------------------------------
     // フィールド組み立てヘルパー（公式v2.0タグ名ベース）
     // ----------------------------------------------------------------
+
+    /**
+     * UTF-8として不正なバイト列を除去（再帰）。
+     * ハローワークのデータに混入するShift-JIS由来の不正バイト(0x92等)を落とし、
+     * Postgres(UTF-8)へのupsert失敗を防ぐ。Carbon等の非文字列はそのまま返す。
+     */
+    private function scrubUtf8($value)
+    {
+        if (is_array($value)) {
+            return array_map([$this, 'scrubUtf8'], $value);
+        }
+        if (is_string($value) && $value !== '') {
+            $clean = @iconv('UTF-8', 'UTF-8//IGNORE', $value);
+            return $clean === false ? $value : $clean;
+        }
+        return $value;
+    }
 
     /** varchar カラム溢れ防止。空文字は null に正規化 */
     private function cap(?string $v, int $len): ?string
