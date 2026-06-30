@@ -125,6 +125,7 @@ export default function JobSearchPage() {
         keyword: searchParams.get('keyword') || '',
         location: searchParams.get('location') || '',
         prefecture: searchParams.get('prefecture') || '',
+        city: searchParams.get('city') || '',
         employment_type: searchParams.get('employment_type') || '',
         salary_min: searchParams.get('salary_min') || '',
         job_category_major: searchParams.get('job_category_major') || '',
@@ -201,6 +202,17 @@ export default function JobSearchPage() {
     // 選択中の求人リスト上のデータ（クリック瞬時表示用）
     const selectedJobListDataRef = useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    // SEO: 都道府県ランディングで表示する市区町村リンク
+    const [areaCities, setAreaCities] = useState([]);
+    useEffect(() => {
+        if (filters.prefecture && !filters.city) {
+            api.get('/jobs/cities', { params: { prefecture: filters.prefecture } })
+                .then(res => setAreaCities(res.data || []))
+                .catch(() => setAreaCities([]));
+        } else {
+            setAreaCities([]);
+        }
+    }, [filters.prefecture, filters.city]);
 
     // Sync filters + page to URL query parameters
     useEffect(() => {
@@ -208,6 +220,7 @@ export default function JobSearchPage() {
         if (filters.keyword) params.set('keyword', filters.keyword);
         if (filters.location) params.set('location', filters.location);
         if (filters.prefecture) params.set('prefecture', filters.prefecture);
+        if (filters.city) params.set('city', filters.city);
         if (filters.employment_type) params.set('employment_type', filters.employment_type);
         if (filters.salary_min) params.set('salary_min', filters.salary_min);
         if (filters.job_category_major) params.set('job_category_major', filters.job_category_major);
@@ -222,7 +235,7 @@ export default function JobSearchPage() {
     }, [filters, page]);
 
     const activeFilterCount = [
-        filters.employment_type, filters.salary_min, filters.location, filters.prefecture,
+        filters.employment_type, filters.salary_min, filters.location, filters.prefecture, filters.city,
         filters.job_category_major, filters.application_type, filters.remote_policy,
         filters.feature_tags?.length > 0 ? true : '',
     ].filter(Boolean).length;
@@ -274,6 +287,7 @@ export default function JobSearchPage() {
             if (currentFilters.keyword) params.keyword = currentFilters.keyword;
             if (currentFilters.location) params.location = currentFilters.location;
             if (currentFilters.prefecture) params.prefecture = currentFilters.prefecture;
+            if (currentFilters.city) params.city = currentFilters.city;
             if (currentFilters.employment_type) params.employment_type = currentFilters.employment_type;
             if (currentFilters.salary_min) params.salary_min = currentFilters.salary_min;
             if (currentFilters.sort) params.sort = currentFilters.sort;
@@ -385,7 +399,7 @@ export default function JobSearchPage() {
 
     const clearFilters = () => {
         const next = {
-            keyword: '', location: '', prefecture: '', employment_type: '', salary_min: '',
+            keyword: '', location: '', prefecture: '', city: '', employment_type: '', salary_min: '',
             job_category_major: '', application_type: '', remote_policy: '',
             feature_tags: [], sort: 'ranking',
         };
@@ -745,25 +759,50 @@ export default function JobSearchPage() {
 
             <div className="container" style={{ paddingTop: 'var(--space-lg)' }}>
 
-                {/* 都道府県ランディング見出し（SEO: ◯◯県の求人） */}
+                {/* 都道府県・市区町村ランディング見出し（SEO） */}
                 {filters.prefecture && (
                     <div style={{ marginBottom: 'var(--space-lg)' }}>
+                        {/* パンくず: 市区町村ページから都道府県へ戻れる内部リンク */}
+                        {filters.city && (
+                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 6 }}>
+                                <Link to={`/jobs?prefecture=${encodeURIComponent(filters.prefecture)}`} style={{ color: 'var(--color-text-accent)', textDecoration: 'none' }}>
+                                    {filters.prefecture}の求人
+                                </Link>
+                                <span> ＞ {filters.city}</span>
+                            </p>
+                        )}
                         <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-navy)', marginBottom: 'var(--space-xs)', letterSpacing: '-0.01em' }}>
-                            {filters.prefecture}の求人・仕事一覧{meta?.total ? `（${meta.total.toLocaleString()}件）` : ''}
+                            {filters.prefecture}{filters.city}の求人・仕事一覧{meta?.total ? `（${meta.total.toLocaleString()}件）` : ''}
                         </h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.9, marginBottom: 'var(--space-md)' }}>
-                            {filters.prefecture}の求人情報をまとめて掲載。正社員・契約社員・パート・アルバイト・派遣など、給与・勤務時間・休日・待遇から条件を絞って探せます。ハローワーク求人も含め登録不要で全件閲覧でき、作成した履歴書でそのまま応募できます。
+                            {filters.prefecture}{filters.city}の求人情報をまとめて掲載。正社員・契約社員・パート・アルバイト・派遣など、給与・勤務時間・休日・待遇から条件を絞って探せます。ハローワーク求人も含め登録不要で全件閲覧でき、作成した履歴書でそのまま応募できます。
                         </p>
-                        <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginBottom: 'var(--space-md)' }}>
                             {['正社員', '派遣', 'パート', 'エンジニア', '営業', '事務', '医療・介護', '販売・接客'].map(kw => (
                                 <button key={kw} onClick={() => { setInputKeyword(kw); updateFilter('keyword', kw); }}
                                     style={{ padding: '4px 12px', borderRadius: 'var(--radius-full)', border: '1px solid var(--color-border)', background: 'transparent', cursor: 'pointer', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', transition: 'all 0.15s' }}
                                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-text-accent)'; }}
                                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}>
-                                    {filters.prefecture}×{kw}
+                                    {filters.prefecture}{filters.city}×{kw}
                                 </button>
                             ))}
                         </div>
+                        {/* 市区町村から探す（内部リンク。都道府県ページのみ） */}
+                        {!filters.city && areaCities.length > 0 && (
+                            <div>
+                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: 6 }}>市区町村から探す</p>
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
+                                    {areaCities.map(c => (
+                                        <Link key={c.city} to={`/jobs?prefecture=${encodeURIComponent(filters.prefecture)}&city=${encodeURIComponent(c.city)}`}
+                                            style={{ padding: '4px 12px', borderRadius: 'var(--radius-full)', border: '1px solid var(--color-border)', background: 'transparent', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', textDecoration: 'none', transition: 'all 0.15s' }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-text-accent)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}>
+                                            {c.city}（{c.total.toLocaleString()}）
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -827,6 +866,7 @@ export default function JobSearchPage() {
                             </p>
                         )}
                         {filters.prefecture && <FilterBadge label={filters.prefecture} onRemove={() => updateFilter('prefecture', '')} />}
+                        {filters.city && <FilterBadge label={filters.city} onRemove={() => updateFilter('city', '')} />}
                         {filters.keyword && <FilterBadge icon="🔍" label={filters.keyword} onRemove={() => { setInputKeyword(''); updateFilter('keyword', ''); }} />}
                         {filters.employment_type && <FilterBadge icon="👔" label={filters.employment_type} onRemove={() => updateFilter('employment_type', '')} />}
                         {filters.salary_min && <FilterBadge icon="💰" label={SALARY_OPTIONS.find(o => o.value === filters.salary_min)?.label} color="green" onRemove={() => updateFilter('salary_min', '')} />}

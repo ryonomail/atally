@@ -275,24 +275,27 @@ Route::get('/column/{slug}', function (string $slug) {
 // ── 求人一覧ページ: 都道府県・キーワード検索時のサーバーサイドSEO
 Route::get('/jobs', function () {
     $prefecture = request()->query('prefecture', '');
+    $city       = request()->query('city', '');
     $keyword    = request()->query('keyword', '');
     $baseUrl    = config('app.url');
+    $region     = trim($prefecture . $city); // 例: 沖縄県那覇市
 
-    $cacheKey = 'seo_jobs_count_' . md5($prefecture . '|' . $keyword);
-    $count = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function () use ($prefecture, $keyword) {
+    $cacheKey = 'seo_jobs_count_' . md5($prefecture . '|' . $city . '|' . $keyword);
+    $count = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function () use ($prefecture, $city, $keyword) {
         return \App\Models\Job::where('status', 'active')
             ->when($prefecture, fn($q) => $q->where('prefecture', $prefecture))
+            ->when($city, fn($q) => $q->where('city', $city))
             ->when($keyword, fn($q) => $q->where('title', 'ILIKE', "%{$keyword}%"))
             ->count();
     });
 
-    if ($prefecture || $keyword) {
-        $parts     = array_filter([$keyword ?: null, $prefecture ?: null]);
+    if ($prefecture || $city || $keyword) {
+        $parts     = array_filter([$keyword ?: null, $region ?: null]);
         $titlePart = implode('・', $parts);
         $seo = [
             'title'       => $titlePart . 'の求人・仕事探し ' . number_format($count) . '件 | Atally',
-            'description' => ($prefecture ?: '全国') . 'の' . ($keyword ?: '求人') . '情報 ' . number_format($count) . '件以上掲載中。給与・勤務時間・待遇など詳細条件で検索できます。正社員・パート・アルバイト・派遣求人あり。',
-            'url'         => $baseUrl . '/jobs?' . http_build_query(array_filter(compact('prefecture', 'keyword'))),
+            'description' => ($region ?: '全国') . 'の' . ($keyword ?: '求人') . '情報 ' . number_format($count) . '件以上掲載中。給与・勤務時間・待遇など詳細条件で検索できます。正社員・パート・アルバイト・派遣求人あり。',
+            'url'         => $baseUrl . '/jobs?' . http_build_query(array_filter(compact('prefecture', 'city', 'keyword'))),
         ];
     } else {
         $seo = [
@@ -532,6 +535,7 @@ Route::get('/sitemap.xml', function () {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
         $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-static.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
+        $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-areas.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
         for ($i = 1; $i <= $jobPages; $i++) {
             $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-jobs-{$i}.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
         }
@@ -545,6 +549,35 @@ Route::get('/sitemap.xml', function () {
              . '</sitemapindex>';
     }
 
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
+});
+
+// 市区町村ランディング（求人が一定数ある市区町村のみ。空ページの量産を避ける）
+Route::get('/sitemap-areas.xml', function () {
+    try {
+        $baseUrl = config('app.url');
+        $rows = \Illuminate\Support\Facades\Cache::remember('sitemap_areas', 3600, function () {
+            return \App\Models\Job::where('status', 'active')
+                ->whereNotNull('prefecture')->where('prefecture', '!=', '')
+                ->whereNotNull('city')->where('city', '!=', '')
+                ->selectRaw('prefecture, city, COUNT(*) as total')
+                ->groupBy('prefecture', 'city')
+                ->havingRaw('COUNT(*) >= 5')
+                ->orderBy('prefecture')->orderByDesc('total')
+                ->get();
+        });
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        foreach ($rows as $r) {
+            $url = $baseUrl . '/jobs?' . http_build_query(['prefecture' => $r->prefecture, 'city' => $r->city]);
+            $xml .= "  <url><loc>{$url}</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n";
+        }
+        $xml .= '</urlset>';
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('sitemap-areas.xml error', ['error' => $e->getMessage()]);
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
+    }
     return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
 });
 

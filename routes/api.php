@@ -46,6 +46,8 @@ Route::middleware('throttle:120,1')->post('/webhook/stripe', [StripeWebhookContr
 /* |-------------------------------------------------------------------------- | 求人検索（パブリック・レート制限+ボット対策付き） |-------------------------------------------------------------------------- */
 Route::middleware(['block.bots', 'throttle:60,1'])->group(function () {
     Route::get('/jobs', [JobController::class , 'index']);
+    // SEO: 都道府県内の市区町村一覧（{job} より前に定義）
+    Route::get('/jobs/cities', [JobController::class , 'citiesByPrefecture']);
     Route::get('/jobs/{job}', [JobController::class , 'show']);
 });
 

@@ -95,6 +95,11 @@ class JobController extends Controller
             $query->where('jobs.prefecture', $request->prefecture);
         }
 
+        // 市区町村フィルタ（SEOの市区町村ランディング用）
+        if ($request->filled('city')) {
+            $query->where('jobs.city', $request->city);
+        }
+
         if ($request->filled('employment_type')) {
             $query->where('jobs.employment_type', $request->employment_type);
         }
@@ -280,6 +285,29 @@ class JobController extends Controller
         }
 
         return null;
+    }
+
+    // SEO: 指定都道府県で求人がある市区町村の一覧（内部リンク・ランディング用）
+    public function citiesByPrefecture(Request $request)
+    {
+        $pref = trim((string) $request->query('prefecture', ''));
+        if ($pref === '') {
+            return response()->json([]);
+        }
+        $cities = Cache::remember('seo_cities_' . md5($pref), 3600, function () use ($pref) {
+            return Job::where('status', 'active')
+                ->where('prefecture', $pref)
+                ->whereNotNull('city')->where('city', '!=', '')
+                ->selectRaw('city, COUNT(*) as total')
+                ->groupBy('city')
+                ->havingRaw('COUNT(*) >= 3')
+                ->orderByDesc('total')
+                ->limit(300)
+                ->get()
+                ->map(fn ($r) => ['city' => $r->city, 'total' => (int) $r->total])
+                ->values();
+        });
+        return response()->json($cities);
     }
 
     // パブリック: 求人詳細
