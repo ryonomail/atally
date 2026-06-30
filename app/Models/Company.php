@@ -46,6 +46,7 @@ class Company extends Model
         'stripe_subscription_id',
         'documents',
         'permit_number',
+        'dispatch_license_number',
         'license_document_path',
         'license_verified',
     ];

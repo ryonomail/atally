@@ -105,6 +105,8 @@ class CompanyController extends Controller
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
             'permit_number' => ['sometimes', 'nullable', 'string', 'max:50', 'regex:/^[\d]+-[ユ]-[\d]+$/u'],
+            // 派遣事業許可番号（例: 派13-301234）。全角ハイフン等も許容するため緩めに検証。
+            'dispatch_license_number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'industry' => ['sometimes', 'nullable', 'string', 'max:100'],
             'number_of_employees' => ['sometimes', 'nullable', 'string', 'max:50'],
             'founded_year' => ['sometimes', 'nullable', 'string', 'max:20'],

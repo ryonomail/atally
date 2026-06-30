@@ -1132,6 +1132,8 @@ function CompanyProfileCard({ company, onUpdate }) {
             website: company.website || '',
             phone: company.phone || '',
             address: company.address || '',
+            permit_number: company.permit_number || '',
+            dispatch_license_number: company.dispatch_license_number || '',
             industry: company.industry || '',
             number_of_employees: company.number_of_employees || '',
             founded_year: company.founded_year || '',
@@ -1259,6 +1261,16 @@ function CompanyProfileCard({ company, onUpdate }) {
                 <div className="form-group">
                     <label className="form-label">本社住所</label>
                     <input className="form-input" value={form.address} onChange={e => set('address', e.target.value)} placeholder="東京都渋谷区..." />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">職業紹介事業 許可番号</label>
+                    <input className="form-input" value={form.permit_number || ''} onChange={e => set('permit_number', e.target.value)} placeholder="例: 13-ユ-301234" />
+                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>紹介案件を掲載する場合に必須。求人に自動表示されます。</span>
+                </div>
+                <div className="form-group">
+                    <label className="form-label">労働者派遣事業 許可番号</label>
+                    <input className="form-input" value={form.dispatch_license_number || ''} onChange={e => set('dispatch_license_number', e.target.value)} placeholder="例: 派13-301234" />
+                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>派遣案件を掲載する場合に必須。派遣元（自社）情報として求人に自動表示されます。</span>
                 </div>
                 <div className="form-group">
                     <label className="form-label">勤務地住所（デフォルト）</label>

@@ -501,6 +501,9 @@ class JobController extends Controller
             'salary_range' => 'nullable|string',
             'benefits' => 'nullable|array',
             'agency_client_id' => 'nullable|exists:agency_clients,id',
+            'listing_type' => 'nullable|string|in:direct,dispatch,referral',
+            'dispatch_client_name' => 'nullable|string|max:255',
+            'show_dispatch_client' => 'nullable|boolean',
             'holiday_details' => 'nullable|string',
             'allowances' => 'nullable|string',
             'probation_period' => 'nullable|string|max:255',
@@ -622,8 +625,24 @@ class JobController extends Controller
             }
         }
 
+        // 法令明示の必須条件チェック（誤解を与えない表記の徹底）
+        $listingType = $request->input('listing_type', 'direct');
+        if ($listingType === 'dispatch' && empty($company->dispatch_license_number)) {
+            return response()->json([
+                'message' => '派遣案件を掲載するには、会社設定で「労働者派遣事業 許可番号」の登録が必要です。',
+                'compliance_required' => true,
+            ], 422);
+        }
+        if ($listingType === 'referral' && empty($company->permit_number)) {
+            return response()->json([
+                'message' => '紹介案件を掲載するには、会社設定で「職業紹介事業 許可番号」の登録が必要です。',
+                'compliance_required' => true,
+            ], 422);
+        }
+
         $data = $request->only([
             'agency_client_id', 'title', 'description', 'requirements',
+            'listing_type', 'dispatch_client_name', 'show_dispatch_client',
             'salary_min', 'salary_max', 'salary_type', 'salary_range',
             'location', 'prefecture', 'city', 'employment_type', 'work_hours', 'benefits',
             'holidays', 'holiday_details', 'insurance', 'allowances',
@@ -842,8 +861,24 @@ class JobController extends Controller
             }
         }
 
+        // 法令明示の必須条件チェック（更新で種別を変える場合も含む）
+        $listingType = $request->input('listing_type', $job->listing_type ?? 'direct');
+        if ($listingType === 'dispatch' && empty($company->dispatch_license_number)) {
+            return response()->json([
+                'message' => '派遣案件を掲載するには、会社設定で「労働者派遣事業 許可番号」の登録が必要です。',
+                'compliance_required' => true,
+            ], 422);
+        }
+        if ($listingType === 'referral' && empty($company->permit_number)) {
+            return response()->json([
+                'message' => '紹介案件を掲載するには、会社設定で「職業紹介事業 許可番号」の登録が必要です。',
+                'compliance_required' => true,
+            ], 422);
+        }
+
         $data = $request->only([
             'title', 'description', 'requirements',
+            'listing_type', 'dispatch_client_name', 'show_dispatch_client',
             'salary_min', 'salary_max', 'salary_type', 'salary_range',
             'location', 'prefecture', 'city', 'employment_type', 'work_hours', 'benefits',
             'holidays', 'holiday_details', 'insurance', 'allowances',

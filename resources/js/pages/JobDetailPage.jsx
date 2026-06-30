@@ -688,6 +688,41 @@ export default function JobDetailPage() {
                     )}
                 </div>
 
+                {/* 派遣: 派遣元情報（労働者派遣法の明示）＝会社設定から自動表示 */}
+                {job.listing_type === 'dispatch' && (
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--color-navy)' }}>
+                        <SectionHeader title="派遣元情報（労働者派遣）" />
+                        <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
+                            <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
+                                これは派遣労働者の募集です
+                            </span>
+                        </div>
+                        <InfoTable>
+                            <InfoRow label="派遣元事業主" value={job.company?.company_name} />
+                            <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                            <InfoRow label="派遣事業許可番号" value={job.company?.dispatch_license_number} />
+                            <InfoRow label="派遣先" value={job.show_dispatch_client && job.dispatch_client_name ? job.dispatch_client_name : '非公開'} />
+                        </InfoTable>
+                    </div>
+                )}
+
+                {/* 紹介: 紹介元（職業紹介事業者）の明示＝会社設定から自動表示 */}
+                {job.listing_type === 'referral' && (
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--color-navy)' }}>
+                        <SectionHeader title="紹介元（職業紹介事業者）" />
+                        <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
+                            <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
+                                これは職業紹介です
+                            </span>
+                        </div>
+                        <InfoTable>
+                            <InfoRow label="紹介事業者" value={job.company?.company_name} />
+                            <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                            <InfoRow label="職業紹介事業 許可番号" value={job.company?.permit_number} />
+                        </InfoTable>
+                    </div>
+                )}
+
                 {/* 応募済みバナー */}
                 {applied && (
                     <div className="card" style={{

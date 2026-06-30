@@ -56,8 +56,10 @@ const INITIAL_FORM = {
     appeal_points: '', contract_period: '期間の定めなし', notes: '',
     // 人材紹介
     allow_referral: false, referral_fee_type: 'percentage', referral_fee: '', referral_conditions: '',
-    // 求人種別（人材紹介会社用）
-    listing_type: 'direct', // 'direct' = 自社採用, 'referral' = 人材紹介
+    // 求人種別
+    listing_type: 'direct', // 'direct' = 自社採用, 'dispatch' = 派遣, 'referral' = 人材紹介
+    // 派遣（派遣先名・公開可否。派遣元＝自社情報は会社設定から自動表示）
+    dispatch_client_name: '', show_dispatch_client: false,
     agency_client_id: '',
     // 紹介先企業情報（人材紹介時）
     client_company_name: '', client_company_address: '', client_company_industry: '',
@@ -350,7 +352,9 @@ export default function CompanyJobsPage() {
             referral_fee_type: job.referral_fee_type || 'percentage',
             referral_fee: job.referral_fee || '',
             referral_conditions: job.referral_conditions || '',
-            listing_type: job.agency_client_id ? 'referral' : 'direct',
+            listing_type: job.listing_type || (job.agency_client_id ? 'referral' : 'direct'),
+            dispatch_client_name: job.dispatch_client_name || '',
+            show_dispatch_client: !!job.show_dispatch_client,
             agency_client_id: job.agency_client_id || '',
             client_company_name: job.agency_client?.client_name || '',
             client_company_address: job.agency_client?.address || '',
@@ -484,13 +488,18 @@ export default function CompanyJobsPage() {
                     // クライアント作成失敗でもジョブ作成は続行
                 }
             }
-            if (payload.listing_type === 'direct') {
+            if (payload.listing_type === 'direct' || payload.listing_type === 'dispatch') {
                 payload.agency_client_id = null;
                 payload.client_company_industry = null;
                 payload.client_company_employees = null;
             }
+            // 派遣以外では派遣先名・公開フラグはクリア
+            if (payload.listing_type !== 'dispatch') {
+                payload.dispatch_client_name = null;
+                payload.show_dispatch_client = false;
+            }
+            // listing_type は実カラムとして保存する（削除しない）
             // フロント専用フィールドを除去
-            delete payload.listing_type;
             delete payload.client_company_name;
             delete payload.client_company_address;
             delete payload.client_company_description;
@@ -1041,17 +1050,18 @@ export default function CompanyJobsPage() {
                     {/* ===== 基本情報タブ ===== */}
                     {activeTab === 'basic' && (
                         <div className="animate-fade-in">
-                            {/* 人材紹介会社: 求人種別選択 */}
-                            {isAgency && (
+                            {/* 求人種別選択（全企業） */}
+                            {(
                                 <div style={{
                                     marginBottom: 'var(--space-lg)', padding: 'var(--space-md)',
                                     background: 'rgba(200,149,46,0.04)', borderRadius: 'var(--radius-md)',
                                     border: '1px solid rgba(200,149,46,0.15)',
                                 }}>
                                     <label className="form-label" style={{ fontWeight: 700 }}>求人種別 *</label>
-                                    <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+                                    <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                                         {[
                                             { value: 'direct', label: '自社採用', desc: '自社で直接採用する求人' },
+                                            { value: 'dispatch', label: '派遣', desc: '自社が派遣元となる派遣求人' },
                                             { value: 'referral', label: '人材紹介', desc: '紹介先企業の求人を代理掲載' },
                                         ].map(opt => (
                                             <div key={opt.value} onClick={() => set('listing_type', opt.value)}
@@ -1066,6 +1076,32 @@ export default function CompanyJobsPage() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    {/* 派遣選択時: 派遣先名（任意・公開可否）。派遣元＝自社情報は会社設定から自動表示 */}
+                                    {form.listing_type === 'dispatch' && (
+                                        <div style={{
+                                            padding: 'var(--space-md)', background: 'var(--color-bg-surface)',
+                                            borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
+                                        }}>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: '0 0 var(--space-sm)', lineHeight: 1.7 }}>
+                                                派遣元（自社）の会社名・住所・<strong>派遣許可番号</strong>は、求人詳細に自動表示されます。
+                                                <br />未登録の場合は<strong>会社設定</strong>で派遣許可番号を登録してください（未登録だと公開できません）。
+                                            </p>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 'var(--space-sm)' }}>
+                                                <input type="checkbox" checked={!!form.show_dispatch_client}
+                                                    onChange={e => set('show_dispatch_client', e.target.checked)} />
+                                                <span>派遣先の企業名を公開する</span>
+                                            </label>
+                                            {form.show_dispatch_client && (
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">派遣先 企業名</label>
+                                                    <input className="form-input" value={form.dispatch_client_name || ''}
+                                                        onChange={e => set('dispatch_client_name', e.target.value)}
+                                                        placeholder="例: 株式会社〇〇（非公開にする場合はチェックを外す）" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* 人材紹介選択時: 紹介先企業情報 */}
                                     {form.listing_type === 'referral' && (
