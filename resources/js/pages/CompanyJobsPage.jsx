@@ -114,7 +114,7 @@ export default function CompanyJobsPage() {
     const [showCampaignForm, setShowCampaignForm] = useState(false);
     const [editingCampaignId, setEditingCampaignId] = useState(null);
     const [campaignSaving, setCampaignSaving] = useState(false);
-    const [campaignForm, setCampaignForm] = useState({ name: '', daily_budget: 5000, budget_allocation: 'even', start_date: '', end_date: '', job_ids: [] });
+    const [campaignForm, setCampaignForm] = useState({ name: '', daily_budget: 5000, budget_allocation: 'even', billing_period: 'daily', start_date: '', end_date: '', job_ids: [], attach_all: false });
     const [addJobIds, setAddJobIds] = useState([]);
     const lastSavedForm = useRef(null); // 最後に保存したフォーム状態
     const [rankResult, setRankResult] = useState(null); // 順位シミュレーション結果
@@ -853,7 +853,7 @@ export default function CompanyJobsPage() {
                                 await api.post('/campaigns', campaignForm);
                                 showToastMsg('予算グループを作成しました');
                             }
-                            setCampaignForm({ name: '', daily_budget: 5000, budget_allocation: 'even', start_date: '', end_date: '', job_ids: [] });
+                            setCampaignForm({ name: '', daily_budget: 5000, budget_allocation: 'even', billing_period: 'daily', start_date: '', end_date: '', job_ids: [], attach_all: false });
                             setEditingCampaignId(null);
                             setShowCampaignForm(false);
                             fetchCampaigns();
@@ -3318,13 +3318,13 @@ function CampaignPanel({
     onSave, onStatusChange, onDelete, onAddJobs, onRemoveJob, onRedistribute,
 }) {
     const resetForm = () => {
-        setCampaignForm({ name: '', daily_budget: 5000, budget_allocation: 'even', start_date: '', end_date: '', job_ids: [] });
+        setCampaignForm({ name: '', daily_budget: 5000, budget_allocation: 'even', billing_period: 'daily', start_date: '', end_date: '', job_ids: [], attach_all: false });
         setEditingCampaignId(null);
         setShowCampaignForm(false);
     };
 
     const startEdit = (c) => {
-        setCampaignForm({ name: c.name, daily_budget: c.daily_budget, budget_allocation: c.budget_allocation, start_date: c.start_date || '', end_date: c.end_date || '', job_ids: [] });
+        setCampaignForm({ name: c.name, daily_budget: c.daily_budget, budget_allocation: c.budget_allocation, billing_period: c.billing_period || 'daily', start_date: c.start_date || '', end_date: c.end_date || '', job_ids: [], attach_all: false });
         setEditingCampaignId(c.id);
         setShowCampaignForm(true);
     };
@@ -3355,14 +3355,36 @@ function CampaignPanel({
                                 <label className="form-label">予算グループ名 *</label>
                                 <input className="form-input" type="text" value={campaignForm.name} onChange={e => setCampaignForm(f => ({ ...f, name: e.target.value }))} placeholder="例: エンジニア採用強化" required />
                             </div>
+                            <div style={{ gridColumn: '1/-1' }}>
+                                <label className="form-label">課金タイプ</label>
+                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                    {[{ value: 'daily', label: '日額（毎日課金）' }, { value: 'monthly', label: '月額（30日分を前払い・毎月更新）' }].map(opt => (
+                                        <button type="button" key={opt.value}
+                                            onClick={() => setCampaignForm(f => ({ ...f, billing_period: opt.value }))}
+                                            style={{
+                                                flex: '1 1 200px', padding: '8px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                                                border: campaignForm.billing_period === opt.value ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                                background: campaignForm.billing_period === opt.value ? 'rgba(18,28,52,0.05)' : 'transparent',
+                                                color: campaignForm.billing_period === opt.value ? 'var(--color-navy)' : 'var(--color-text-secondary)',
+                                                fontWeight: campaignForm.billing_period === opt.value ? 700 : 400, fontSize: 'var(--font-size-sm)',
+                                            }}>
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                             <div>
-                                <label className="form-label">日額予算（全体）</label>
+                                <label className="form-label">{campaignForm.billing_period === 'monthly' ? '月額予算（全体）' : '日額予算（全体）'}</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>¥</span>
-                                    <input type="range" min={0} max={100000} step={500} value={campaignForm.daily_budget} onChange={e => setCampaignForm(f => ({ ...f, daily_budget: Number(e.target.value) }))} style={{ flex: 1 }} />
+                                    <input type="range" min={0} max={campaignForm.billing_period === 'monthly' ? 1000000 : 100000} step={500} value={campaignForm.daily_budget} onChange={e => setCampaignForm(f => ({ ...f, daily_budget: Number(e.target.value) }))} style={{ flex: 1 }} />
                                     <input className="form-input" type="number" value={campaignForm.daily_budget} onChange={e => setCampaignForm(f => ({ ...f, daily_budget: Math.max(0, Number(e.target.value)) }))} style={{ width: 110, textAlign: 'right' }} />
                                 </div>
-                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>月額見積もり: ¥{cfmt(campaignForm.daily_budget * 30)}</span>
+                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                    {campaignForm.billing_period === 'monthly'
+                                        ? `今すぐ¥${cfmt(campaignForm.daily_budget)}を課金 → 30日間配信・毎月自動更新`
+                                        : `月額見積もり: ¥${cfmt(campaignForm.daily_budget * 30)}`}
+                                </span>
                             </div>
                             <div>
                                 <label className="form-label">配分方法</label>
@@ -3382,18 +3404,40 @@ function CampaignPanel({
                             {/* 新規時のみ求人選択 */}
                             {!editingCampaignId && (
                                 <div style={{ gridColumn: '1/-1' }}>
-                                    <label className="form-label">求人を追加（後から追加可）</label>
-                                    <JobCheckboxList
-                                        jobs={jobs.filter(j => !j.campaign_id)}
-                                        selectedIds={campaignForm.job_ids}
-                                        onToggle={(jobId) => setCampaignForm(f => ({ ...f, job_ids: f.job_ids.includes(jobId) ? f.job_ids.filter(id => id !== jobId) : [...f.job_ids, jobId] }))}
-                                        emptyText="未所属の求人がありません"
-                                        companyName={companyName}
-                                    />
-                                    {campaignForm.job_ids.length > 0 && (
-                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', fontWeight: 600, marginTop: 4, display: 'block' }}>
-                                            {campaignForm.job_ids.length}件選択 → 1求人あたり ¥{cfmt(Math.round(campaignForm.daily_budget / campaignForm.job_ids.length))}/日
+                                    <label className="form-label">対象求人</label>
+                                    {/* 全件選択 */}
+                                    <label style={{
+                                        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer',
+                                        borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-sm)',
+                                        border: campaignForm.attach_all ? '1.5px solid var(--color-navy)' : '1px solid var(--color-border)',
+                                        background: campaignForm.attach_all ? 'rgba(18,28,52,0.05)' : 'transparent',
+                                    }}>
+                                        <input type="checkbox" checked={campaignForm.attach_all}
+                                            onChange={e => setCampaignForm(f => ({ ...f, attach_all: e.target.checked, job_ids: e.target.checked ? [] : f.job_ids }))} />
+                                        <span style={{ fontWeight: 600, color: campaignForm.attach_all ? 'var(--color-navy)' : undefined }}>
+                                            未所属の公開求人をすべて対象にする（全件）
                                         </span>
+                                    </label>
+                                    {campaignForm.attach_all ? (
+                                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.7 }}>
+                                            まだどのキャンペーンにも属していない公開中の求人すべてに予算を配分します。<br />
+                                            件数が多いほど1求人あたりの配分は小さくなります（例：¥{cfmt(campaignForm.daily_budget)}÷{campaignForm.billing_period === 'monthly' ? '30日÷' : ''}求人数）。
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <JobCheckboxList
+                                                jobs={jobs.filter(j => !j.campaign_id)}
+                                                selectedIds={campaignForm.job_ids}
+                                                onToggle={(jobId) => setCampaignForm(f => ({ ...f, job_ids: f.job_ids.includes(jobId) ? f.job_ids.filter(id => id !== jobId) : [...f.job_ids, jobId] }))}
+                                                emptyText="未所属の求人がありません（このページ内）"
+                                                companyName={companyName}
+                                            />
+                                            {campaignForm.job_ids.length > 0 && (
+                                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', fontWeight: 600, marginTop: 4, display: 'block' }}>
+                                                    {campaignForm.job_ids.length}件選択 → 1求人あたり ¥{cfmt(Math.round((campaignForm.billing_period === 'monthly' ? campaignForm.daily_budget / 30 : campaignForm.daily_budget) / campaignForm.job_ids.length))}/日
+                                                </span>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}

@@ -109,6 +109,7 @@ class CampaignController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'job_ids' => 'nullable|array',
             'job_ids.*' => 'integer|exists:jobs,id',
+            'attach_all' => 'nullable|boolean',
         ]);
 
         $company = Auth::user()->company;
@@ -142,7 +143,16 @@ class CampaignController extends Controller
         ]);
 
         // 求人を紐付け
-        if ($request->filled('job_ids')) {
+        if ($request->boolean('attach_all')) {
+            // 未所属のアクティブ求人をすべて対象にする（全件選択）
+            Job::where('company_id', $company->id)
+                ->whereNull('campaign_id')
+                ->where('status', 'active')
+                ->update(['campaign_id' => $campaign->id]);
+
+            $campaign->refresh();
+            $campaign->distributeBudget();
+        } elseif ($request->filled('job_ids')) {
             Job::where('company_id', $company->id)
                 ->whereIn('id', $request->job_ids)
                 ->update(['campaign_id' => $campaign->id]);
