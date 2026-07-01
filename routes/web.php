@@ -241,6 +241,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-06-30T00:00:00+09:00',
             'modified'    => '2026-06-30T00:00:00+09:00',
         ],
+        'rirekisho-gakureki-kakikata' => [
+            'title'       => '履歴書の学歴の書き方【卒業年度・留年・中退・専門学校まで完全解説】 | Atally',
+            'description' => '履歴書の学歴欄の書き方を完全解説。中学校からの書き方・元号と西暦の統一・大学の学部学科名の正式表記・留年・休学・中退・卒業見込みの書き方まで。履歴書 学歴 書き方のNG例も紹介。',
+            'published'   => '2026-07-01T00:00:00+09:00',
+            'modified'    => '2026-07-01T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -627,6 +633,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-jikoshokai', 'monthly', '0.8'],
             ['/column/rirekisho-mail-okurikata', 'monthly', '0.8'],
             ['/column/rirekisho-honnin-kibo-kakikata', 'monthly', '0.8'],
+            ['/column/rirekisho-gakureki-kakikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
