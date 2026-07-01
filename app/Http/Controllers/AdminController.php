@@ -471,6 +471,72 @@ class AdminController extends Controller
     }
 
     /**
+     * 代理店別の実績（マーケットプレイス経由）。
+     * 経由企業数・稼働中企業数・掲載中求人数・求人課金売上・25%還元額を代理店ごとに集計。
+     * どの代理店経由の登録/売上/掲載が多いかを後から比較できるようにする。
+     */
+    public function agencyPerformance()
+    {
+        $data = Cache::remember('admin_agency_performance', 120, function () {
+            // 代理店ごとの経由企業数（declined除く）と稼働中企業数
+            $engagementAgg = DB::table('agency_engagements')
+                ->whereIn('status', ['requested', 'active', 'ended'])
+                ->selectRaw("
+                    agency_id,
+                    COUNT(DISTINCT client_company_id) AS client_count,
+                    COUNT(DISTINCT client_company_id) FILTER (WHERE status = 'active') AS active_client_count
+                ")
+                ->groupBy('agency_id')
+                ->get()->keyBy('agency_id');
+
+            // 稼働中エンゲージメントの企業が出している掲載中求人数
+            $jobAgg = DB::table('agency_engagements as ae')
+                ->join('jobs as j', function ($join) {
+                    $join->on('j.company_id', '=', 'ae.client_company_id')
+                        ->where('j.status', '=', 'active');
+                })
+                ->where('ae.status', 'active')
+                ->selectRaw('ae.agency_id, COUNT(j.id) AS job_count')
+                ->groupBy('ae.agency_id')
+                ->get()->keyBy('agency_id');
+
+            // 代理店経由の求人課金売上・25%還元額
+            $revenueAgg = DB::table('payment_transactions')
+                ->where('status', 'succeeded')
+                ->whereNotNull('agency_id')
+                ->selectRaw('agency_id, SUM(amount) AS revenue, SUM(agency_share_amount) AS agency_share, COUNT(*) AS tx_count')
+                ->groupBy('agency_id')
+                ->get()->keyBy('agency_id');
+
+            // 全代理店を並べる（実績0でも一覧に出す）
+            return Company::where('company_type', 'recruitment_agency')
+                ->get(['id', 'company_name', 'marketplace_listed', 'marketplace_status'])
+                ->map(function ($a) use ($engagementAgg, $jobAgg, $revenueAgg) {
+                    $e = $engagementAgg->get($a->id);
+                    $j = $jobAgg->get($a->id);
+                    $r = $revenueAgg->get($a->id);
+                    return [
+                        'agency_id'           => $a->id,
+                        'agency_name'         => $a->company_name,
+                        'marketplace_listed'  => (bool) $a->marketplace_listed,
+                        'marketplace_status'  => $a->marketplace_status,
+                        'client_count'        => (int) ($e->client_count ?? 0),
+                        'active_client_count' => (int) ($e->active_client_count ?? 0),
+                        'job_count'           => (int) ($j->job_count ?? 0),
+                        'revenue'             => (int) ($r->revenue ?? 0),
+                        'agency_share'        => (int) ($r->agency_share ?? 0),
+                        'tx_count'            => (int) ($r->tx_count ?? 0),
+                    ];
+                })
+                ->sortByDesc('revenue')
+                ->values()
+                ->all();
+        });
+
+        return response()->json($data);
+    }
+
+    /**
      * 求職者一覧
      */
     public function jobseekers(Request $request)

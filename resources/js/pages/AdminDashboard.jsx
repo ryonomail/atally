@@ -14,6 +14,7 @@ const TABS = [
     { key: 'jobs', label: '求人審査', Icon: FileText },
     { key: 'licenses', label: 'ライセンス', Icon: ScrollText },
     { key: 'marketplace', label: '代理店審査', Icon: Store },
+    { key: 'agency-perf', label: '代理店実績', Icon: BarChart3 },
     { key: 'reports', label: '通報', Icon: AlertTriangle },
     { key: 'audit', label: '監査ログ', Icon: History },
     { key: 'settings', label: '設定', Icon: Settings },
@@ -1466,6 +1467,105 @@ function MarketplaceTab({ initialData }) {
 }
 
 /* ============================================
+   代理店実績タブ（マーケットプレイス経由の登録・掲載・売上を代理店別に比較）
+   ============================================ */
+function AgencyPerformanceTab({ initialData }) {
+    const [rows, setRows] = useState(initialData || []);
+    const [loading, setLoading] = useState(!initialData);
+    const [sortKey, setSortKey] = useState('revenue');
+    const [sortDir, setSortDir] = useState('desc');
+
+    const fetchData = () => {
+        setLoading(true);
+        api.get('/admin/agency-performance').then(res => setRows(res.data || [])).finally(() => setLoading(false));
+    };
+    useEffect(() => { if (!initialData) fetchData(); }, []);
+
+    const COLS = [
+        { key: 'agency_name', label: '代理店', num: false },
+        { key: 'client_count', label: '経由企業数', num: true },
+        { key: 'active_client_count', label: '稼働中', num: true },
+        { key: 'job_count', label: '掲載中求人', num: true },
+        { key: 'revenue', label: '求人課金売上', num: true, yen: true },
+        { key: 'agency_share', label: '25%還元額', num: true, yen: true },
+    ];
+
+    const sorted = [...rows].sort((a, b) => {
+        const av = a[sortKey], bv = b[sortKey];
+        const cmp = typeof av === 'string' ? String(av).localeCompare(String(bv), 'ja') : (av - bv);
+        return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    const toggleSort = (key) => {
+        if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        else { setSortKey(key); setSortDir('desc'); }
+    };
+
+    const totals = rows.reduce((t, r) => ({
+        client: t.client + r.client_count, active: t.active + r.active_client_count,
+        jobs: t.jobs + r.job_count, revenue: t.revenue + r.revenue, share: t.share + r.agency_share,
+    }), { client: 0, active: 0, jobs: 0, revenue: 0, share: 0 });
+
+    if (loading) return <div className="skeleton" style={{ height: 240 }} />;
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0 }}>
+                    列見出しをクリックで並び替え（{sortKey === 'agency_name' ? '名前' : COLS.find(c => c.key === sortKey)?.label} / {sortDir === 'desc' ? '降順' : '昇順'}）
+                </p>
+                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)' }} onClick={fetchData}>再読み込み</button>
+            </div>
+            <div className="card" style={{ overflowX: 'auto', padding: 0 }}>
+                <table style={{ width: '100%', fontSize: 'var(--font-size-sm)', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
+                            {COLS.map(c => (
+                                <th key={c.key} onClick={() => toggleSort(c.key)}
+                                    style={{ padding: '12px 14px', textAlign: c.num ? 'right' : 'left', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}>
+                                    {c.label}{sortKey === c.key ? (sortDir === 'desc' ? ' ▼' : ' ▲') : ''}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sorted.map(r => (
+                            <tr key={r.agency_id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                <td style={{ padding: '10px 14px' }}>
+                                    {r.agency_name}
+                                    {!r.marketplace_listed && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--color-text-muted)' }}>未掲載</span>}
+                                    {r.marketplace_listed && r.marketplace_status !== 'approved' && <span style={{ marginLeft: 6, fontSize: 10, color: '#b5801f' }}>審査中</span>}
+                                </td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>{r.client_count}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>{r.active_client_count}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>{r.job_count}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600 }}>¥{r.revenue.toLocaleString()}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--color-accent, #c8952e)' }}>¥{r.agency_share.toLocaleString()}</td>
+                            </tr>
+                        ))}
+                        {sorted.length === 0 && (
+                            <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: 'var(--color-text-muted)' }}>代理店がまだありません</td></tr>
+                        )}
+                    </tbody>
+                    {rows.length > 0 && (
+                        <tfoot>
+                            <tr style={{ borderTop: '2px solid var(--color-border)', fontWeight: 700, background: 'var(--color-bg-muted)' }}>
+                                <td style={{ padding: '10px 14px' }}>合計</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>{totals.client}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>{totals.active}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>{totals.jobs}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>¥{totals.revenue.toLocaleString()}</td>
+                                <td style={{ padding: '10px 14px', textAlign: 'right' }}>¥{totals.share.toLocaleString()}</td>
+                            </tr>
+                        </tfoot>
+                    )}
+                </table>
+            </div>
+        </div>
+    );
+}
+
+/* ============================================
    通報管理タブ
    ============================================ */
 function ReportsTab({ initialData }) {
@@ -1967,6 +2067,7 @@ export default function AdminDashboard() {
             jobs:           () => !prefetched.pendingJobs     && api.get('/admin/jobs/pending').then(r => setPrefetched(p => ({ ...p, pendingJobs: r.data }))).catch(() => {}),
             licenses:       () => !prefetched.pendingLicenses && api.get('/admin/licenses/pending').then(r => setPrefetched(p => ({ ...p, pendingLicenses: r.data }))).catch(() => {}),
             marketplace:    () => !prefetched.pendingMarketplace && api.get('/admin/marketplace/pending').then(r => setPrefetched(p => ({ ...p, pendingMarketplace: r.data }))).catch(() => {}),
+            'agency-perf':  () => !prefetched.agencyPerf && api.get('/admin/agency-performance').then(r => setPrefetched(p => ({ ...p, agencyPerf: r.data }))).catch(() => {}),
             reports:        () => !prefetched.reports         && api.get('/admin/reports', { params: { status: 'open' } }).then(r => setPrefetched(p => ({ ...p, reports: r.data }))).catch(() => {}),
             audit:          () => !prefetched.auditLogs       && api.get('/admin/audit-logs').then(r => setPrefetched(p => ({ ...p, auditLogs: r.data }))).catch(() => {}),
             settings:       () => !prefetched.settings        && api.get('/admin/settings').then(r => setPrefetched(p => ({ ...p, settings: r.data }))).catch(() => {}),
@@ -2040,6 +2141,7 @@ export default function AdminDashboard() {
             {tab === 'jobs' && <JobsTab initialData={prefetched.pendingJobs} />}
             {tab === 'licenses' && <LicensesTab initialData={prefetched.pendingLicenses} />}
             {tab === 'marketplace' && <MarketplaceTab initialData={prefetched.pendingMarketplace} />}
+            {tab === 'agency-perf' && <AgencyPerformanceTab initialData={prefetched.agencyPerf} />}
             {tab === 'reports' && <ReportsTab initialData={prefetched.reports} />}
             {tab === 'audit' && <AuditLogTab initialData={prefetched.auditLogs} />}
             {tab === 'settings' && <SettingsTab initialData={prefetched.settings} />}
