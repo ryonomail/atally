@@ -30,6 +30,17 @@ function cleanMapQuery(addr) {
     return s;
 }
 
+// 地図に立てるピンのクエリを決定：
+//  - 通常の住所 → 建物ピン（正確）
+//  - 施設名・物流拠点等を含む住所（複数ピンになりやすい）や、詳細住所が無い場合 → 都道府県/市区町村
+const FACILITY_RE = /(パーク|センター|ロジスティクス|ターミナル|工業団地|流通|物流|ビル|タワー|プラザ|モール|団地|キャンパス|アリーナ|スタジアム|倉庫)/;
+function mapPinQuery(job) {
+    const region = [job.prefecture, job.city].filter(Boolean).join('') || job.location || '';
+    const addr = cleanMapQuery(job.office_address || '');
+    if (addr && !FACILITY_RE.test(addr)) return addr; // 通常住所はそのまま
+    return region || addr || job.location || null;     // 施設名混在 or 詳細なし → 市区町村
+}
+
 const EMPLOYMENT_TYPES = [
     { value: '', label: 'すべて' },
     { value: '正社員', label: '正社員' },
@@ -1473,9 +1484,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         <InfoRow label="契約期間" value={job.contract_period} />
                         {/* 勤務地の地図（詳細取得後に一度だけ描画してちらつきを防ぐ） */}
                         {job.__full && (() => {
-                            const mapQuery = cleanMapQuery(job.office_address
-                                || [job.prefecture, job.city].filter(Boolean).join('')
-                                || job.location);
+                            const mapQuery = mapPinQuery(job);
                             if (!mapQuery) return null;
                             return (
                                 <div style={{ marginTop: 'var(--space-md)' }}>

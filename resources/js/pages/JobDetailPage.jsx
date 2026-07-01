@@ -25,6 +25,15 @@ function cleanMapQuery(addr) {
     return s;
 }
 
+// 地図ピンのクエリ：通常住所は建物ピン、施設名混在や詳細住所なしは都道府県/市区町村へフォールバック
+const FACILITY_RE = /(パーク|センター|ロジスティクス|ターミナル|工業団地|流通|物流|ビル|タワー|プラザ|モール|団地|キャンパス|アリーナ|スタジアム|倉庫)/;
+function mapPinQuery(job) {
+    const region = [job.prefecture, job.city].filter(Boolean).join('') || job.location || '';
+    const addr = cleanMapQuery(job.office_address || '');
+    if (addr && !FACILITY_RE.test(addr)) return addr;
+    return region || addr || job.location || null;
+}
+
 function SectionHeader({ title }) {
     return (
         <div style={{
@@ -979,9 +988,7 @@ export default function JobDetailPage() {
 
                     {/* 勤務地の地図（住所があるときのみ・APIキー不要のGoogleマップ埋め込み） */}
                     {(() => {
-                        const mapQuery = cleanMapQuery(job.office_address
-                            || [job.prefecture, job.city].filter(Boolean).join('')
-                            || job.location);
+                        const mapQuery = mapPinQuery(job);
                         if (!mapQuery) return null;
                         return (
                             <div style={{ padding: 'var(--space-lg) var(--space-xl) var(--space-xl)' }}>
