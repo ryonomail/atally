@@ -16,3 +16,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# 秘密鍵（GSCサービスアカウント等・イメージに焼かない）
+/secrets/

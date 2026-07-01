@@ -13,6 +13,9 @@ services:
       PORT: "80"
     env_file:
       - .env
+    volumes:
+      # 秘密鍵などイメージに焼かず永続化したいファイル（例: GSCサービスアカウントJSON）
+      - ./secrets:/var/www/html/storage/app/secrets:ro
     depends_on:
       db:
         condition: service_healthy

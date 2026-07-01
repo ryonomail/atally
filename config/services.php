@@ -36,7 +36,7 @@ return [
     'gsc' => [
         // URLプレフィックスなら 'https://atally.io/'、ドメインプロパティなら 'sc-domain:atally.io'
         'site_url' => env('GSC_SITE_URL', 'sc-domain:atally.io'),
-        // サービスアカウントJSONキーの絶対パス（VPSに配置）
-        'key_path' => env('GSC_KEY_PATH', storage_path('app/gsc-service-account.json')),
+        // サービスアカウントJSONキーの絶対パス（ホスト永続の secrets ボリューム内）
+        'key_path' => env('GSC_KEY_PATH', storage_path('app/secrets/gsc-service-account.json')),
     ],
 ];
