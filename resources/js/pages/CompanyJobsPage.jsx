@@ -124,6 +124,9 @@ export default function CompanyJobsPage() {
     const [benchmark, setBenchmark] = useState(null); // 相場診断結果
     const [benchmarkLoading, setBenchmarkLoading] = useState(false);
     const benchTimerRef = useRef(null);
+    const [boost, setBoost] = useState(null);         // 無料→有料化ナッジ
+    const [boostBusyId, setBoostBusyId] = useState(null);
+    const [boostDismissed, setBoostDismissed] = useState(false);
     const [selectedJobs, setSelectedJobs] = useState([]); // 一括選択
     const [bulkBudget, setBulkBudget] = useState(0);
     const [bulkSaving, setBulkSaving] = useState(false);
@@ -268,6 +271,22 @@ export default function CompanyJobsPage() {
             }).catch(() => {});
         }
     }, []);
+
+    // 無料掲載→有料化ナッジ用のデータを取得
+    const fetchBoost = useCallback(() => {
+        api.get('/my-jobs/boost-insights').then(res => setBoost(res.data)).catch(() => {});
+    }, []);
+    useEffect(() => { fetchBoost(); }, [fetchBoost]);
+
+    // ナッジから推奨予算で上位表示を開始
+    const startBoost = (item) => {
+        if (!confirm(`「${item.title}」を ¥${Number(item.suggested_budget).toLocaleString()}/日 で上位表示しますか？\n有料掲載が開始され、日額で課金されます。`)) return;
+        setBoostBusyId(item.id);
+        api.post('/jobs/bulk-budget', { job_ids: [item.id], daily_budget: item.suggested_budget })
+            .then(() => { toast.success('上位表示を開始しました'); fetchJobs(currentPage); fetchBoost(); })
+            .catch(err => toast.error(err.response?.data?.message || '設定に失敗しました'))
+            .finally(() => setBoostBusyId(null));
+    };
 
     // 絞り込み・検索が変わったら1ページ目から取り直す（検索は400msデバウンス）
     useEffect(() => {
@@ -2141,6 +2160,40 @@ export default function CompanyJobsPage() {
                     </div>
                 ) : (
                     <>
+                        {/* 無料掲載→有料化ナッジ（検索順位は課金で上がる事実に基づく） */}
+                        {!showForm && !boostDismissed && boost && boost.free_jobs > 0 && boost.items?.length > 0 && (
+                            <div style={{
+                                marginBottom: 'var(--space-md)', padding: '14px 16px', borderRadius: 10,
+                                border: '1px solid var(--color-accent-light, #eadfc4)',
+                                background: 'linear-gradient(180deg, #fbf6ea 0%, #fdfbf5 100%)',
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--color-navy)' }}>
+                                        <Target size={16} style={{ color: 'var(--color-accent, #c8952e)' }} />
+                                        無料枠の求人が {boost.free_jobs} 件あります
+                                    </div>
+                                    <button onClick={() => setBoostDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>閉じる</button>
+                                </div>
+                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', margin: '0 0 10px' }}>
+                                    検索結果の表示順は掲載予算で決まります。有料化すると同エリアの上位に表示され、応募が集まりやすくなります。
+                                </p>
+                                {boost.items.slice(0, 3).map(item => (
+                                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,0.05)', flexWrap: 'wrap' }}>
+                                        <div style={{ minWidth: 0, flex: '1 1 240px' }}>
+                                            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
+                                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                                {item.area}：有料掲載 {item.area_paid} 件が上位表示中
+                                            </div>
+                                        </div>
+                                        <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}
+                                            disabled={boostBusyId === item.id}
+                                            onClick={() => startBoost(item)}>
+                                            {boostBusyId === item.id ? '設定中…' : `¥${Number(item.suggested_budget).toLocaleString()}/日で上位表示`}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         {/* 一括選択バー */}
                         {filteredJobs.length > 0 && !showForm && (
                             <div style={{

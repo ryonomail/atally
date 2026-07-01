@@ -8,6 +8,7 @@ import GuestProfileBanner, { getGuestProfile } from '../components/GuestProfileB
 import { JOB_CATEGORY_MAJORS } from '../data/jobCategories';
 import { formatSalary } from '../utils/salary';
 import { mapPinQuery } from '../utils/mapPin';
+import { cleanJobText } from '../utils/jobText';
 import { Search, MapPin, Bookmark, BookmarkCheck, X } from 'lucide-react';
 
 // 残業表記の正規化：ハローワーク由来の重複（月平均月平均…時間時間）を圧縮し、数字のみには単位を補う
@@ -1179,7 +1180,7 @@ function JobListCard({ job, isSelected, isSaved, isApplied, onToggleSave, onClic
                     fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', lineHeight: 1.5,
                     display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     margin: 0,
-                }}>{job.description.replace(/【[^】]+】\n?/g, '').trim()}</p>
+                }}>{cleanJobText(job.description.replace(/【[^】]+】\n?/g, ''))}</p>
             )}
         </div>
     );
@@ -1410,7 +1411,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                 <div style={{ marginBottom: 'var(--space-xl)' }}>
                     <SectionHeader icon="📋" title="仕事内容" />
                     <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)' }}>
-                        {job.description?.replace(/【[^】]+】\n?/g, '').trim()}
+                        {cleanJobText((job.description || '').replace(/【[^】]+】\n?/g, ''))}
                     </p>
                     {job.scope_of_change && (
                         <InfoRow label="変更の範囲" value={job.scope_of_change} />

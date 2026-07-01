@@ -5,6 +5,7 @@ import api from '../api';
 import SEO from '../components/SEO';
 import { formatSalary } from '../utils/salary';
 import { mapPinQuery } from '../utils/mapPin';
+import { cleanJobText } from '../utils/jobText';
 import { ArrowLeft, Bookmark, BookmarkCheck, FileText, MapPin } from 'lucide-react';
 
 // 残業表記の正規化：重複（月平均月平均…時間時間）を圧縮し、数字のみには単位を補う
@@ -767,7 +768,7 @@ export default function JobDetailPage() {
                             この求人のポイント
                         </p>
                         <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)', margin: 0 }}>
-                            {job.appeal_points}
+                            {cleanJobText(job.appeal_points)}
                         </p>
                     </div>
                 )}
@@ -815,7 +816,7 @@ export default function JobDetailPage() {
                     <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-lg)', background: 'rgba(18,28,52,0.02)' }}>
                         <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>募集背景</p>
                         <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: 'var(--font-size-sm)', margin: 0 }}>
-                            {job.recruitment_background}
+                            {cleanJobText(job.recruitment_background)}
                         </p>
                     </div>
                 )}
@@ -894,7 +895,7 @@ export default function JobDetailPage() {
                     <SectionHeader icon="📋" title="仕事内容" />
                     <div style={{ padding: 'var(--space-lg) var(--space-xl)' }}>
                         <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
-                            {job.description}
+                            {cleanJobText(job.description)}
                         </p>
                         {job.scope_of_change && (
                             <div style={{ marginTop: 'var(--space-md)', borderTop: '1px solid #e5e7eb', paddingTop: 'var(--space-md)' }}>
@@ -911,14 +912,14 @@ export default function JobDetailPage() {
                         <div style={{ padding: 'var(--space-lg) var(--space-xl)' }}>
                             {job.requirements && (
                                 <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, marginBottom: job.preferred_qualifications ? 'var(--space-lg)' : 0 }}>
-                                    {job.requirements}
+                                    {cleanJobText(job.requirements)}
                                 </p>
                             )}
                             {job.preferred_qualifications && (
                                 <>
                                     <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: 4 }}>歓迎条件</p>
                                     <p style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8, margin: 0 }}>
-                                        {job.preferred_qualifications}
+                                        {cleanJobText(job.preferred_qualifications)}
                                     </p>
                                 </>
                             )}

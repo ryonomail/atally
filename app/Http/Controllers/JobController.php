@@ -1438,6 +1438,53 @@ class JobController extends Controller
         ]);
     }
 
+    /**
+     * 企業: 無料掲載→有料化の納得ナッジ。
+     * 無料枠(daily_budget=0)のアクティブ求人ごとに、同エリアの競合数・有料掲載数・推奨開始予算を返す。
+     * 検索順位は ranking_score（=予算由来）で決まるため、有料化＝上位表示という事実に基づく。
+     */
+    public function boostInsights(Request $request)
+    {
+        $company = Auth::user()->company;
+        if (!$company) {
+            return response()->json(['free_jobs' => 0, 'items' => []]);
+        }
+
+        $freeTotal = $company->jobs()->where('status', 'active')->where('daily_budget', 0)->count();
+
+        $freeJobs = $company->jobs()->where('status', 'active')->where('daily_budget', 0)
+            ->orderByDesc('created_at')->limit(20)
+            ->get(['id', 'title', 'prefecture', 'location']);
+
+        $items = $freeJobs->map(function ($j) {
+            $area = function () use ($j) {
+                $q = Job::where('status', 'active');
+                if (!empty($j->prefecture)) $q->where('prefecture', $j->prefecture);
+                elseif (!empty($j->location)) $q->where('location', $j->location);
+                return $q;
+            };
+            $areaActive = (clone $area())->count();
+            $areaPaid   = (clone $area())->where('daily_budget', '>', 0)->count();
+            $maxPaid    = (float) (clone $area())->where('daily_budget', '>', 0)->max('daily_budget');
+            // 有料勢を上回る推奨予算（¥100単位・切り上げ）。有料勢がいなければ最低ライン。
+            $suggested  = $maxPaid > 0 ? (int) (ceil(($maxPaid + 100) / 100) * 100) : 300;
+
+            return [
+                'id'               => $j->id,
+                'title'            => $j->title,
+                'area'             => $j->prefecture ?: ($j->location ?: '全国'),
+                'area_active'      => $areaActive,
+                'area_paid'        => $areaPaid,
+                'suggested_budget' => $suggested,
+            ];
+        });
+
+        return response()->json([
+            'free_jobs' => $freeTotal,
+            'items'     => $items->values(),
+        ]);
+    }
+
     // 企業: 一括ステータス変更
     public function bulkStatus(Request $request)
     {
