@@ -18,8 +18,10 @@ class MarketplaceController extends Controller
     /** マーケットプレイス掲載中の代理店一覧 */
     public function agencies(Request $request)
     {
+        // 掲載希望(marketplace_listed)かつ運営審査を通過(approved)した代理店のみ公開
         $agencies = Company::where('company_type', 'recruitment_agency')
             ->where('marketplace_listed', true)
+            ->where('marketplace_status', 'approved')
             ->orderByRaw('COALESCE(service_fee, 999999) asc')
             ->get(['id', 'company_name', 'industry', 'permit_number', 'service_fee',
                    'service_description', 'service_specialties', 'license_verified']);
@@ -109,20 +111,24 @@ class MarketplaceController extends Controller
             'service_specialties' => 'nullable|string|max:255',
         ]);
 
-        // 掲載するには許可番号が必要（有料職業紹介の適法性）
-        if ($data['marketplace_listed'] && empty($company->permit_number)) {
-            return response()->json(['message' => 'マーケットプレイス掲載には人材紹介の許可番号登録が必要です'], 422);
-        }
-
-        $company->update([
+        // 許可番号は必須にしない（営業代行等も想定）。掲載可否は運営の非公開基準による審査で判断する。
+        $update = [
             'marketplace_listed'  => $data['marketplace_listed'],
             'service_fee'         => $data['service_fee'] ?? null,
             'service_description' => $data['service_description'] ?? null,
             'service_specialties' => $data['service_specialties'] ?? null,
-        ]);
+        ];
+
+        // 掲載を希望し、まだ承認されていなければ審査待ちにする（却下後の再申請も審査待ちへ戻す）
+        if ($data['marketplace_listed'] && $company->marketplace_status !== 'approved') {
+            $update['marketplace_status'] = 'pending';
+            $update['marketplace_reviewed_at'] = null;
+        }
+
+        $company->update($update);
 
         return response()->json([
-            'company' => $company->only(['id', 'marketplace_listed', 'service_fee', 'service_description', 'service_specialties']),
+            'company' => $company->only(['id', 'marketplace_listed', 'marketplace_status', 'service_fee', 'service_description', 'service_specialties']),
             'fee_cap' => self::FEE_CAP,
         ]);
     }

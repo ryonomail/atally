@@ -429,6 +429,55 @@ class AdminController extends Controller
     }
 
     /**
+     * マーケットプレイス掲載審査待ちの代理店一覧
+     */
+    public function pendingMarketplace()
+    {
+        $data = Company::where('company_type', 'recruitment_agency')
+            ->where('marketplace_listed', true)
+            ->where('marketplace_status', 'pending')
+            ->with('user:id,name,email')
+            ->orderBy('updated_at', 'asc')
+            ->get(['id', 'user_id', 'company_name', 'permit_number', 'service_fee',
+                   'service_description', 'service_specialties', 'license_verified', 'updated_at'])
+            ->toArray();
+        return response()->json($data);
+    }
+
+    /**
+     * マーケットプレイス掲載の承認/却下（基準は非公開）
+     */
+    public function reviewMarketplace(Request $request, Company $company)
+    {
+        $validated = $request->validate([
+            'approved' => ['required', 'boolean'],
+        ]);
+
+        $company->update([
+            'marketplace_status'      => $validated['approved'] ? 'approved' : 'rejected',
+            'marketplace_reviewed_at' => now(),
+        ]);
+
+        AdminAuditLog::log(auth()->id(), $validated['approved'] ? 'marketplace.approved' : 'marketplace.rejected', 'company', $company->id);
+
+        if ($company->user) {
+            $approved = $validated['approved'];
+            InAppNotification::notify(
+                $company->user->id,
+                'system',
+                $approved ? 'マーケットプレイス掲載が承認されました' : 'マーケットプレイス掲載が見送りになりました',
+                $approved ? '運用代行マーケットプレイスに掲載されました。' : '掲載基準を満たさなかったため、今回は見送りとなりました。',
+                '/company/marketplace'
+            );
+        }
+
+        return response()->json([
+            'company' => $company->fresh(),
+            'message' => $validated['approved'] ? '掲載を承認しました。' : '掲載を却下しました。',
+        ]);
+    }
+
+    /**
      * 求職者一覧
      */
     public function jobseekers(Request $request)

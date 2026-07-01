@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw } from 'lucide-react';
+import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw, Store } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
@@ -13,6 +13,7 @@ const TABS = [
     { key: 'companies', label: '企業審査', Icon: CheckCircle },
     { key: 'jobs', label: '求人審査', Icon: FileText },
     { key: 'licenses', label: 'ライセンス', Icon: ScrollText },
+    { key: 'marketplace', label: '代理店審査', Icon: Store },
     { key: 'reports', label: '通報', Icon: AlertTriangle },
     { key: 'audit', label: '監査ログ', Icon: History },
     { key: 'settings', label: '設定', Icon: Settings },
@@ -1385,6 +1386,87 @@ function LicensesTab({ initialData }) {
 }
 
 /* ============================================
+   代理店（マーケットプレイス）審査タブ
+   ============================================ */
+function MarketplaceTab({ initialData }) {
+    const toast = useToast();
+    const [agencies, setAgencies] = useState(initialData || []);
+    const [loading, setLoading] = useState(!initialData);
+    const [processing, setProcessing] = useState(null);
+
+    const fetchPending = () => {
+        setLoading(true);
+        api.get('/admin/marketplace/pending').then(res => setAgencies(res.data || [])).finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        if (initialData) return;
+        fetchPending();
+    }, []);
+
+    const handleReview = async (companyId, approved) => {
+        const action = approved ? '掲載を承認' : '掲載を却下';
+        if (!confirm(`この代理店の${action}しますか？（審査基準は非公開）`)) return;
+        setProcessing(companyId);
+        try {
+            await api.put(`/admin/marketplace/${companyId}/review`, { approved });
+            setAgencies(agencies.filter(a => a.id !== companyId));
+        } catch (err) {
+            toast.error('処理に失敗しました');
+        } finally {
+            setProcessing(null);
+        }
+    };
+
+    if (loading) return <div className="skeleton" style={{ height: 200 }} />;
+
+    if (agencies.length === 0) {
+        return (
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>
+                <p>マーケットプレイス掲載の審査待ちはありません</p>
+                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-sm)' }} onClick={fetchPending}>再読み込み</button>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-sm)' }}>
+                <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)' }} onClick={fetchPending} disabled={loading}>
+                    {loading ? '読み込み中…' : '再読み込み'}
+                </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                {agencies.map(a => (
+                    <div key={a.id} className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
+                            <div style={{ flex: 1 }}>
+                                <h3 style={{ marginBottom: 'var(--space-xs)' }}>{a.company_name}</h3>
+                                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                                    {a.user && <p style={{ margin: '0 0 4px' }}>登録者: {a.user.name} ({a.user.email})</p>}
+                                    <p style={{ margin: '0 0 4px' }}>許可番号: {a.permit_number ? <strong>{a.permit_number}</strong> : <span style={{ color: 'var(--color-text-muted)' }}>なし（営業代行等）</span>}{a.license_verified && '（確認済）'}</p>
+                                    <p style={{ margin: '0 0 4px' }}>管理料の目安: {a.service_fee != null ? `¥${Number(a.service_fee).toLocaleString()}/月` : '要相談'}</p>
+                                    {a.service_specialties && <p style={{ margin: '0 0 4px' }}>得意領域: {a.service_specialties}</p>}
+                                </div>
+                                {a.service_description && (
+                                    <p style={{ fontSize: 'var(--font-size-sm)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: 'var(--color-bg-muted)', padding: '10px 12px', borderRadius: 'var(--radius-md)' }}>{a.service_description}</p>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', gap: 'var(--space-sm)', flexShrink: 0 }}>
+                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-sm)' }}
+                                    disabled={processing === a.id} onClick={() => handleReview(a.id, true)}>承認</button>
+                                <button className="btn btn-danger" style={{ fontSize: 'var(--font-size-sm)' }}
+                                    disabled={processing === a.id} onClick={() => handleReview(a.id, false)}>却下</button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+}
+
+/* ============================================
    通報管理タブ
    ============================================ */
 function ReportsTab({ initialData }) {
@@ -1885,6 +1967,7 @@ export default function AdminDashboard() {
             companies:      () => !prefetched.pendingCompanies && api.get('/admin/companies/pending').then(r => setPrefetched(p => ({ ...p, pendingCompanies: r.data }))).catch(() => {}),
             jobs:           () => !prefetched.pendingJobs     && api.get('/admin/jobs/pending').then(r => setPrefetched(p => ({ ...p, pendingJobs: r.data }))).catch(() => {}),
             licenses:       () => !prefetched.pendingLicenses && api.get('/admin/licenses/pending').then(r => setPrefetched(p => ({ ...p, pendingLicenses: r.data }))).catch(() => {}),
+            marketplace:    () => !prefetched.pendingMarketplace && api.get('/admin/marketplace/pending').then(r => setPrefetched(p => ({ ...p, pendingMarketplace: r.data }))).catch(() => {}),
             reports:        () => !prefetched.reports         && api.get('/admin/reports', { params: { status: 'open' } }).then(r => setPrefetched(p => ({ ...p, reports: r.data }))).catch(() => {}),
             audit:          () => !prefetched.auditLogs       && api.get('/admin/audit-logs').then(r => setPrefetched(p => ({ ...p, auditLogs: r.data }))).catch(() => {}),
             settings:       () => !prefetched.settings        && api.get('/admin/settings').then(r => setPrefetched(p => ({ ...p, settings: r.data }))).catch(() => {}),
@@ -1957,6 +2040,7 @@ export default function AdminDashboard() {
             {tab === 'companies' && <CompaniesTab initialData={prefetched.pendingCompanies} />}
             {tab === 'jobs' && <JobsTab initialData={prefetched.pendingJobs} />}
             {tab === 'licenses' && <LicensesTab initialData={prefetched.pendingLicenses} />}
+            {tab === 'marketplace' && <MarketplaceTab initialData={prefetched.pendingMarketplace} />}
             {tab === 'reports' && <ReportsTab initialData={prefetched.reports} />}
             {tab === 'audit' && <AuditLogTab initialData={prefetched.auditLogs} />}
             {tab === 'settings' && <SettingsTab initialData={prefetched.settings} />}

@@ -50,6 +50,8 @@ class Company extends Model
         'license_document_path',
         'license_verified',
         'marketplace_listed',
+        'marketplace_status',
+        'marketplace_reviewed_at',
         'service_fee',
         'service_description',
         'service_specialties',
@@ -66,6 +68,7 @@ class Company extends Model
             'payment_failed_at' => 'datetime',
             'license_verified' => 'boolean',
             'marketplace_listed' => 'boolean',
+            'marketplace_reviewed_at' => 'datetime',
             'service_fee' => 'integer',
         ];
     }

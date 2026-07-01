@@ -140,6 +140,7 @@ function ClientView({ toast }) {
 /* ========================= 代理店ビュー ========================= */
 function AgencyView({ toast }) {
     const [profile, setProfile] = useState({ marketplace_listed: false, service_fee: '', service_description: '', service_specialties: '' });
+    const [reviewStatus, setReviewStatus] = useState(null); // pending / approved / rejected
     const [engagements, setEngagements] = useState([]);
     const [payouts, setPayouts] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -154,6 +155,7 @@ function AgencyView({ toast }) {
                 service_description: c.service_description ?? '',
                 service_specialties: c.service_specialties ?? '',
             });
+            setReviewStatus(c.marketplace_status ?? null);
         }).catch(() => {});
         api.get('/marketplace/engagements').then(res => setEngagements(res.data.engagements || [])).catch(() => {});
         api.get('/marketplace/payouts').then(res => setPayouts(res.data)).catch(() => {});
@@ -167,8 +169,13 @@ function AgencyView({ toast }) {
             service_fee: profile.service_fee === '' ? null : Number(profile.service_fee),
             service_description: profile.service_description || null,
             service_specialties: profile.service_specialties || null,
-        }).then(() => toast.success('掲載プロフィールを保存しました'))
-          .catch(err => toast.error(err.response?.data?.message || '保存に失敗しました'))
+        }).then(res => {
+            const st = res.data?.company?.marketplace_status;
+            if (st) setReviewStatus(st);
+            toast.success(profile.marketplace_listed && st !== 'approved'
+                ? '保存しました。運営審査の通過後に掲載されます。'
+                : '掲載プロフィールを保存しました');
+        }).catch(err => toast.error(err.response?.data?.message || '保存に失敗しました'))
           .finally(() => setSaving(false));
     };
 
@@ -195,6 +202,22 @@ function AgencyView({ toast }) {
             {/* 掲載プロフィール */}
             <div className="card" style={{ padding: 20, borderRadius: 12, border: '1px solid var(--color-border, #e5e7eb)', marginBottom: 24 }}>
                 <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, marginTop: 0, marginBottom: 14 }}>掲載プロフィール</h2>
+                {profile.marketplace_listed && reviewStatus && reviewStatus !== 'approved' && (
+                    <div style={{
+                        marginBottom: 14, padding: '10px 12px', borderRadius: 8, fontSize: 'var(--font-size-sm)',
+                        background: reviewStatus === 'rejected' ? '#fbecec' : '#fbf3e0',
+                        color: reviewStatus === 'rejected' ? '#a3312f' : '#8a6314',
+                    }}>
+                        {reviewStatus === 'rejected'
+                            ? '今回は掲載を見送りとなりました。内容を見直して再度申請できます。'
+                            : '運営審査中です。承認されると求人企業に公開されます。'}
+                    </div>
+                )}
+                {profile.marketplace_listed && reviewStatus === 'approved' && (
+                    <div style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 8, fontSize: 'var(--font-size-sm)', background: '#eaf6ee', color: '#1b7a3d' }}>
+                        掲載中です。求人企業に公開されています。
+                    </div>
+                )}
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, cursor: 'pointer' }}>
                     <input type="checkbox" checked={profile.marketplace_listed}
                         onChange={e => setProfile(p => ({ ...p, marketplace_listed: e.target.checked }))} />
