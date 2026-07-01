@@ -351,7 +351,9 @@ export default function JobSearchPage() {
             setDetailLoading(true);
         }
         api.get(`/jobs/${selectedJobId}`)
-            .then(res => setSelectedJob(res.data))
+            // __full: 詳細(会社住所・許可番号・写真等を含む完全データ)が揃った印。
+            // 一覧データからのちらつき（地図の再読込・紹介元カードの後埋め）を防ぐために使う。
+            .then(res => setSelectedJob({ ...res.data, __full: true }))
             .catch(() => { if (!hasInstantData) setSelectedJob(null); })
             .finally(() => setDetailLoading(false));
     }, [selectedJobId]);
@@ -1265,7 +1267,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
             </div>
 
             {/* 派遣: 派遣元情報（自社設定から自動表示。外部求人は対象外） */}
-            {job.listing_type === 'dispatch' && job.source !== 'hellowork' && (
+            {job.__full && job.listing_type === 'dispatch' && job.source !== 'hellowork' && (
                 <div style={{ padding: 'var(--space-md) var(--space-xl)', borderBottom: '1px solid var(--color-border)' }}>
                     <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 6px' }}>派遣元情報（労働者派遣）</p>
                     <InfoRow label="派遣元事業主" value={job.company?.company_name} />
@@ -1276,7 +1278,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
             )}
 
             {/* 紹介: 紹介元（職業紹介事業者）。紹介×派遣も明示 */}
-            {job.listing_type === 'referral' && job.source !== 'hellowork' && (
+            {job.__full && job.listing_type === 'referral' && job.source !== 'hellowork' && (
                 <div style={{ padding: 'var(--space-md) var(--space-xl)', borderBottom: '1px solid var(--color-border)' }}>
                     <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 6px' }}>紹介元（職業紹介事業者）</p>
                     {job.employment_type?.includes('派遣') && (
@@ -1450,8 +1452,8 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         {job.dormitory && <InfoRow label="寮" value={job.dormitory} />}
                         {job.smoking_policy && <InfoRow label="受動喫煙対策" value={job.smoking_policy} />}
                         <InfoRow label="契約期間" value={job.contract_period} />
-                        {/* 勤務地の地図（APIキー不要のGoogleマップ埋め込み） */}
-                        {(() => {
+                        {/* 勤務地の地図（詳細取得後に一度だけ描画してちらつきを防ぐ） */}
+                        {job.__full && (() => {
                             const mapQuery = job.office_address
                                 || [job.prefecture, job.city].filter(Boolean).join('')
                                 || job.location;
