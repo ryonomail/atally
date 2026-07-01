@@ -595,9 +595,31 @@ class AdminController extends Controller
             if ($request->filled('status')) {
                 $query->where('verification_status', $request->status);
             }
-            return $query->orderBy('created_at', 'desc')->paginate(30)->toArray();
+            $paginator = $query->orderBy('created_at', 'desc')->paginate(30);
+            // 運用中の代理店（マーケットプレイス経由）を付与
+            $agencyMap = $this->agencyMapForClients(collect($paginator->items())->pluck('id'));
+            $paginator->getCollection()->transform(function ($c) use ($agencyMap) {
+                $c->setAttribute('managing_agency', $agencyMap[$c->id] ?? null);
+                return $c;
+            });
+            return $paginator->toArray();
         });
         return response()->json($result);
+    }
+
+    /** 求人企業ID群に対して、現在運用中の代理店(id/name)を client_company_id => {id,name} で返す */
+    private function agencyMapForClients($clientIds): array
+    {
+        $ids = collect($clientIds)->filter()->unique()->values();
+        if ($ids->isEmpty()) return [];
+        return DB::table('agency_engagements as ae')
+            ->join('companies as c', 'c.id', '=', 'ae.agency_id')
+            ->where('ae.status', 'active')
+            ->whereIn('ae.client_company_id', $ids)
+            ->get(['ae.client_company_id', 'ae.agency_id', 'c.company_name as agency_name'])
+            ->keyBy('client_company_id')
+            ->map(fn($r) => ['id' => (int) $r->agency_id, 'name' => $r->agency_name])
+            ->toArray();
     }
 
     /**
@@ -616,7 +638,14 @@ class AdminController extends Controller
             } else {
                 $query->where('status', 'active');
             }
-            return $query->orderBy('created_at', 'desc')->paginate(30)->toArray();
+            $paginator = $query->orderBy('created_at', 'desc')->paginate(30);
+            // 各求人の掲載企業を運用中の代理店（マーケットプレイス経由）を付与
+            $agencyMap = $this->agencyMapForClients(collect($paginator->items())->pluck('company_id'));
+            $paginator->getCollection()->transform(function ($j) use ($agencyMap) {
+                $j->setAttribute('managing_agency', $agencyMap[$j->company_id] ?? null);
+                return $j;
+            });
+            return $paginator->toArray();
         });
         return response()->json($result);
     }

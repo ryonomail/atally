@@ -548,6 +548,7 @@ function AllCompaniesTab({ initialData }) {
                                 <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>企業名</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>種別</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>代理店経由</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>ステータス</th>
                                     <th style={{ textAlign: 'right', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>求人数</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>担当者</th>
@@ -563,6 +564,11 @@ function AllCompaniesTab({ initialData }) {
                                             <span className="badge badge-info" style={{ fontSize: 10 }}>
                                                 {c.company_type === 'recruitment_agency' ? '紹介会社' : '一般企業'}
                                             </span>
+                                        </td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>
+                                            {c.managing_agency
+                                                ? <span style={{ color: 'var(--color-accent, #c8952e)', fontWeight: 600 }}>{c.managing_agency.name}</span>
+                                                : <span style={{ color: 'var(--color-text-muted)' }}>—</span>}
                                         </td>
                                         <td style={{ padding: '8px' }}>
                                             <span className={`badge ${VSTATUS[c.verification_status]?.cls || 'badge-info'}`} style={{ fontSize: 10 }}>
@@ -704,6 +710,7 @@ function AllJobsTab({ initialData }) {
                                 <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>タイトル</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>企業</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>代理店経由</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>ステータス</th>
                                     <th style={{ textAlign: 'right', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>応募数</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>掲載日</th>
@@ -715,6 +722,11 @@ function AllJobsTab({ initialData }) {
                                     <tr key={j.id} style={{ borderBottom: '1px solid var(--color-border)', opacity: j.status === 'suspended' ? 0.7 : 1 }}>
                                         <td style={{ padding: '8px', fontWeight: 600 }}>{j.title}</td>
                                         <td style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>{j.company?.company_name || '—'}</td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>
+                                            {j.managing_agency
+                                                ? <span style={{ color: 'var(--color-accent, #c8952e)', fontWeight: 600 }}>{j.managing_agency.name}</span>
+                                                : <span style={{ color: 'var(--color-text-muted)' }}>—</span>}
+                                        </td>
                                         <td style={{ padding: '8px' }}>
                                             <span className={`badge ${JSTATUS[j.status]?.cls || 'badge-info'}`} style={{ fontSize: 10 }}>
                                                 {JSTATUS[j.status]?.label || j.status}
