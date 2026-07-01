@@ -17,6 +17,19 @@ function formatOvertime(v) {
     return s;
 }
 
+// 地図クエリの整形：建物名・施設名（スペース以降に来ることが多い）を除去し、
+// Googleマップ検索で複数ピンにならないよう住所部分だけにする
+function cleanMapQuery(addr) {
+    if (!addr) return addr;
+    const s = String(addr).trim();
+    const parts = s.split(/[\s　]+/);
+    // 先頭が住所として十分（丁目/番地/号/数字を含む）なら建物名以降を落とす
+    if (parts.length > 1 && /[0-9０-９]|丁目|番地|番|号/.test(parts[0])) {
+        return parts[0];
+    }
+    return s;
+}
+
 const EMPLOYMENT_TYPES = [
     { value: '', label: 'すべて' },
     { value: '正社員', label: '正社員' },
@@ -1460,9 +1473,9 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         <InfoRow label="契約期間" value={job.contract_period} />
                         {/* 勤務地の地図（詳細取得後に一度だけ描画してちらつきを防ぐ） */}
                         {job.__full && (() => {
-                            const mapQuery = job.office_address
+                            const mapQuery = cleanMapQuery(job.office_address
                                 || [job.prefecture, job.city].filter(Boolean).join('')
-                                || job.location;
+                                || job.location);
                             if (!mapQuery) return null;
                             return (
                                 <div style={{ marginTop: 'var(--space-md)' }}>

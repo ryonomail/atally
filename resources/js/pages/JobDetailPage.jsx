@@ -14,6 +14,17 @@ function formatOvertime(v) {
     return s;
 }
 
+// 地図クエリの整形：建物名・施設名を除去し、Googleマップで複数ピンにならないよう住所部分だけにする
+function cleanMapQuery(addr) {
+    if (!addr) return addr;
+    const s = String(addr).trim();
+    const parts = s.split(/[\s　]+/);
+    if (parts.length > 1 && /[0-9０-９]|丁目|番地|番|号/.test(parts[0])) {
+        return parts[0];
+    }
+    return s;
+}
+
 function SectionHeader({ title }) {
     return (
         <div style={{
@@ -968,9 +979,9 @@ export default function JobDetailPage() {
 
                     {/* 勤務地の地図（住所があるときのみ・APIキー不要のGoogleマップ埋め込み） */}
                     {(() => {
-                        const mapQuery = job.office_address
+                        const mapQuery = cleanMapQuery(job.office_address
                             || [job.prefecture, job.city].filter(Boolean).join('')
-                            || job.location;
+                            || job.location);
                         if (!mapQuery) return null;
                         return (
                             <div style={{ padding: 'var(--space-lg) var(--space-xl) var(--space-xl)' }}>
