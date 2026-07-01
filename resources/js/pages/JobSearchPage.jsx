@@ -200,7 +200,8 @@ export default function JobSearchPage() {
     const [selectedJob, setSelectedJob] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
     // 選択中の求人リスト上のデータ（クリック瞬時表示用）
-    const selectedJobListDataRef = useRef(null);
+    // 取得済み求人詳細のキャッシュ（ホバー先読み＋再クリックを即時化）
+    const detailCache = useRef(new Map());
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     // SEO: 都道府県ランディングで表示する市区町村リンク
     const [areaCities, setAreaCities] = useState([]);
@@ -310,8 +311,6 @@ export default function JobSearchPage() {
             setMeta(res.data);
             // フィルター変更・初回のみ先頭を自動選択（ページ送りは現在の選択を維持）
             if (data.length > 0 && !isMobile && resetSelection) {
-                selectedJobListDataRef.current = data[0];
-                setSelectedJob(data[0]);
                 setSelectedJobId(data[0].id);
             }
         } catch (err) {
@@ -342,19 +341,25 @@ export default function JobSearchPage() {
     useEffect(() => {
         if (!selectedJobId) {
             setSelectedJob(null);
-            selectedJobListDataRef.current = null;
             return;
         }
-        // リストデータが即セットされていない場合のみローディング表示
-        const hasInstantData = selectedJobListDataRef.current?.id === selectedJobId;
-        if (!hasInstantData) {
-            setDetailLoading(true);
+        // キャッシュ済み（ホバー先読み等）なら即時に完全データを表示（ちらつきなし）
+        const cached = detailCache.current.get(selectedJobId);
+        if (cached) {
+            setSelectedJob(cached);
+            setDetailLoading(false);
+            return;
         }
+        // 未取得なら、詳細が揃うまでスケルトンを表示（部分データを見せない＝後埋めを防ぐ）
+        setDetailLoading(true);
         api.get(`/jobs/${selectedJobId}`)
-            // __full: 詳細(会社住所・許可番号・写真等を含む完全データ)が揃った印。
-            // 一覧データからのちらつき（地図の再読込・紹介元カードの後埋め）を防ぐために使う。
-            .then(res => setSelectedJob({ ...res.data, __full: true }))
-            .catch(() => { if (!hasInstantData) setSelectedJob(null); })
+            .then(res => {
+                // __full: 完全データが揃った印
+                const full = { ...res.data, __full: true };
+                detailCache.current.set(selectedJobId, full);
+                setSelectedJob(full);
+            })
+            .catch(() => setSelectedJob(null))
             .finally(() => setDetailLoading(false));
     }, [selectedJobId]);
 
@@ -468,21 +473,22 @@ export default function JobSearchPage() {
         if (isMobile) {
             navigate(`/jobs/${job.id}`);
         } else {
-            // リストデータを即座に表示（待機時間ゼロ）、詳細はバックグラウンドで取得
-            selectedJobListDataRef.current = job;
-            setSelectedJob(job);
+            // 選択のみ。詳細が揃うまではスケルトン表示（部分データによる後埋めを防ぐ）
             setSelectedJobId(job.id);
         }
     };
 
-    // ホバー時に詳細をプリフェッチ（クリック前にAPIレスポンスをキャッシュに入れる）
+    // ホバー時に詳細をプリフェッチしてキャッシュ（クリック時に即表示）
     const prefetchTimer = useRef(null);
     const handleJobHover = (jobId) => {
-        if (jobId === selectedJobId || isMobile) return;
+        if (jobId === selectedJobId || isMobile || detailCache.current.has(jobId)) return;
         // 200ms後にプリフェッチ（素早いマウス通過は無視）
         clearTimeout(prefetchTimer.current);
         prefetchTimer.current = setTimeout(() => {
-            api.get(`/jobs/${jobId}`).catch(() => {});
+            if (detailCache.current.has(jobId)) return;
+            api.get(`/jobs/${jobId}`)
+                .then(res => detailCache.current.set(jobId, { ...res.data, __full: true }))
+                .catch(() => {});
         }, 200);
     };
     const handleJobHoverEnd = () => clearTimeout(prefetchTimer.current);
