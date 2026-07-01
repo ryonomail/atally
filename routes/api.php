@@ -12,6 +12,7 @@ use App\Http\Controllers\InterviewScheduleController;
 use App\Http\Controllers\ScoutController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SavedJobController;
@@ -161,6 +162,18 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             // エージェント: 審査前も利用可能（ダッシュボード・ライセンス提出）
             Route::post('/agency/license', [AgencyController::class , 'uploadLicense']);
             Route::get('/agency/dashboard', [AgencyController::class , 'dashboard']);
+
+            // マーケットプレイス（運用代行・代理店）
+            // 求人主向け
+            Route::get('/marketplace/agencies', [MarketplaceController::class , 'agencies']);
+            Route::get('/marketplace/my-engagement', [MarketplaceController::class , 'myEngagement']);
+            Route::post('/marketplace/engagements', [MarketplaceController::class , 'requestEngagement']);
+            Route::post('/marketplace/engagements/{engagement}/end', [MarketplaceController::class , 'endEngagement']);
+            // 代理店向け
+            Route::post('/marketplace/profile', [MarketplaceController::class , 'updateProfile']);
+            Route::get('/marketplace/engagements', [MarketplaceController::class , 'engagements']);
+            Route::post('/marketplace/engagements/{engagement}/respond', [MarketplaceController::class , 'respondEngagement']);
+            Route::get('/marketplace/payouts', [MarketplaceController::class , 'payouts']);
 
             // 審査済み企業のみ
             Route::middleware('verified.company')->group(function () {

@@ -49,6 +49,10 @@ class Company extends Model
         'dispatch_license_number',
         'license_document_path',
         'license_verified',
+        'marketplace_listed',
+        'service_fee',
+        'service_description',
+        'service_specialties',
     ];
 
     protected function casts(): array
@@ -61,6 +65,8 @@ class Company extends Model
             'documents' => 'array',
             'payment_failed_at' => 'datetime',
             'license_verified' => 'boolean',
+            'marketplace_listed' => 'boolean',
+            'service_fee' => 'integer',
         ];
     }
 
@@ -108,6 +114,18 @@ class Company extends Model
     public function referralsAsReferrer()
     {
         return $this->hasMany(JobReferral::class, 'referrer_company_id');
+    }
+
+    /** この代理店が運用しているエンゲージメント（代理店視点） */
+    public function managedEngagements()
+    {
+        return $this->hasMany(AgencyEngagement::class, 'agency_id');
+    }
+
+    /** この求人企業を運用してもらっているエンゲージメント（企業視点） */
+    public function clientEngagements()
+    {
+        return $this->hasMany(AgencyEngagement::class, 'client_company_id');
     }
 
     public function isAgency(): bool

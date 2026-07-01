@@ -373,6 +373,9 @@ function NavLinks({ user, logout, showAll = false }) {
                 <>
                     <li><Link to="/company" className="navbar-link">管理画面</Link></li>
                     <li><Link to="/company/jobs" className={`navbar-link ${hideMobile}`}>求人管理</Link></li>
+                    <li><Link to="/company/marketplace" className={`navbar-link ${hideMobile}`}>
+                        {user?.company?.company_type === 'recruitment_agency' ? '運用代行を掲載' : '運用代行を探す'}
+                    </Link></li>
                     {user?.company?.company_type === 'recruitment_agency' && (
                         <li><Link to="/company/bulk-upload" className={`navbar-link ${hideMobile}`}>求人一括アップロード</Link></li>
                     )}

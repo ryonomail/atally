@@ -31,6 +31,7 @@ const ResumeListPage         = lazy(() => import('./pages/ResumeListPage'));
 const ResumeEditorPage       = lazy(() => import('./pages/ResumeEditorPage'));
 const CompanyDashboard       = lazy(() => import('./pages/CompanyDashboard'));
 const CompanyJobsPage        = lazy(() => import('./pages/CompanyJobsPage'));
+const MarketplacePage        = lazy(() => import('./pages/MarketplacePage'));
 const ScoutSearchPage        = lazy(() => import('./pages/ScoutSearchPage'));
 const AgencyJobDBPage        = lazy(() => import('./pages/AgencyJobDBPage'));
 const AgencyBulkUploadPage   = lazy(() => import('./pages/AgencyBulkUploadPage'));
@@ -253,6 +254,7 @@ function AppRoutes() {
                 {/* 企業 */}
                 <Route path="/company" element={<ProtectedRoute role="company"><CompanyDashboard /></ProtectedRoute>} />
                 <Route path="/company/jobs" element={<ProtectedRoute role="company"><CompanyJobsPage /></ProtectedRoute>} />
+                <Route path="/company/marketplace" element={<ProtectedRoute role="company"><MarketplacePage /></ProtectedRoute>} />
                 <Route path="/company/scout" element={<ProtectedRoute role="company"><ScoutSearchPage /></ProtectedRoute>} />
                 <Route path="/company/bulk-upload" element={<ProtectedRoute role="company"><AgencyBulkUploadPage /></ProtectedRoute>} />
                 <Route path="/company/jobs/:jobId/applications" element={<ProtectedRoute role="company"><CompanyApplicationsPage /></ProtectedRoute>} />
