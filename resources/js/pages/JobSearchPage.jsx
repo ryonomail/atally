@@ -337,6 +337,18 @@ export default function JobSearchPage() {
             if (data.length > 0 && !isMobile && resetSelection) {
                 setSelectedJobId(data[0].id);
             }
+            // 体感速度向上: 表示中の上位求人の詳細を先読みキャッシュ（クリック時に即・完全表示）
+            if (!isMobile) {
+                data.slice(0, 6).forEach((j, i) => {
+                    if (detailCache.current.has(j.id)) return;
+                    setTimeout(() => {
+                        if (detailCache.current.has(j.id)) return;
+                        api.get(`/jobs/${j.id}`)
+                            .then(r => detailCache.current.set(j.id, { ...r.data, __full: true }))
+                            .catch(() => {});
+                    }, 120 * i); // 少しずつ取得してサーバー負荷を分散
+                });
+            }
         } catch (err) {
             if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
             toast.error('求人情報の取得に失敗しました');
