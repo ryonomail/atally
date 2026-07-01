@@ -323,18 +323,27 @@ class JobController extends Controller
             'salary_min'  => 'nullable|integer|min:0',
         ]);
 
-        $industry   = trim((string) ($data['industry'] ?? ''));
-        $prefecture = trim((string) ($data['prefecture'] ?? ''));
-        $salaryType = trim((string) ($data['salary_type'] ?? ''));
-        // 給与種別の表記ゆれを実データ側へ正規化（フォームは「年収」、既存データは「年俸制」）
+        return response()->json($this->computeBenchmark(
+            trim((string) ($data['industry'] ?? '')),
+            trim((string) ($data['prefecture'] ?? '')),
+            trim((string) ($data['salary_type'] ?? '')),
+            (int) ($data['salary_min'] ?? 0)
+        ));
+    }
+
+    /**
+     * 給与相場の中核計算（会社フォーム／公開ツールで共用）。
+     * industry を軸に salary_type を揃えて salary_min の分位を出し、母数が少なければ全国にフォールバック。
+     */
+    private function computeBenchmark(string $industry, string $prefecture, string $salaryType, int $yourSalary = 0): array
+    {
+        // 給与種別の表記ゆれを実データ側へ正規化（「年収」→「年俸制」）
         $salaryType = ['年収' => '年俸制'][$salaryType] ?? $salaryType;
-        $yourSalary = (int) ($data['salary_min'] ?? 0);
 
         if ($industry === '' || $salaryType === '') {
-            return response()->json(['available' => false, 'reason' => 'insufficient_input']);
+            return ['available' => false, 'reason' => 'insufficient_input'];
         }
 
-        // 十分な母数が取れる範囲を選ぶ（都道府県 → 全国）
         $build = function ($withPref) use ($industry, $salaryType, $prefecture) {
             $q = Job::where('status', 'active')
                 ->where('industry', $industry)
@@ -353,7 +362,7 @@ class JobController extends Controller
             $count = (clone $build(false))->count();
         }
         if ($count < 5) {
-            return response()->json(['available' => false, 'reason' => 'too_few_samples', 'count' => $count]);
+            return ['available' => false, 'reason' => 'too_few_samples', 'count' => $count];
         }
 
         $withPref = $scope === 'prefecture';
@@ -373,20 +382,63 @@ class JobController extends Controller
             $percentile = (int) round($below / max($count, 1) * 100);
         }
 
-        return response()->json([
-            'available'   => true,
-            'scope'       => $scope,                 // prefecture / nationwide
-            'prefecture'  => $prefecture,
-            'industry'    => $industry,
-            'salary_type' => $salaryType,
-            'count'       => $count,
-            'p25'         => $p25,
-            'median'      => $p50,
-            'p75'         => $p75,
-            'your_salary' => $yourSalary ?: null,
-            'percentile'  => $percentile,            // あなたの給与が下位◯%
+        return [
+            'available'     => true,
+            'scope'         => $scope,               // prefecture / nationwide
+            'prefecture'    => $prefecture,
+            'industry'      => $industry,
+            'salary_type'   => $salaryType,
+            'count'         => $count,
+            'p25'           => $p25,
+            'median'        => $p50,
+            'p75'           => $p75,
+            'your_salary'   => $yourSalary ?: null,
+            'percentile'    => $percentile,          // あなたの給与が下位◯%
             'gap_to_median' => ($yourSalary > 0 && $yourSalary < $p50) ? ($p50 - $yourSalary) : 0,
+        ];
+    }
+
+    /**
+     * 公開: 求職者向け給与相場診断（認証不要）。業種×都道府県×給与種別で分位を返す。
+     */
+    public function publicSalaryBenchmark(Request $request)
+    {
+        $data = $request->validate([
+            'industry'    => 'required|string|max:100',
+            'prefecture'  => 'nullable|string|max:10',
+            'salary_type' => 'required|string|max:20',
         ]);
+
+        $key = 'pub_benchmark_' . md5(($data['industry']) . '|' . ($data['prefecture'] ?? '') . '|' . $data['salary_type']);
+        $result = \Illuminate\Support\Facades\Cache::remember($key, 1800, function () use ($data) {
+            return $this->computeBenchmark(
+                trim($data['industry']),
+                trim((string) ($data['prefecture'] ?? '')),
+                trim($data['salary_type'])
+            );
+        });
+
+        return response()->json($result);
+    }
+
+    /**
+     * 公開: 相場診断で選べる業種一覧（十分な母数がある業種のみ・多い順）。
+     */
+    public function salaryIndustries()
+    {
+        $list = \Illuminate\Support\Facades\Cache::remember('pub_benchmark_industries', 3600, function () {
+            return Job::where('status', 'active')
+                ->whereNotNull('industry')->where('industry', '!=', '')
+                ->where('salary_min', '>', 0)
+                ->selectRaw('industry, COUNT(*) as cnt')
+                ->groupBy('industry')
+                ->havingRaw('COUNT(*) >= 50')
+                ->orderByDesc('cnt')
+                ->limit(80)
+                ->pluck('industry')
+                ->values();
+        });
+        return response()->json($list);
     }
 
     // パブリック: 求人詳細

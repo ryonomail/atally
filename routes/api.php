@@ -49,6 +49,9 @@ Route::middleware(['block.bots', 'throttle:60,1'])->group(function () {
     Route::get('/jobs', [JobController::class , 'index']);
     // SEO: 都道府県内の市区町村一覧（{job} より前に定義）
     Route::get('/jobs/cities', [JobController::class , 'citiesByPrefecture']);
+    // 公開: 求職者向け給与相場診断（{job} より前に定義）
+    Route::get('/salary-benchmark/industries', [JobController::class , 'salaryIndustries']);
+    Route::get('/salary-benchmark', [JobController::class , 'publicSalaryBenchmark']);
     Route::get('/jobs/{job}', [JobController::class , 'show']);
 });
 

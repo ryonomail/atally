@@ -314,6 +314,38 @@ Route::get('/jobs', function () {
     return view('app', compact('seo'));
 });
 
+// 給料・年収相場チェッカー（求職者向け・SEOランディング）
+Route::get('/kyuyo/{prefecture?}/{industry?}', function ($prefecture = '', $industry = '') {
+    $prefecture = trim(urldecode((string) $prefecture));
+    $industry   = trim(urldecode((string) $industry));
+    $baseUrl    = config('app.url');
+    $region     = $prefecture !== '' ? $prefecture : '全国';
+
+    if ($industry !== '') {
+        $cacheKey = 'seo_kyuyo_' . md5($prefecture . '|' . $industry);
+        $count = \Illuminate\Support\Facades\Cache::remember($cacheKey, 1800, function () use ($prefecture, $industry) {
+            return \App\Models\Job::where('status', 'active')
+                ->where('industry', $industry)
+                ->where('salary_min', '>', 0)
+                ->when($prefecture !== '', fn($q) => $q->where('prefecture', $prefecture))
+                ->count();
+        });
+        $seo = [
+            'title'       => $region . 'の' . $industry . 'の給料・年収相場【求人' . number_format($count) . '件から算出】| Atally',
+            'description' => $region . 'の' . $industry . 'の給与相場を実際の求人' . number_format($count) . '件から算出。下位25%・中央値・上位25%が無料でわかります（登録不要）。相場以上の求人もその場で探せます。',
+            'url'         => $baseUrl . '/kyuyo/' . rawurlencode($prefecture) . '/' . rawurlencode($industry),
+        ];
+    } else {
+        $seo = [
+            'title'       => ($prefecture !== '' ? $prefecture . 'の' : '') . '給料・年収相場チェッカー | 業種×地域の給与相場が無料でわかる | Atally',
+            'description' => '業種・地域・給与種別を選ぶだけで、実際の求人データから給与相場（下位25%・中央値・上位25%）が無料でわかります。登録不要。' . ($prefecture !== '' ? $prefecture . 'の相場もチェックできます。' : ''),
+            'url'         => $baseUrl . '/kyuyo' . ($prefecture !== '' ? '/' . rawurlencode($prefecture) : ''),
+        ];
+    }
+
+    return view('app', compact('seo'));
+})->where('prefecture', '[^/]*')->where('industry', '[^/]*');
+
 // 求人詳細ページ: サーバーサイドでメタ情報を埋め込み（Google しごと検索 + SNSシェア対応）
 Route::get('/jobs/{id}', function ($id) {
     try {
@@ -542,6 +574,7 @@ Route::get('/sitemap.xml', function () {
         $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
         $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-static.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
         $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-areas.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
+        $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-salary.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
         for ($i = 1; $i <= $jobPages; $i++) {
             $xml .= "  <sitemap><loc>{$baseUrl}/sitemap-jobs-{$i}.xml</loc><lastmod>{$now}</lastmod></sitemap>\n";
         }
@@ -582,6 +615,47 @@ Route::get('/sitemap-areas.xml', function () {
         $xml .= '</urlset>';
     } catch (\Throwable $e) {
         \Illuminate\Support\Facades\Log::error('sitemap-areas.xml error', ['error' => $e->getMessage()]);
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
+    }
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
+});
+
+// 給料相場ランディング（母数のある上位業種 × 47都道府県）
+Route::get('/sitemap-salary.xml', function () {
+    try {
+        $baseUrl = config('app.url');
+        $data = \Illuminate\Support\Facades\Cache::remember('sitemap_salary', 3600, function () {
+            $industries = \App\Models\Job::where('status', 'active')
+                ->whereNotNull('industry')->where('industry', '!=', '')
+                ->where('salary_min', '>', 0)
+                ->selectRaw('industry, COUNT(*) as cnt')
+                ->groupBy('industry')
+                ->havingRaw('COUNT(*) >= 200')
+                ->orderByDesc('cnt')
+                ->limit(30)
+                ->pluck('industry');
+            $prefectures = [
+                '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県',
+                '埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県',
+                '岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県',
+                '鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県',
+                '佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県',
+            ];
+            return ['industries' => $industries, 'prefectures' => $prefectures];
+        });
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        // 業種 × 都道府県（検索価値の高い組み合わせ）
+        foreach ($data['industries'] as $ind) {
+            foreach ($data['prefectures'] as $pref) {
+                $url = $baseUrl . '/kyuyo/' . rawurlencode($pref) . '/' . rawurlencode($ind);
+                $xml .= "  <url><loc>{$url}</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>\n";
+            }
+        }
+        $xml .= '</urlset>';
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('sitemap-salary.xml error', ['error' => $e->getMessage()]);
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
     }
     return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);

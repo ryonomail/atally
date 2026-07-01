@@ -21,6 +21,7 @@ import api from './api';
 // ── 遅延ロード（必要になるまでJSを読み込まない）────────────────────────
 const LandingPage    = lazy(() => import('./pages/LandingPage'));
 const JobSearchPage  = lazy(() => import('./pages/JobSearchPage'));
+const SalaryBenchmarkPage = lazy(() => import('./pages/SalaryBenchmarkPage'));
 const JobDetailPage  = lazy(() => import('./pages/JobDetailPage'));
 const LoginPage      = lazy(() => import('./pages/LoginPage'));
 const RegisterPage   = lazy(() => import('./pages/RegisterPage'));
@@ -223,6 +224,9 @@ function AppRoutes() {
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
                 <Route path="/jobs" element={<JobSearchPage />} />
                 <Route path="/jobs/:id" element={<JobDetailPage />} />
+                <Route path="/kyuyo" element={<SalaryBenchmarkPage />} />
+                <Route path="/kyuyo/:prefecture" element={<SalaryBenchmarkPage />} />
+                <Route path="/kyuyo/:prefecture/:industry" element={<SalaryBenchmarkPage />} />
                 <Route path="/companies/:id" element={<CompanyProfilePage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -323,6 +327,7 @@ function AppRoutes() {
                         <div>
                             <div style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-navy)', marginBottom: 'var(--space-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>お役立ちコラム</div>
                             {[
+                                { to: '/kyuyo', label: '給料・年収相場チェッカー' },
                                 { to: '/column/rirekisho-kakikata', label: '履歴書の書き方' },
                                 { to: '/column/shibo-doki-kakikata', label: '志望動機の書き方' },
                                 { to: '/column/shokumukeirekisho-toha', label: '職務経歴書とは' },
