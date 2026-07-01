@@ -20,16 +20,20 @@ function formatOvertime(v) {
 //  3) 物流拠点・施設名など複数ピンになりやすい語が残る/詳細住所が無い場合は 市区町村にフォールバック
 const HARD_FACILITY_RE = /(ロジスティクス|ターミナル|工業団地|物流|倉庫|流通|パーク|マルシェ|モール|アリーナ|スタジアム|キャンパス)/;
 const BLDG_STRIP_RE = /(ビル|ビルディング|マンション|ハイツ|コーポ|タワー|プラザ|スクエア|ゲート|号室|Ｆ|階).*$/;
+const PREF_RE = /^(北海道|東京都|京都府|大阪府|..県|...県)/;
+// 必ず「都道府県」から始まる住所を返す。特定できなければ null（地図を出さない）。
 function mapPinQuery(job) {
     const region = [job.prefecture, job.city].filter(Boolean).join('') || String(job.location || '').trim();
+    const regionHasPref = PREF_RE.test(region);
     let a = String(job.office_address || '').trim();
-    if (!a) return region || null;
-    a = a.split(/[\s　「（(【]/)[0].replace(BLDG_STRIP_RE, '').trim();
-    if (!a) return region || null;
-    const startsWithPref = /^(北海道|東京都|京都府|大阪府|..県|...県)/.test(a);
-    const full = (!startsWithPref && region) ? region + a : a;
-    if (HARD_FACILITY_RE.test(full)) return region || null;
-    return full || region || null;
+    if (a) a = a.split(/[\s　「（(【]/)[0].replace(BLDG_STRIP_RE, '').trim();
+    let full = '';
+    if (a && PREF_RE.test(a)) full = a;
+    else if (a && regionHasPref) full = region + a;
+    else if (regionHasPref) full = region;
+    if (!full) return null;
+    if (HARD_FACILITY_RE.test(full)) return regionHasPref ? region : null;
+    return full;
 }
 
 function SectionHeader({ title }) {
