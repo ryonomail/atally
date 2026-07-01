@@ -56,17 +56,8 @@ class AdminController extends Controller
 
             $openReports = DB::table('reports')->where('status', 'open')->count();
 
-            // 今月・先月の売上を1クエリで取得（実際のStripe課金＝決済台帳から集計）
-            $revenueSums = DB::table('payment_transactions')
-                ->where('status', 'succeeded')
-                ->selectRaw("
-                    SUM(amount) FILTER (WHERE EXTRACT(YEAR FROM charged_at) = ? AND EXTRACT(MONTH FROM charged_at) = ?) AS this_month,
-                    SUM(amount) FILTER (WHERE EXTRACT(YEAR FROM charged_at) = ? AND EXTRACT(MONTH FROM charged_at) = ?) AS last_month
-                ", [
-                    $today->year, $today->month,
-                    $today->copy()->subMonth()->year, $today->copy()->subMonth()->month,
-                ])
-                ->first();
+            // 売上サマリー（前月同期比。月初のフル月比較による見かけ上のマイナスを回避）
+            $mom = $this->revenueMoM($today);
 
             return [
                 'stats' => [
@@ -79,8 +70,10 @@ class AdminController extends Controller
                     'pending_licenses'      => (int) $companyCounts->pending_licenses,
                 ],
                 'revenue_summary' => [
-                    'this_month' => (int) round($revenueSums->this_month ?? 0),
-                    'last_month' => (int) round($revenueSums->last_month ?? 0),
+                    'this_month'         => $mom['this_month'],
+                    'last_month'         => $mom['last_month'],
+                    'last_month_to_date' => $mom['last_month_to_date'],
+                    'mom_growth'         => $mom['mom_growth'],
                 ],
             ];
         });
@@ -641,6 +634,40 @@ class AdminController extends Controller
     }
 
     /**
+     * 前月同期比の売上集計。
+     * 「今月フル vs 先月フル」だと月初は必ず大きくマイナスになるため、
+     * 今月の月初来(startOfMonth〜now)を、先月の同じ経過期間と比較する。
+     * 返り値: this_month(今月の月初来), last_month(先月フル・表示用), last_month_to_date(先月同期), mom_growth(%|null)
+     */
+    private function revenueMoM(\Carbon\Carbon $now): array
+    {
+        $base = fn() => \App\Models\PaymentTransaction::where('status', 'succeeded');
+
+        $startThis = $now->copy()->startOfMonth();
+        $startLast = $startThis->copy()->subMonthNoOverflow();
+        // 今月の経過秒を先月頭に加算 → 先月の同じ地点。月末長差で今月に食い込まないよう月境界でクランプ。
+        $lastCutoff = $startLast->copy()->addSeconds($startThis->diffInSeconds($now));
+        if ($lastCutoff->gt($startThis)) {
+            $lastCutoff = $startThis->copy();
+        }
+
+        $thisMonth       = (float) $base()->where('charged_at', '>=', $startThis)->sum('amount');
+        $lastMonthFull   = (float) $base()->where('charged_at', '>=', $startLast)->where('charged_at', '<', $startThis)->sum('amount');
+        $lastMonthToDate = (float) $base()->where('charged_at', '>=', $startLast)->where('charged_at', '<', $lastCutoff)->sum('amount');
+
+        $growth = $lastMonthToDate > 0
+            ? (int) round((($thisMonth - $lastMonthToDate) / $lastMonthToDate) * 100)
+            : null; // 比較対象がなければ算出不能
+
+        return [
+            'this_month'         => (int) round($thisMonth),
+            'last_month'         => (int) round($lastMonthFull),
+            'last_month_to_date' => (int) round($lastMonthToDate),
+            'mom_growth'         => $growth,
+        ];
+    }
+
+    /**
      * 売上データ
      */
     public function revenue()
@@ -651,13 +678,8 @@ class AdminController extends Controller
             // 実際のStripe課金（決済台帳）から集計
             $base = fn() => \App\Models\PaymentTransaction::where('status', 'succeeded');
 
-            $thisMonth = $base()->whereYear('charged_at', $today->year)
-                ->whereMonth('charged_at', $today->month)
-                ->sum('amount');
-
-            $lastMonth = $base()->whereYear('charged_at', $today->copy()->subMonth()->year)
-                ->whereMonth('charged_at', $today->copy()->subMonth()->month)
-                ->sum('amount');
+            // 前月同期比（月初来 vs 先月同期）で成長率を算出
+            $mom = $this->revenueMoM($today);
 
             $daily = $base()->where('charged_at', '>=', $today->copy()->subDays(30)->startOfDay())
                 ->selectRaw("TO_CHAR(charged_at, 'YYYY-MM-DD') as date, SUM(amount) as total")
@@ -694,11 +716,13 @@ class AdminController extends Controller
                 ->all();
 
             return [
-                'this_month'    => round($thisMonth),
-                'last_month'    => round($lastMonth),
-                'daily'         => $daily,
-                'top_companies' => $topCompanies,
-                'monthly'       => $monthly,
+                'this_month'         => $mom['this_month'],
+                'last_month'         => $mom['last_month'],
+                'last_month_to_date' => $mom['last_month_to_date'],
+                'mom_growth'         => $mom['mom_growth'],
+                'daily'              => $daily,
+                'top_companies'      => $topCompanies,
+                'monthly'            => $monthly,
             ];
         });
 

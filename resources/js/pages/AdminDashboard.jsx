@@ -65,14 +65,11 @@ function OverviewTab({ stats, statsError, onTabChange, revenueSummary }) {
                         <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
                             先月: ¥{revenue.last_month?.toLocaleString() || '0'}
                         </span>
-                        {revenue.last_month > 0 && (() => {
-                            const growth = Math.round((((revenue.this_month || 0) - revenue.last_month) / revenue.last_month) * 100);
-                            return (
-                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: growth >= 0 ? '#22c55e' : '#ef4444' }}>
-                                    {growth >= 0 ? '+' : ''}{growth}%
-                                </span>
-                            );
-                        })()}
+                        {revenue.mom_growth != null && (
+                            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: revenue.mom_growth >= 0 ? '#22c55e' : '#ef4444' }}>
+                                前月同期比 {revenue.mom_growth >= 0 ? '+' : ''}{revenue.mom_growth}%
+                            </span>
+                        )}
                     </div>
                 </div>
             )}
@@ -114,9 +111,8 @@ function RevenueTab({ initialData }) {
     if (loading) return <div className="skeleton" style={{ height: 300 }} />;
     if (!data) return <div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>売上データがありません</div>;
 
-    const growth = data.last_month > 0
-        ? Math.round(((data.this_month - data.last_month) / data.last_month) * 100)
-        : null;
+    // 前月同期比（バックエンドで月初来 vs 先月同期を算出）。月初のフル月比較による見かけ上のマイナスを回避。
+    const growth = data.mom_growth ?? null;
 
     const maxDaily = Math.max(...(data.daily || []).map(d => d.total), 1);
 
@@ -137,9 +133,12 @@ function RevenueTab({ initialData }) {
                     </p>
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>前月比</p>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>前月同期比</p>
                     <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: growth > 0 ? '#22c55e' : growth < 0 ? '#ef4444' : '#94a3b8', margin: 0 }}>
                         {growth !== null ? `${growth > 0 ? '+' : ''}${growth}%` : '—'}
+                    </p>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 10, margin: '4px 0 0' }}>
+                        今月分 vs 先月同期(¥{(data.last_month_to_date ?? 0).toLocaleString()})
                     </p>
                 </div>
             </div>

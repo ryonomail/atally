@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import api from '../api';
 import SEO from '../components/SEO';
 import { formatSalary } from '../utils/salary';
+import { mapPinQuery } from '../utils/mapPin';
 import { ArrowLeft, Bookmark, BookmarkCheck, FileText, MapPin } from 'lucide-react';
 
 // 残業表記の正規化：重複（月平均月平均…時間時間）を圧縮し、数字のみには単位を補う
@@ -12,28 +13,6 @@ function formatOvertime(v) {
     let s = String(v).trim().replace(/(月平均)+/g, '月平均').replace(/(時間)+/g, '時間');
     if (/^\d+(\.\d+)?$/.test(s)) s = s + '時間';
     return s;
-}
-
-// 地図ピンのクエリを決定（誤ピン・複数ピン・未ピンを防ぐ）:
-//  1) office_address が都道府県から始まらない断片なら location(都道府県+市区町村) を前置
-//  2) 建物名・階・「」( )補足を除去
-//  3) 物流拠点・施設名など複数ピンになりやすい語が残る/詳細住所が無い場合は 市区町村にフォールバック
-const HARD_FACILITY_RE = /(ロジスティクス|ターミナル|工業団地|物流|倉庫|流通|パーク|マルシェ|モール|アリーナ|スタジアム|キャンパス)/;
-const BLDG_STRIP_RE = /(ビル|ビルディング|マンション|ハイツ|コーポ|タワー|プラザ|スクエア|ゲート|号室|Ｆ|階).*$/;
-const PREF_RE = /^(北海道|東京都|京都府|大阪府|..県|...県)/;
-// 必ず「都道府県」から始まる住所を返す。特定できなければ null（地図を出さない）。
-function mapPinQuery(job) {
-    const region = [job.prefecture, job.city].filter(Boolean).join('') || String(job.location || '').trim();
-    const regionHasPref = PREF_RE.test(region);
-    let a = String(job.office_address || '').trim();
-    if (a) a = a.split(/[\s　「（(【]/)[0].replace(BLDG_STRIP_RE, '').trim();
-    let full = '';
-    if (a && PREF_RE.test(a)) full = a;
-    else if (a && regionHasPref) full = region + a;
-    else if (regionHasPref) full = region;
-    if (!full) return null;
-    if (HARD_FACILITY_RE.test(full)) return regionHasPref ? region : null;
-    return full;
 }
 
 function SectionHeader({ title }) {
