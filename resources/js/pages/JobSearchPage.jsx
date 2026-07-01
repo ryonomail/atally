@@ -1450,6 +1450,30 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                         {job.dormitory && <InfoRow label="寮" value={job.dormitory} />}
                         {job.smoking_policy && <InfoRow label="受動喫煙対策" value={job.smoking_policy} />}
                         <InfoRow label="契約期間" value={job.contract_period} />
+                        {/* 勤務地の地図（APIキー不要のGoogleマップ埋め込み） */}
+                        {(() => {
+                            const mapQuery = job.office_address
+                                || [job.prefecture, job.city].filter(Boolean).join('')
+                                || job.location;
+                            if (!mapQuery) return null;
+                            return (
+                                <div style={{ marginTop: 'var(--space-md)' }}>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>地図</p>
+                                    <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                                        <iframe
+                                            title="勤務地の地図"
+                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&hl=ja&output=embed`}
+                                            width="100%" height="240" style={{ border: 0, display: 'block' }}
+                                            loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                                    </div>
+                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        style={{ display: 'inline-block', marginTop: 'var(--space-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent)' }}>
+                                        Googleマップで開く →
+                                    </a>
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
 
