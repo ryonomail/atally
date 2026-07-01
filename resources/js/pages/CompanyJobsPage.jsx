@@ -3,7 +3,7 @@ import {
     ClipboardList, Wallet, Building2, BarChart3, Sparkles, Lock, Camera,
     Search, Info, Save, Eye, Target, MapPin, Briefcase, Home, Wallet as WalletIcon,
     Clock, Timer, Calendar, Users, Handshake, FileText, CheckCircle2, ScrollText,
-    Landmark, AlertTriangle, Hourglass,
+    Landmark, AlertTriangle, Hourglass, TrendingUp,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -121,6 +121,9 @@ export default function CompanyJobsPage() {
     const lastSavedForm = useRef(null); // 最後に保存したフォーム状態
     const [rankResult, setRankResult] = useState(null); // 順位シミュレーション結果
     const rankTimerRef = useRef(null);
+    const [benchmark, setBenchmark] = useState(null); // 相場診断結果
+    const [benchmarkLoading, setBenchmarkLoading] = useState(false);
+    const benchTimerRef = useRef(null);
     const [selectedJobs, setSelectedJobs] = useState([]); // 一括選択
     const [bulkBudget, setBulkBudget] = useState(0);
     const [bulkSaving, setBulkSaving] = useState(false);
@@ -213,6 +216,29 @@ export default function CompanyJobsPage() {
         }, 500);
         return () => clearTimeout(rankTimerRef.current);
     }, [form.daily_budget, showForm]);
+
+    // 相場診断: 業種×都道府県×給与種別が揃ったら給与相場を取得（デバウンス600ms）
+    useEffect(() => {
+        if (!showForm) return;
+        const salaryMin = Number(form.salary_min) || 0;
+        if (!form.industry || !form.salary_type || !salaryMin) {
+            setBenchmark(null);
+            return;
+        }
+        clearTimeout(benchTimerRef.current);
+        benchTimerRef.current = setTimeout(() => {
+            setBenchmarkLoading(true);
+            api.post('/jobs/market-benchmark', {
+                industry: form.industry,
+                prefecture: form.prefecture || null,
+                salary_type: form.salary_type,
+                salary_min: salaryMin,
+            }).then(res => setBenchmark(res.data))
+              .catch(() => setBenchmark(null))
+              .finally(() => setBenchmarkLoading(false));
+        }, 600);
+        return () => clearTimeout(benchTimerRef.current);
+    }, [form.industry, form.prefecture, form.salary_type, form.salary_min, showForm]);
 
     // 求人一覧をサーバーから取得（サーバー側で絞り込み＋ページング。数千件でも軽量）
     const fetchJobs = useCallback((page = 1) => {
@@ -1466,6 +1492,47 @@ export default function CompanyJobsPage() {
                                     {errors.salary_max && <div style={{ color: '#ef4444', fontSize: 'var(--font-size-xs)', marginTop: 2 }}>{errors.salary_max[0]}</div>}
                                 </div>
                             </div>
+                            {/* 相場診断: 業種×都道府県×給与種別の給与相場 */}
+                            {(benchmarkLoading || (benchmark && benchmark.available)) && (
+                                <div style={{
+                                    marginBottom: 16, padding: '14px 16px', borderRadius: 10,
+                                    border: '1px solid var(--color-accent-light, #eadfc4)',
+                                    background: 'linear-gradient(180deg, #fbf6ea 0%, #fdfbf5 100%)',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--color-navy, #121c34)', fontSize: 'var(--font-size-sm)', marginBottom: benchmark && benchmark.available ? 10 : 0 }}>
+                                        <TrendingUp size={16} style={{ color: 'var(--color-accent, #c8952e)' }} />
+                                        相場診断
+                                        {benchmarkLoading && <span style={{ fontWeight: 400, opacity: 0.6, fontSize: 'var(--font-size-xs)' }}>診断中…</span>}
+                                    </div>
+                                    {benchmark && benchmark.available && (() => {
+                                        const fmt = n => '¥' + Number(n || 0).toLocaleString();
+                                        const scopeLabel = benchmark.scope === 'prefecture' ? `${benchmark.prefecture}・${benchmark.industry}` : `全国・${benchmark.industry}`;
+                                        const unit = benchmark.salary_type || '';
+                                        const gap = benchmark.gap_to_median || 0;
+                                        const pct = benchmark.percentile;
+                                        return (
+                                            <>
+                                                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary, #6b7280)', marginBottom: 8 }}>
+                                                    {scopeLabel}（{unit}・{benchmark.count.toLocaleString()}件）の相場
+                                                </div>
+                                                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+                                                    <div><div style={{ fontSize: 10, opacity: 0.6 }}>下位25%</div><div style={{ fontWeight: 600 }}>{fmt(benchmark.p25)}</div></div>
+                                                    <div><div style={{ fontSize: 10, opacity: 0.6 }}>中央値</div><div style={{ fontWeight: 700, color: 'var(--color-accent, #c8952e)' }}>{fmt(benchmark.median)}</div></div>
+                                                    <div><div style={{ fontSize: 10, opacity: 0.6 }}>上位25%</div><div style={{ fontWeight: 600 }}>{fmt(benchmark.p75)}</div></div>
+                                                    {pct != null && <div><div style={{ fontSize: 10, opacity: 0.6 }}>この求人の位置</div><div style={{ fontWeight: 600 }}>下位{pct}%</div></div>}
+                                                </div>
+                                                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-navy, #121c34)', lineHeight: 1.6 }}>
+                                                    {gap > 0
+                                                        ? `相場中央値より ${fmt(gap)} 低めです。中央値（${fmt(benchmark.median)}）まで引き上げると応募が集まりやすくなります。`
+                                                        : (pct != null && pct >= 75)
+                                                            ? '相場上位の水準です。給与面は強い訴求ポイントになります。'
+                                                            : '相場中央値以上の適正水準です。'}
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            )}
                             <div className="form-group">
                                 <label className="form-label">給与補足（モデル年収等）</label>
                                 <textarea className="form-textarea" value={form.salary_details || ''} rows={4}

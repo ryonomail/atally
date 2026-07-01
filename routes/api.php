@@ -167,6 +167,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
                     // 求人管理
                     Route::get('/my-jobs', [JobController::class , 'myJobs']);
                     Route::get('/my-jobs/analytics', [JobController::class , 'analytics']);
+                    Route::post('/jobs/market-benchmark', [JobController::class , 'marketBenchmark']);
                     Route::post('/jobs', [JobController::class , 'store']);
                     Route::put('/jobs/{job}', [JobController::class , 'update']);
                     Route::post('/jobs/bulk-budget', [JobController::class , 'bulkBudget']);

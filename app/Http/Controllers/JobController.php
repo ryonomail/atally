@@ -310,6 +310,85 @@ class JobController extends Controller
         return response()->json($cities);
     }
 
+    /**
+     * 相場診断: 業種×都道府県×賃金形態 の給与相場（分位）と、この求人の位置づけ・改善提案を返す。
+     * job_category_major が未整備のため industry を軸に、salary_type を揃えて salary_min を比較する。
+     */
+    public function marketBenchmark(Request $request)
+    {
+        $data = $request->validate([
+            'industry'    => 'nullable|string|max:100',
+            'prefecture'  => 'nullable|string|max:10',
+            'salary_type' => 'nullable|string|max:20',
+            'salary_min'  => 'nullable|integer|min:0',
+        ]);
+
+        $industry   = trim((string) ($data['industry'] ?? ''));
+        $prefecture = trim((string) ($data['prefecture'] ?? ''));
+        $salaryType = trim((string) ($data['salary_type'] ?? ''));
+        // 給与種別の表記ゆれを実データ側へ正規化（フォームは「年収」、既存データは「年俸制」）
+        $salaryType = ['年収' => '年俸制'][$salaryType] ?? $salaryType;
+        $yourSalary = (int) ($data['salary_min'] ?? 0);
+
+        if ($industry === '' || $salaryType === '') {
+            return response()->json(['available' => false, 'reason' => 'insufficient_input']);
+        }
+
+        // 十分な母数が取れる範囲を選ぶ（都道府県 → 全国）
+        $build = function ($withPref) use ($industry, $salaryType, $prefecture) {
+            $q = Job::where('status', 'active')
+                ->where('industry', $industry)
+                ->where('salary_type', $salaryType)
+                ->where('salary_min', '>', 0);
+            if ($withPref && $prefecture !== '') {
+                $q->where('prefecture', $prefecture);
+            }
+            return $q;
+        };
+
+        $scope = 'prefecture';
+        $count = ($prefecture !== '') ? (clone $build(true))->count() : 0;
+        if ($count < 20) { // 母数が少なければ全国にフォールバック
+            $scope = 'nationwide';
+            $count = (clone $build(false))->count();
+        }
+        if ($count < 5) {
+            return response()->json(['available' => false, 'reason' => 'too_few_samples', 'count' => $count]);
+        }
+
+        $withPref = $scope === 'prefecture';
+        $stats = (clone $build($withPref))->selectRaw("
+            percentile_cont(0.25) within group (order by salary_min) AS p25,
+            percentile_cont(0.50) within group (order by salary_min) AS p50,
+            percentile_cont(0.75) within group (order by salary_min) AS p75
+        ")->first();
+
+        $p25 = (int) round($stats->p25);
+        $p50 = (int) round($stats->p50);
+        $p75 = (int) round($stats->p75);
+
+        $percentile = null;
+        if ($yourSalary > 0) {
+            $below = (clone $build($withPref))->where('salary_min', '<', $yourSalary)->count();
+            $percentile = (int) round($below / max($count, 1) * 100);
+        }
+
+        return response()->json([
+            'available'   => true,
+            'scope'       => $scope,                 // prefecture / nationwide
+            'prefecture'  => $prefecture,
+            'industry'    => $industry,
+            'salary_type' => $salaryType,
+            'count'       => $count,
+            'p25'         => $p25,
+            'median'      => $p50,
+            'p75'         => $p75,
+            'your_salary' => $yourSalary ?: null,
+            'percentile'  => $percentile,            // あなたの給与が下位◯%
+            'gap_to_median' => ($yourSalary > 0 && $yourSalary < $p50) ? ($p50 - $yourSalary) : 0,
+        ]);
+    }
+
     // パブリック: 求人詳細
     public function show(Request $request, Job $job)
     {
