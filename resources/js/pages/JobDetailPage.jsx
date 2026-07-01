@@ -14,24 +14,22 @@ function formatOvertime(v) {
     return s;
 }
 
-// 地図クエリの整形：建物名・施設名を除去し、Googleマップで複数ピンにならないよう住所部分だけにする
-function cleanMapQuery(addr) {
-    if (!addr) return addr;
-    const s = String(addr).trim();
-    const parts = s.split(/[\s　]+/);
-    if (parts.length > 1 && /[0-9０-９]|丁目|番地|番|号/.test(parts[0])) {
-        return parts[0];
-    }
-    return s;
-}
-
-// 地図ピンのクエリ：通常住所は建物ピン、施設名混在や詳細住所なしは都道府県/市区町村へフォールバック
-const FACILITY_RE = /(パーク|センター|ロジスティクス|ターミナル|工業団地|流通|物流|ビル|タワー|プラザ|モール|団地|キャンパス|アリーナ|スタジアム|倉庫)/;
+// 地図ピンのクエリを決定（誤ピン・複数ピン・未ピンを防ぐ）:
+//  1) office_address が都道府県から始まらない断片なら location(都道府県+市区町村) を前置
+//  2) 建物名・階・「」( )補足を除去
+//  3) 物流拠点・施設名など複数ピンになりやすい語が残る/詳細住所が無い場合は 市区町村にフォールバック
+const HARD_FACILITY_RE = /(ロジスティクス|ターミナル|工業団地|物流|倉庫|流通|パーク|マルシェ|モール|アリーナ|スタジアム|キャンパス)/;
+const BLDG_STRIP_RE = /(ビル|ビルディング|マンション|ハイツ|コーポ|タワー|プラザ|スクエア|ゲート|号室|Ｆ|階).*$/;
 function mapPinQuery(job) {
-    const region = [job.prefecture, job.city].filter(Boolean).join('') || job.location || '';
-    const addr = cleanMapQuery(job.office_address || '');
-    if (addr && !FACILITY_RE.test(addr)) return addr;
-    return region || addr || job.location || null;
+    const region = [job.prefecture, job.city].filter(Boolean).join('') || String(job.location || '').trim();
+    let a = String(job.office_address || '').trim();
+    if (!a) return region || null;
+    a = a.split(/[\s　「（(【]/)[0].replace(BLDG_STRIP_RE, '').trim();
+    if (!a) return region || null;
+    const startsWithPref = /^(北海道|東京都|京都府|大阪府|..県|...県)/.test(a);
+    const full = (!startsWithPref && region) ? region + a : a;
+    if (HARD_FACILITY_RE.test(full)) return region || null;
+    return full || region || null;
 }
 
 function SectionHeader({ title }) {

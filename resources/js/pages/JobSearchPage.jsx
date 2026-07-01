@@ -17,28 +17,22 @@ function formatOvertime(v) {
     return s;
 }
 
-// 地図クエリの整形：建物名・施設名（スペース以降に来ることが多い）を除去し、
-// Googleマップ検索で複数ピンにならないよう住所部分だけにする
-function cleanMapQuery(addr) {
-    if (!addr) return addr;
-    const s = String(addr).trim();
-    const parts = s.split(/[\s　]+/);
-    // 先頭が住所として十分（丁目/番地/号/数字を含む）なら建物名以降を落とす
-    if (parts.length > 1 && /[0-9０-９]|丁目|番地|番|号/.test(parts[0])) {
-        return parts[0];
-    }
-    return s;
-}
-
-// 地図に立てるピンのクエリを決定：
-//  - 通常の住所 → 建物ピン（正確）
-//  - 施設名・物流拠点等を含む住所（複数ピンになりやすい）や、詳細住所が無い場合 → 都道府県/市区町村
-const FACILITY_RE = /(パーク|センター|ロジスティクス|ターミナル|工業団地|流通|物流|ビル|タワー|プラザ|モール|団地|キャンパス|アリーナ|スタジアム|倉庫)/;
+// 地図ピンのクエリを決定（誤ピン・複数ピン・未ピンを防ぐ）:
+//  1) office_address が都道府県から始まらない断片なら location(都道府県+市区町村) を前置
+//  2) 建物名・階・「」( )補足を除去
+//  3) 物流拠点・施設名など複数ピンになりやすい語が残る/詳細住所が無い場合は 市区町村にフォールバック
+const HARD_FACILITY_RE = /(ロジスティクス|ターミナル|工業団地|物流|倉庫|流通|パーク|マルシェ|モール|アリーナ|スタジアム|キャンパス)/;
+const BLDG_STRIP_RE = /(ビル|ビルディング|マンション|ハイツ|コーポ|タワー|プラザ|スクエア|ゲート|号室|Ｆ|階).*$/;
 function mapPinQuery(job) {
-    const region = [job.prefecture, job.city].filter(Boolean).join('') || job.location || '';
-    const addr = cleanMapQuery(job.office_address || '');
-    if (addr && !FACILITY_RE.test(addr)) return addr; // 通常住所はそのまま
-    return region || addr || job.location || null;     // 施設名混在 or 詳細なし → 市区町村
+    const region = [job.prefecture, job.city].filter(Boolean).join('') || String(job.location || '').trim();
+    let a = String(job.office_address || '').trim();
+    if (!a) return region || null;
+    a = a.split(/[\s　「（(【]/)[0].replace(BLDG_STRIP_RE, '').trim(); // 建物名・補足を除去
+    if (!a) return region || null;
+    const startsWithPref = /^(北海道|東京都|京都府|大阪府|..県|...県)/.test(a);
+    const full = (!startsWithPref && region) ? region + a : a; // 断片住所なら都道府県+市区町村を前置
+    if (HARD_FACILITY_RE.test(full)) return region || null;    // 施設名が残るならエリア表示
+    return full || region || null;
 }
 
 const EMPLOYMENT_TYPES = [
