@@ -37,3 +37,6 @@ Schedule::command('app:warm-jobs-cache')->everyFourMinutes();
 
 // 毎朝10時: 新着求人をX（旧Twitter）に自動投稿（最大5件/日）
 Schedule::command('app:post-jobs-to-x --limit=5')->dailyAt('10:00');
+
+// 毎朝6時30分: Google Search Console のSEOレポート生成（狙い目クエリ抽出）。朝の記事ルーチンが読む
+Schedule::command('app:seo-report')->dailyAt('06:30');

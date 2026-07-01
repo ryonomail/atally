@@ -31,4 +31,12 @@ return [
         'id'       => env('HELLOWORK_ID', ''),
         'pass'     => env('HELLOWORK_PASS', ''),
     ],
+
+    // Google Search Console API（SEO分析ループ用・サービスアカウント）
+    'gsc' => [
+        // URLプレフィックスなら 'https://atally.io/'、ドメインプロパティなら 'sc-domain:atally.io'
+        'site_url' => env('GSC_SITE_URL', 'sc-domain:atally.io'),
+        // サービスアカウントJSONキーの絶対パス（VPSに配置）
+        'key_path' => env('GSC_KEY_PATH', storage_path('app/gsc-service-account.json')),
+    ],
 ];
