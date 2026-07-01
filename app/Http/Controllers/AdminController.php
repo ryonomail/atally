@@ -508,8 +508,16 @@ class AdminController extends Controller
                 ->groupBy('agency_id')
                 ->get()->keyBy('agency_id');
 
-            // 全代理店を並べる（実績0でも一覧に出す）
+            // 「代理店」＝運用代行マーケットに参加している紹介会社に限定。
+            // （掲載を希望した or 実際にエンゲージメントがある）。単なる紹介会社は代理店として出さない。
             return Company::where('company_type', 'recruitment_agency')
+                ->where(function ($q) {
+                    $q->where('marketplace_listed', true)
+                      ->orWhereExists(function ($sub) {
+                          $sub->selectRaw('1')->from('agency_engagements')
+                              ->whereColumn('agency_engagements.agency_id', 'companies.id');
+                      });
+                })
                 ->get(['id', 'company_name', 'marketplace_listed', 'marketplace_status'])
                 ->map(function ($a) use ($engagementAgg, $jobAgg, $revenueAgg) {
                     $e = $engagementAgg->get($a->id);
