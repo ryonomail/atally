@@ -247,6 +247,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-01T00:00:00+09:00',
             'modified'    => '2026-07-01T00:00:00+09:00',
         ],
+        'web-oubo-rirekisho' => [
+            'title'       => 'Web応募の履歴書の書き方・送り方【ファイル形式・写真データ・入力フォームの注意点】 | Atally',
+            'description' => 'Web応募での履歴書提出方法を解説。PDFなどファイル形式・ファイル名の付け方、証明写真データの用意、入力フォームで気をつけたいポイント、送信前の最終チェックリストまで実務的にまとめました。',
+            'published'   => '2026-07-02T00:00:00+09:00',
+            'modified'    => '2026-07-02T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -718,6 +724,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-mail-okurikata', 'monthly', '0.8'],
             ['/column/rirekisho-honnin-kibo-kakikata', 'monthly', '0.8'],
             ['/column/rirekisho-gakureki-kakikata', 'monthly', '0.8'],
+            ['/column/web-oubo-rirekisho', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
