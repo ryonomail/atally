@@ -15,6 +15,8 @@
         $canonical   = $seo['url']         ?? config('app.url') . request()->getPathInfo();
         $ogType      = $seo['type']        ?? 'website';
         $ogImage     = $seo['image']       ?? config('app.og_image');
+        // 薄い/低品質ページはnoindex（リンクはfollowして評価は流す）。thin-content対策。
+        $robots      = ($seo['noindex'] ?? false) ? 'noindex,follow' : null;
         $jsonLd      = $seo['jsonLd']      ?? [
             '@context'    => 'https://schema.org',
             '@type'       => 'WebSite',
@@ -26,6 +28,9 @@
 
     <title>{{ $title }}</title>
     <meta name="description" content="{{ $description }}">
+    @if($robots)
+    <meta name="robots" content="{{ $robots }}">
+    @endif
     <link rel="canonical" href="{{ $canonical }}">
 
     <meta property="og:type" content="{{ $ogType }}">

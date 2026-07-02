@@ -417,12 +417,18 @@ Route::get('/jobs/{id}', function ($id) {
         . ($job->holidays ? "\n\n【休日・休暇】" . $job->holidays : '')
     ), 0, 5000);
 
+    // thin-content対策: 説明が薄い/給与なしの求人はnoindex（リンクはfollowして評価は流す）。
+    // 品質ライン = 給与あり かつ 説明文120字以上。薄い約1/3を検索対象から外し、サイト全体の評価毀損を防ぐ。
+    $descLen  = mb_strlen(trim((string) ($job->description ?? '')));
+    $thinPage = !(($job->salary_min ?? 0) > 0 && $descLen >= 120);
+
     $seo = [
         'title'       => $job->title . '【' . ($job->prefecture ?? $job->location ?? '') . '】 - ' . $orgName . ' | Atally',
         'description' => $metaDesc,
         'url'         => $baseUrl . '/jobs/' . $job->id,
         'type'        => 'website',
         'image'       => $defaultOgImage,
+        'noindex'     => $thinPage,
         'jsonLd'      => [
             '@context' => 'https://schema.org',
             '@graph'   => [
@@ -566,7 +572,11 @@ Route::get('/resumes/guest', function () {
 Route::get('/sitemap.xml', function () {
     try {
         $baseUrl   = config('app.url');
-        $totalJobs = \App\Models\Job::where('status', 'active')->count();
+        // 求人サイトマップは品質ライン（給与あり＋説明120字以上）のみ掲載するため、ページ数もその件数で算出
+        $totalJobs = \App\Models\Job::where('status', 'active')
+            ->where('salary_min', '>', 0)
+            ->whereRaw('char_length(coalesce(description, \'\')) >= 120')
+            ->count();
         $jobPages  = max(1, (int) ceil($totalJobs / 50000));
         $now       = now()->toAtomString();
 
@@ -741,16 +751,20 @@ Route::get('/sitemap-jobs-{page}.xml', function ($page) {
     $page      = max(1, (int) $page);
     $perPage   = 50000;
     $offset    = ($page - 1) * $perPage;
-    $totalJobs = \App\Models\Job::where('status', 'active')->count();
+    // thin-content対策: サイトマップは品質ライン（給与あり＋説明120字以上）を満たす求人のみ掲載
+    $qualityJobs = fn() => \App\Models\Job::where('status', 'active')
+        ->where('salary_min', '>', 0)
+        ->whereRaw('char_length(coalesce(description, \'\')) >= 120');
+    $totalJobs = $qualityJobs()->count();
 
     if ($offset >= $totalJobs) abort(404);
 
-    $callback = function () use ($baseUrl, $offset, $perPage) {
+    $callback = function () use ($baseUrl, $offset, $perPage, $qualityJobs) {
         echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
         $fetched = 0;
-        \App\Models\Job::where('status', 'active')
+        $qualityJobs()
             ->select('id', 'updated_at')
             ->orderBy('id')
             ->skip($offset)
