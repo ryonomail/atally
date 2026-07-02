@@ -1916,6 +1916,110 @@ function SettingsTab({ initialData }) {
                     {saving ? '保存中...' : '設定を保存'}
                 </button>
             </div>
+
+            <TwoFactorCard />
+        </div>
+    );
+}
+
+/* ============================================
+   2要素認証（TOTP・opt-in）カード
+   ============================================ */
+function TwoFactorCard() {
+    const toast = useToast();
+    const [enabled, setEnabled] = useState(null);
+    const [setup, setSetup] = useState(null);      // { secret, otpauth }
+    const [code, setCode] = useState('');
+    const [recovery, setRecovery] = useState(null); // 発行されたリカバリコード
+    const [busy, setBusy] = useState(false);
+    const [disablePw, setDisablePw] = useState('');
+
+    useEffect(() => {
+        api.get('/2fa/status').then(r => setEnabled(!!r.data.enabled)).catch(() => setEnabled(false));
+    }, []);
+
+    const startEnable = () => {
+        setBusy(true);
+        api.post('/2fa/enable').then(r => setSetup(r.data)).catch(e => toast.error(e.response?.data?.message || '開始に失敗しました')).finally(() => setBusy(false));
+    };
+    const confirm = () => {
+        setBusy(true);
+        api.post('/2fa/confirm', { code }).then(r => {
+            setRecovery(r.data.recovery_codes || []);
+            setEnabled(true); setSetup(null); setCode('');
+            toast.success('2要素認証を有効化しました');
+        }).catch(e => toast.error(e.response?.data?.message || 'コードが正しくありません')).finally(() => setBusy(false));
+    };
+    const disable = () => {
+        if (!disablePw) return;
+        setBusy(true);
+        api.post('/2fa/disable', { password: disablePw }).then(() => {
+            setEnabled(false); setDisablePw(''); setRecovery(null);
+            toast.success('2要素認証を無効化しました');
+        }).catch(e => toast.error(e.response?.data?.message || '無効化に失敗しました')).finally(() => setBusy(false));
+    };
+
+    return (
+        <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
+            <h3 style={{ marginBottom: 'var(--space-sm)' }}>2要素認証（2FA）</h3>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-md)' }}>
+                管理者アカウントのログインに、認証アプリの6桁コードを追加します。パスワードが漏れても不正ログインを防げます。
+            </p>
+
+            {enabled === null && <div className="skeleton" style={{ height: 40 }} />}
+
+            {/* 有効化済み */}
+            {enabled === true && !recovery && (
+                <>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#16a34a', fontWeight: 600, marginBottom: 'var(--space-md)' }}>
+                        ● 有効になっています
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">無効化するにはパスワードを入力</label>
+                        <input className="form-input" type="password" value={disablePw} onChange={e => setDisablePw(e.target.value)} placeholder="現在のパスワード" />
+                    </div>
+                    <button className="btn btn-danger" onClick={disable} disabled={busy || !disablePw}>2要素認証を無効化</button>
+                </>
+            )}
+
+            {/* リカバリコード表示（一度きり） */}
+            {recovery && (
+                <div style={{ padding: 'var(--space-md)', background: 'rgba(200,149,46,0.08)', border: '1px solid rgba(200,149,46,0.3)', borderRadius: 'var(--radius-md)' }}>
+                    <p style={{ fontWeight: 700, marginBottom: 6 }}>リカバリコード（今だけ表示・必ず控えてください）</p>
+                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+                        スマホを紛失した際、このコード1つでログインできます（各1回のみ）。安全な場所に保管してください。
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}>
+                        {recovery.map(c => <div key={c}>{c}</div>)}
+                    </div>
+                    <button className="btn btn-secondary" style={{ marginTop: 'var(--space-md)' }} onClick={() => setRecovery(null)}>控えました</button>
+                </div>
+            )}
+
+            {/* 未設定 → 有効化フロー */}
+            {enabled === false && !setup && (
+                <button className="btn btn-primary" onClick={startEnable} disabled={busy}>2要素認証を有効化する</button>
+            )}
+
+            {enabled === false && setup && (
+                <div>
+                    <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 8 }}>
+                        認証アプリ（Google Authenticator / Microsoft Authenticator 等）で、下の<strong>セットアップキー</strong>を手動追加してください。
+                    </p>
+                    <div style={{ padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: 'var(--space-sm)' }}>
+                        {setup.secret}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-md)' }}>
+                        アカウント名: Atally（あなたのメール）／ 種類: 時間ベース（TOTP）
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">アプリに表示された6桁コードを入力</label>
+                        <input className="form-input" inputMode="numeric" value={code} onChange={e => setCode(e.target.value)} placeholder="123456" />
+                    </div>
+                    <button className="btn btn-primary" onClick={confirm} disabled={busy || code.length < 6}>確認して有効化</button>
+                    <button className="btn btn-secondary" style={{ marginLeft: 8 }} onClick={() => { setSetup(null); setCode(''); }}>キャンセル</button>
+                </div>
+            )}
         </div>
     );
 }

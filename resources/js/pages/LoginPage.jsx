@@ -36,11 +36,12 @@ function GoogleRoleModal({ onSelect, onClose }) {
 export default function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState({ email: '', password: '' });
+    const [form, setForm] = useState({ email: '', password: '', code: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
+    const [twoFactor, setTwoFactor] = useState(false); // 2FAコード入力ステップ
     const [showGoogleModal, setShowGoogleModal] = useState(false);
 
     const handleBlur = (name) => {
@@ -61,9 +62,14 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await login(form.email, form.password);
+            const res = await login(form.email, form.password, twoFactor ? form.code : null);
+            // 2FA有効ユーザー: コード入力ステップへ
+            if (res.two_factor_required) {
+                setTwoFactor(true);
+                setLoading(false);
+                return;
+            }
             const role = res.user?.role;
-            const companyType = res.user?.company?.company_type;
             const dest = role === 'admin' ? '/admin'
                 : role === 'company' ? '/company'
                 : '/jobs';
@@ -129,8 +135,20 @@ export default function LoginPage() {
                         </div>
                         {fieldErrors.password && <div style={fieldErrorStyle}>{fieldErrors.password}</div>}
                     </div>
+                    {twoFactor && (
+                        <div className="form-group">
+                            <label className="form-label">認証コード（6桁）</label>
+                            <input type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus
+                                className="form-input" value={form.code}
+                                onChange={e => setForm({ ...form, code: e.target.value })}
+                                placeholder="認証アプリの6桁 / またはリカバリコード" />
+                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                                認証アプリ（Google Authenticator等）の6桁コードを入力してください。
+                            </div>
+                        </div>
+                    )}
                     <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
-                        {loading ? 'ログイン中...' : 'ログイン'}
+                        {loading ? '確認中...' : (twoFactor ? '認証して続行' : 'ログイン')}
                     </button>
                 </form>
 

@@ -78,6 +78,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'code' => ['nullable', 'string'], // 2FAコード（TOTP6桁 or リカバリコード）
         ]);
 
         $user = User::where('email', $validated['email'])->first();
@@ -100,6 +101,17 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // 2要素認証（有効化済みユーザーのみ）: パスワードの後に6桁コードを要求
+        if ($user->hasTwoFactorEnabled()) {
+            $code = trim((string) ($validated['code'] ?? ''));
+            if ($code === '') {
+                return response()->json(['two_factor_required' => true], 200);
+            }
+            if (!$this->passesTwoFactor($user, $code)) {
+                return response()->json(['message' => '認証コードが正しくありません。'], 401);
+            }
+        }
+
         $user->update(['last_login_at' => Carbon::now()]);
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -108,6 +120,29 @@ class AuthController extends Controller
             'user' => $user->load(['profile', 'company']),
             'token' => $token,
         ]);
+    }
+
+    /**
+     * 2FAコードの検証。TOTP6桁 or リカバリコード（使い捨て）を許容。
+     */
+    private function passesTwoFactor(User $user, string $code): bool
+    {
+        // TOTP（6桁数字）
+        if (preg_match('/^\d{6}$/', $code) && !empty($user->two_factor_secret)
+            && \App\Support\Totp::verify($user->two_factor_secret, $code)) {
+            return true;
+        }
+        // リカバリコード（使い捨て・ハッシュ照合）
+        $codes = $user->two_factor_recovery_codes ?? [];
+        foreach ($codes as $i => $hash) {
+            if (Hash::check($code, $hash)) {
+                unset($codes[$i]);
+                $user->two_factor_recovery_codes = array_values($codes);
+                $user->save();
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -70,6 +70,12 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
     // 通報（スパム防止: 5回/分）— MVP期間中は無効化（管理者が手動対応）
     // Route::middleware('throttle:5,1')->post('/reports', [ReportController::class , 'store']);
 
+    // 2要素認証（TOTP・opt-in）
+    Route::get('/2fa/status', [\App\Http\Controllers\TwoFactorController::class , 'status']);
+    Route::post('/2fa/enable', [\App\Http\Controllers\TwoFactorController::class , 'enable']);
+    Route::post('/2fa/confirm', [\App\Http\Controllers\TwoFactorController::class , 'confirm']);
+    Route::post('/2fa/disable', [\App\Http\Controllers\TwoFactorController::class , 'disable']);
+
     // 設定（全認証ユーザー共通）
     Route::put('/settings/password', [SettingsController::class , 'updatePassword']);
     Route::get('/settings/notifications', [SettingsController::class , 'getNotifications']);

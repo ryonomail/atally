@@ -69,8 +69,12 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const login = async (email, password) => {
-        const res = await api.post('/login', { email, password });
+    const login = async (email, password, code = null) => {
+        const res = await api.post('/login', { email, password, ...(code ? { code } : {}) });
+        // 2要素認証が有効なユーザー: トークンはまだ発行されず、コード入力が必要
+        if (res.data.two_factor_required) {
+            return { two_factor_required: true };
+        }
         localStorage.setItem('auth_token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         setUser(res.data.user);

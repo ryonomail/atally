@@ -36,6 +36,8 @@ class User extends Authenticatable
         'remember_token',
         'google_id',        // OAuth識別子は外部に漏洩させない
         'suspension_reason', // 停止理由は管理者のみ参照（APIレスポンスから除外）
+        'two_factor_secret',        // 2FAシークレットは絶対に外部へ出さない
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -47,7 +49,16 @@ class User extends Authenticatable
             'deactivated_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class ,
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_secret' => 'encrypted',       // シークレットはDBで暗号化保存
+            'two_factor_recovery_codes' => 'array',    // ハッシュ化リカバリコードのJSON
         ];
+    }
+
+    /** 2FAが有効化（確認済み）か */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return !is_null($this->two_factor_confirmed_at);
     }
 
     public function profile()
