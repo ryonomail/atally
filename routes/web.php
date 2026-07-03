@@ -253,6 +253,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-02T00:00:00+09:00',
             'modified'    => '2026-07-02T00:00:00+09:00',
         ],
+        'mensetsu-orei-mail' => [
+            'title'       => '面接後のお礼メールの書き方【例文集】送るタイミング・件名・NG例まで | Atally',
+            'description' => '面接後のお礼メールの書き方を解説。送るべきタイミング、件名・本文のコピペOK例文（一次面接・最終面接・複数面接官・オンライン面接別）、書いてはいけないNG例まで網羅。面接 お礼メール 例文の完全ガイド。',
+            'published'   => '2026-07-03T00:00:00+09:00',
+            'modified'    => '2026-07-03T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -725,6 +731,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-honnin-kibo-kakikata', 'monthly', '0.8'],
             ['/column/rirekisho-gakureki-kakikata', 'monthly', '0.8'],
             ['/column/web-oubo-rirekisho', 'monthly', '0.8'],
+            ['/column/mensetsu-orei-mail', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
