@@ -632,7 +632,8 @@ Route::get('/sitemap-areas.xml', function () {
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
         foreach ($rows as $r) {
             $url = $baseUrl . '/jobs?' . http_build_query(['prefecture' => $r->prefecture, 'city' => $r->city]);
-            $xml .= "  <url><loc>{$url}</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n";
+            $loc = htmlspecialchars($url, ENT_XML1 | ENT_QUOTES, 'UTF-8'); // & を &amp; 等にXMLエスケープ（必須）
+            $xml .= "  <url><loc>{$loc}</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n";
         }
         $xml .= '</urlset>';
     } catch (\Throwable $e) {
@@ -738,7 +739,8 @@ Route::get('/sitemap-static.xml', function () {
 
         foreach ($prefectures as $pref) {
             $url = $baseUrl . '/jobs?prefecture=' . urlencode($pref);
-            $xml .= "  <url><loc>{$url}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n";
+            $loc = htmlspecialchars($url, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $xml .= "  <url><loc>{$loc}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n";
         }
 
         \App\Models\Company::where('verification_status', 'verified')
