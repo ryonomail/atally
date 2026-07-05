@@ -259,6 +259,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-03T00:00:00+09:00',
             'modified'    => '2026-07-03T00:00:00+09:00',
         ],
+        'mensetsu-gyakushitsumon' => [
+            'title'       => '面接の逆質問 例文20選【好印象を与える質問とNG例】転職・就活対応 | Atally',
+            'description' => '面接の最後に聞かれる「何か質問はありますか」への回答例を場面別に20選紹介。逆質問を準備すべき理由、質問の考え方、聞いてはいけないNG質問、一次・最終面接別の例文まで解説。面接 逆質問 例文の完全ガイド。',
+            'published'   => '2026-07-04T00:00:00+09:00',
+            'modified'    => '2026-07-04T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -733,6 +739,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-gakureki-kakikata', 'monthly', '0.8'],
             ['/column/web-oubo-rirekisho', 'monthly', '0.8'],
             ['/column/mensetsu-orei-mail', 'monthly', '0.8'],
+            ['/column/mensetsu-gyakushitsumon', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
