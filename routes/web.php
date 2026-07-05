@@ -265,6 +265,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-04T00:00:00+09:00',
             'modified'    => '2026-07-04T00:00:00+09:00',
         ],
+        'web-mensetsu-yarikata' => [
+            'title'       => 'Web面接（オンライン面接）のやり方・マナー完全ガイド【服装・背景・トラブル対策】 | Atally',
+            'description' => 'Web面接（オンライン面接）のやり方を完全解説。事前準備のチェックリスト、服装・背景・目線のマナー、通信トラブル時の対処法、対面との違いまで実践的にまとめました。Web面接 やり方 マナーの完全ガイド。',
+            'published'   => '2026-07-06T00:00:00+09:00',
+            'modified'    => '2026-07-06T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -740,6 +746,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/web-oubo-rirekisho', 'monthly', '0.8'],
             ['/column/mensetsu-orei-mail', 'monthly', '0.8'],
             ['/column/mensetsu-gyakushitsumon', 'monthly', '0.8'],
+            ['/column/web-mensetsu-yarikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
