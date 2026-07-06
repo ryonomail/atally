@@ -271,6 +271,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-06T00:00:00+09:00',
             'modified'    => '2026-07-06T00:00:00+09:00',
         ],
+        'rirekisho-shomeishashin' => [
+            'title'       => '履歴書の証明写真の撮り方・選び方完全ガイド【サイズ・服装・撮影方法まで】 | Atally',
+            'description' => '履歴書の証明写真の一般的なサイズ・撮影時期の目安、服装・身だしなみのマナー、写真館・証明写真機・スマホ撮影の違いと選び方、データ添付時の注意点、よくあるNG例まで解説します。履歴書 証明写真 サイズ・撮り方の完全ガイド。',
+            'published'   => '2026-07-06T00:00:00+09:00',
+            'modified'    => '2026-07-06T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -747,6 +753,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-orei-mail', 'monthly', '0.8'],
             ['/column/mensetsu-gyakushitsumon', 'monthly', '0.8'],
             ['/column/web-mensetsu-yarikata', 'monthly', '0.8'],
+            ['/column/rirekisho-shomeishashin', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
