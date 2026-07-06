@@ -637,16 +637,40 @@ class AdminController extends Controller
     {
         $cacheKey = 'admin_jobs_all_' . $this->paramHash($request);
         $result = Cache::remember($cacheKey, 300, function () use ($request) {
-            $query = Job::with(['company:id,company_name']);
+            // アクセス数・応募数は集計サブクエリをLEFT JOIN（83万行への相関サブクエリを避け、ソートも軽くする）
+            $viewsAgg = DB::table('job_views')
+                ->selectRaw("job_id,
+                    COUNT(*) AS views_count,
+                    COUNT(*) FILTER (WHERE viewed_at >= now() - interval '7 days') AS views_7d_count")
+                ->groupBy('job_id');
+            $appsAgg = DB::table('applications')
+                ->selectRaw('job_id, COUNT(*) AS applications_count')
+                ->groupBy('job_id');
+
+            $query = Job::with(['company:id,company_name'])
+                ->leftJoinSub($viewsAgg, 'va', 'va.job_id', '=', 'jobs.id')
+                ->leftJoinSub($appsAgg, 'aa', 'aa.job_id', '=', 'jobs.id')
+                ->select('jobs.*')
+                ->selectRaw('COALESCE(va.views_count, 0) AS views_count')
+                ->selectRaw('COALESCE(va.views_7d_count, 0) AS views_7d_count')
+                ->selectRaw('COALESCE(aa.applications_count, 0) AS applications_count');
             if ($request->filled('q')) {
                 $query->where('title', 'ilike', "%{$request->q}%");
             }
             if ($request->filled('status')) {
-                $query->where('status', $request->status);
+                $query->where('jobs.status', $request->status);
             } else {
-                $query->where('status', 'active');
+                $query->where('jobs.status', 'active');
             }
-            $paginator = $query->orderBy('created_at', 'desc')->paginate(30);
+            // 並び替え（アクセス累計・直近7日・応募数・掲載日）
+            $sort = $request->input('sort', 'newest');
+            match ($sort) {
+                'views'        => $query->orderByDesc('views_count')->orderByDesc('jobs.created_at'),
+                'views_7d'     => $query->orderByDesc('views_7d_count')->orderByDesc('jobs.created_at'),
+                'applications' => $query->orderByDesc('applications_count')->orderByDesc('jobs.created_at'),
+                default        => $query->orderBy('jobs.created_at', 'desc'),
+            };
+            $paginator = $query->paginate(30);
             // 各求人の掲載企業を運用中の代理店（マーケットプレイス経由）を付与
             $agencyMap = $this->agencyMapForClients(collect($paginator->items())->pluck('company_id'));
             $paginator->getCollection()->transform(function ($j) use ($agencyMap) {

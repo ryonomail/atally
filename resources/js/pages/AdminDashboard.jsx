@@ -643,10 +643,11 @@ function AllJobsTab({ initialData }) {
     const [page, setPage] = useState(1);
     const [meta, setMeta] = useState(initialData ? { current_page: initialData.current_page, last_page: initialData.last_page, total: initialData.total } : null);
     const [processing, setProcessing] = useState(null);
+    const [sort, setSort] = useState('newest'); // newest / views / views_7d / applications
 
-    const fetchData = (p = 1, q = '', status = '') => {
+    const fetchData = (p = 1, q = '', status = '', s = sort) => {
         setLoading(true);
-        api.get('/admin/jobs/all', { params: { page: p, q: q || undefined, status: status || undefined } }).then(res => {
+        api.get('/admin/jobs/all', { params: { page: p, q: q || undefined, status: status || undefined, sort: s !== 'newest' ? s : undefined } }).then(res => {
             setJobs(res.data.data || []);
             setMeta({ current_page: res.data.current_page, last_page: res.data.last_page, total: res.data.total });
             setPage(p);
@@ -654,6 +655,20 @@ function AllJobsTab({ initialData }) {
     };
 
     useEffect(() => { if (!initialData) fetchData(); }, []);
+
+    // 列見出しクリックで並び替え（同じ列を再クリックで新着順に戻す）
+    const toggleSort = (key) => {
+        const next = sort === key ? 'newest' : key;
+        setSort(next);
+        fetchData(1, search, statusFilter, next);
+    };
+    const sortableTh = (key, label, align = 'right') => (
+        <th onClick={() => toggleSort(key)}
+            title="クリックで並び替え"
+            style={{ textAlign: align, padding: '8px', color: sort === key ? 'var(--color-accent)' : 'var(--color-text-muted)', fontWeight: sort === key ? 700 : 500, cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+            {label}{sort === key ? ' ▼' : ''}
+        </th>
+    );
 
     const handleJobAction = async (jobId, status) => {
         const msg = status === 'suspended' ? 'この求人を停止しますか？' : 'この求人を公開に戻しますか？';
@@ -712,7 +727,9 @@ function AllJobsTab({ initialData }) {
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>企業</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>代理店経由</th>
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>ステータス</th>
-                                    <th style={{ textAlign: 'right', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>応募数</th>
+                                    {sortableTh('views', 'アクセス累計')}
+                                    {sortableTh('views_7d', '7日')}
+                                    {sortableTh('applications', '応募数')}
                                     <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>掲載日</th>
                                     <th style={{ textAlign: 'center', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>操作</th>
                                 </tr>
@@ -732,7 +749,13 @@ function AllJobsTab({ initialData }) {
                                                 {JSTATUS[j.status]?.label || j.status}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '8px', textAlign: 'right' }}>{j.applications_count}</td>
+                                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: (j.views_count ?? 0) > 0 ? 600 : 400, color: (j.views_count ?? 0) > 0 ? 'var(--color-navy)' : 'var(--color-text-muted)' }}>
+                                            {(j.views_count ?? 0).toLocaleString()}
+                                        </td>
+                                        <td style={{ padding: '8px', textAlign: 'right', color: (j.views_7d_count ?? 0) > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)' }}>
+                                            {(j.views_7d_count ?? 0).toLocaleString()}
+                                        </td>
+                                        <td style={{ padding: '8px', textAlign: 'right' }}>{j.applications_count ?? 0}</td>
                                         <td style={{ padding: '8px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
                                             {j.published_at ? new Date(j.published_at).toLocaleDateString('ja-JP') : '—'}
                                         </td>
