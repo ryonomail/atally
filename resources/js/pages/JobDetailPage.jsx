@@ -940,6 +940,43 @@ export default function JobDetailPage() {
                     </InfoTable>
                 </div>
 
+                {/* 給与相場との比較（Atally独自データ） */}
+                {job.market_context && (() => {
+                    const mc = job.market_context;
+                    const yen = n => '¥' + Number(n || 0).toLocaleString();
+                    const POSITION_LABEL = {
+                        top25: '相場の上位25%に入る水準です',
+                        above_median: '相場の中央値を上回る水準です',
+                        below_median: '相場の中央値をやや下回る水準です',
+                        bottom25: '相場の下位25%の水準です',
+                    };
+                    const sign = mc.diff_pct > 0 ? '+' : '';
+                    const barPos = Math.min(Math.max((mc.salary_min - mc.p25) / Math.max(mc.p75 - mc.p25, 1), 0), 1) * 100;
+                    return (
+                        <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-lg)', border: '1px solid rgba(200,149,46,0.25)', background: 'linear-gradient(180deg, #fbf6ea 0%, #fdfbf5 100%)' }}>
+                            <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-navy)', marginBottom: 6 }}>
+                                {mc.area_label}の{mc.industry}の給与相場と比較
+                            </p>
+                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, marginBottom: 10 }}>
+                                この求人の{mc.salary_type} {yen(mc.salary_min)}〜 は、{mc.area_label}の同業種{mc.count.toLocaleString()}件の相場
+                                （中央値 {yen(mc.median)}）と比べて <strong style={{ color: mc.diff_pct >= 0 ? '#1b7a3d' : '#b5801f' }}>{sign}{mc.diff_pct}%</strong>。
+                                {POSITION_LABEL[mc.position] || ''}
+                            </p>
+                            <div style={{ position: 'relative', height: 6, background: '#e7dcc4', borderRadius: 999, margin: '2px 0 6px' }}>
+                                <div style={{ position: 'absolute', left: `${barPos}%`, top: -4, width: 14, height: 14, borderRadius: '50%', background: 'var(--color-accent)', transform: 'translateX(-50%)', border: '2px solid #fff' }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                <span>下位25% {yen(mc.p25)}</span>
+                                <span>中央値 {yen(mc.median)}</span>
+                                <span>上位25% {yen(mc.p75)}</span>
+                            </div>
+                            <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '8px 0 0' }}>
+                                ※ Atally掲載中の求人データから算出（{mc.scope === 'prefecture' ? mc.area_label : '全国'}・下限給与ベース）
+                            </p>
+                        </div>
+                    );
+                })()}
+
                 {/* 勤務条件 */}
                 <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                     <SectionHeader icon="🏢" title="勤務条件" />

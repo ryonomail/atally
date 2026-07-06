@@ -17,7 +17,12 @@
 	header @static Cache-Control "public, max-age=31536000, immutable"
 
 	# Caddy がデフォルトで X-Forwarded-For / -Proto を実クライアントIPで付与する
-	reverse_proxy app:80
+	# lb_try_*: デプロイでappが再起動する数十秒は502を返さずリトライで吸収する
+	# （Googlebotが一時502を踏んで「サーバーエラー(5xx)」計上されるのを防ぐ）
+	reverse_proxy app:80 {
+		lb_try_duration 60s
+		lb_try_interval 2s
+	}
 }
 
 # www は apex（atally.io）へ恒久リダイレクト（重複コンテンツ回避）

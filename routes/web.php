@@ -421,12 +421,26 @@ Route::get('/jobs/{id}', function ($id) {
         $clean       = trim(preg_replace('/【[^】]*】\n?/', '', $job->description));
         $descSnippet = ' ' . mb_substr($clean, 0, 50);
     }
+    // 相場コンテキスト（独自性）: 同業種×地域の相場中央値をmeta descriptionに含める。
+    // 統計は12hキャッシュ。失敗してもページ生成は止めない。
+    $marketText = '';
+    try {
+        $mc = \App\Support\SalaryBenchmark::contextForJob($job);
+        if ($mc) {
+            $sign = $mc['diff_pct'] > 0 ? '+' : '';
+            $marketText = ' / ' . $mc['area_label'] . 'の同業種相場'
+                . '（中央値' . number_format($mc['median']) . '円）比 ' . $sign . $mc['diff_pct'] . '%';
+        }
+    } catch (\Throwable $e) {
+        // 相場が出せなくてもmetaは通常どおり生成
+    }
     $metaDesc = mb_substr(
         ($job->company->company_name ?? '') . 'の' . $job->title . '。'
         . ($job->prefecture ? $job->prefecture . ' ' : '')
         . ($job->location ? $job->location . ' / ' : '')
         . ($job->employment_type ?? '')
         . ($salaryText ? ' / ' . $salaryText : '')
+        . $marketText
         . $descSnippet,
         0, 160
     );

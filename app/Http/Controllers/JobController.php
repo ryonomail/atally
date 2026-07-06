@@ -337,65 +337,33 @@ class JobController extends Controller
      */
     private function computeBenchmark(string $industry, string $prefecture, string $salaryType, int $yourSalary = 0): array
     {
-        // 給与種別の表記ゆれを実データ側へ正規化（「年収」→「年俸制」）
-        $salaryType = ['年収' => '年俸制'][$salaryType] ?? $salaryType;
-
-        if ($industry === '' || $salaryType === '') {
-            return ['available' => false, 'reason' => 'insufficient_input'];
+        // 分位統計は共通サービス（12hキャッシュ・正規化込み）へ委譲
+        $stats = \App\Support\SalaryBenchmark::stats($industry, $prefecture, $salaryType);
+        if (!($stats['available'] ?? false)) {
+            return $stats;
         }
 
-        $build = function ($withPref) use ($industry, $salaryType, $prefecture) {
-            $q = Job::where('status', 'active')
-                ->where('industry', $industry)
-                ->where('salary_type', $salaryType)
-                ->where('salary_min', '>', 0);
-            if ($withPref && $prefecture !== '') {
-                $q->where('prefecture', $prefecture);
-            }
-            return $q;
-        };
+        $p50 = $stats['median'];
 
-        $scope = 'prefecture';
-        $count = ($prefecture !== '') ? (clone $build(true))->count() : 0;
-        if ($count < 20) { // 母数が少なければ全国にフォールバック
-            $scope = 'nationwide';
-            $count = (clone $build(false))->count();
-        }
-        if ($count < 5) {
-            return ['available' => false, 'reason' => 'too_few_samples', 'count' => $count];
-        }
-
-        $withPref = $scope === 'prefecture';
-        $stats = (clone $build($withPref))->selectRaw("
-            percentile_cont(0.25) within group (order by salary_min) AS p25,
-            percentile_cont(0.50) within group (order by salary_min) AS p50,
-            percentile_cont(0.75) within group (order by salary_min) AS p75
-        ")->first();
-
-        $p25 = (int) round($stats->p25);
-        $p50 = (int) round($stats->p50);
-        $p75 = (int) round($stats->p75);
-
+        // あなたの給与の順位（下位◯%）だけはこの場で算出（企業フォーム用・入力の都度変わるため）
         $percentile = null;
         if ($yourSalary > 0) {
-            $below = (clone $build($withPref))->where('salary_min', '<', $yourSalary)->count();
-            $percentile = (int) round($below / max($count, 1) * 100);
+            $q = Job::where('status', 'active')
+                ->where('industry', $stats['industry'])
+                ->where('salary_type', $stats['salary_type'])
+                ->where('salary_min', '>', 0)
+                ->where('salary_min', '<', $yourSalary);
+            if ($stats['scope'] === 'prefecture') {
+                $q->where('prefecture', $stats['prefecture']);
+            }
+            $percentile = (int) round($q->count() / max($stats['count'], 1) * 100);
         }
 
-        return [
-            'available'     => true,
-            'scope'         => $scope,               // prefecture / nationwide
-            'prefecture'    => $prefecture,
-            'industry'      => $industry,
-            'salary_type'   => $salaryType,
-            'count'         => $count,
-            'p25'           => $p25,
-            'median'        => $p50,
-            'p75'           => $p75,
+        return array_merge($stats, [
             'your_salary'   => $yourSalary ?: null,
             'percentile'    => $percentile,          // あなたの給与が下位◯%
             'gap_to_median' => ($yourSalary > 0 && $yourSalary < $p50) ? ($p50 - $yourSalary) : 0,
-        ];
+        ]);
     }
 
     /**
@@ -569,6 +537,14 @@ class JobController extends Controller
 
             return [];
         });
+
+        // 相場コンテキスト（独自コンテンツ）: 同業種×地域の給与相場と本求人の位置づけ。
+        // 統計は12hキャッシュ＋算術のみ（per-jobクエリなし）。失敗してもページは壊さない。
+        try {
+            $data['market_context'] = \App\Support\SalaryBenchmark::contextForJob($job);
+        } catch (\Throwable $e) {
+            $data['market_context'] = null;
+        }
 
         if ($useCache) {
             Cache::put($detailCacheKey, $data, 180);
