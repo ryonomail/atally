@@ -637,40 +637,48 @@ class AdminController extends Controller
     {
         $cacheKey = 'admin_jobs_all_' . $this->paramHash($request);
         $result = Cache::remember($cacheKey, 300, function () use ($request) {
-            // アクセス数・応募数は集計サブクエリをLEFT JOIN（83万行への相関サブクエリを避け、ソートも軽くする）
-            $viewsAgg = DB::table('job_views')
-                ->selectRaw("job_id,
-                    COUNT(*) AS views_count,
-                    COUNT(*) FILTER (WHERE viewed_at >= now() - interval '7 days') AS views_7d_count")
-                ->groupBy('job_id');
-            $appsAgg = DB::table('applications')
-                ->selectRaw('job_id, COUNT(*) AS applications_count')
-                ->groupBy('job_id');
+            $sort   = $request->input('sort', 'newest');
+            $status = $request->filled('status') ? $request->status : 'active';
 
-            $query = Job::with(['company:id,company_name'])
-                ->leftJoinSub($viewsAgg, 'va', 'va.job_id', '=', 'jobs.id')
-                ->leftJoinSub($appsAgg, 'aa', 'aa.job_id', '=', 'jobs.id')
-                ->select('jobs.*')
-                ->selectRaw('COALESCE(va.views_count, 0) AS views_count')
-                ->selectRaw('COALESCE(va.views_7d_count, 0) AS views_7d_count')
-                ->selectRaw('COALESCE(aa.applications_count, 0) AS applications_count');
+            $query = Job::with(['company:id,company_name'])->where('jobs.status', $status);
             if ($request->filled('q')) {
                 $query->where('title', 'ilike', "%{$request->q}%");
             }
-            if ($request->filled('status')) {
-                $query->where('jobs.status', $request->status);
+
+            // アクセス/応募順ソート: 83万行のjoinソートは重い(±10s)ため、
+            // 「カウントを持つ求人ID」(job_views/applicationsは小さい)を先に並べ、その順で本体を取得する。
+            // カウント0の求人はページ後半に新着順で続く（NULLS LAST相当）。
+            if (in_array($sort, ['views', 'views_7d', 'applications'], true)) {
+                $rankSql = match ($sort) {
+                    'views'        => "SELECT job_id, COUNT(*) AS c FROM job_views GROUP BY job_id",
+                    'views_7d'     => "SELECT job_id, COUNT(*) AS c FROM job_views WHERE viewed_at >= now() - interval '7 days' GROUP BY job_id",
+                    'applications' => "SELECT job_id, COUNT(*) AS c FROM applications GROUP BY job_id",
+                };
+                $query->leftJoin(DB::raw("({$rankSql}) rk"), 'rk.job_id', '=', 'jobs.id')
+                    ->orderByRaw('rk.c DESC NULLS LAST')
+                    ->orderByDesc('jobs.created_at')
+                    ->select('jobs.*');
             } else {
-                $query->where('jobs.status', 'active');
+                $query->orderBy('jobs.created_at', 'desc');
             }
-            // 並び替え（アクセス累計・直近7日・応募数・掲載日）
-            $sort = $request->input('sort', 'newest');
-            match ($sort) {
-                'views'        => $query->orderByDesc('views_count')->orderByDesc('jobs.created_at'),
-                'views_7d'     => $query->orderByDesc('views_7d_count')->orderByDesc('jobs.created_at'),
-                'applications' => $query->orderByDesc('applications_count')->orderByDesc('jobs.created_at'),
-                default        => $query->orderBy('jobs.created_at', 'desc'),
-            };
+
             $paginator = $query->paginate(30);
+
+            // 表示用カウントはこのページの30件だけ集計（常に軽い）
+            $ids = collect($paginator->items())->pluck('id');
+            $viewCounts = $ids->isEmpty() ? collect() : DB::table('job_views')
+                ->selectRaw("job_id, COUNT(*) AS views_count,
+                    COUNT(*) FILTER (WHERE viewed_at >= now() - interval '7 days') AS views_7d_count")
+                ->whereIn('job_id', $ids)->groupBy('job_id')->get()->keyBy('job_id');
+            $appCounts = $ids->isEmpty() ? collect() : DB::table('applications')
+                ->selectRaw('job_id, COUNT(*) AS applications_count')
+                ->whereIn('job_id', $ids)->groupBy('job_id')->get()->keyBy('job_id');
+            $paginator->getCollection()->transform(function ($j) use ($viewCounts, $appCounts) {
+                $j->setAttribute('views_count', (int) ($viewCounts[$j->id]->views_count ?? 0));
+                $j->setAttribute('views_7d_count', (int) ($viewCounts[$j->id]->views_7d_count ?? 0));
+                $j->setAttribute('applications_count', (int) ($appCounts[$j->id]->applications_count ?? 0));
+                return $j;
+            });
             // 各求人の掲載企業を運用中の代理店（マーケットプレイス経由）を付与
             $agencyMap = $this->agencyMapForClients(collect($paginator->items())->pluck('company_id'));
             $paginator->getCollection()->transform(function ($j) use ($agencyMap) {
