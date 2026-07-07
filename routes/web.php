@@ -277,6 +277,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-06T00:00:00+09:00',
             'modified'    => '2026-07-06T00:00:00+09:00',
         ],
+        'shokumukeirekisho-template' => [
+            'title'       => '職務経歴書テンプレート 無料ダウンロード【編年体・キャリア式】書き方つき2026年版 | Atally',
+            'description' => '職務経歴書のテンプレートを無料で紹介。編年体式・逆編年体式・キャリア式の違いと選び方、項目ごとの書き方例、Word・PDFで作る際の注意点、Atallyでの無料作成方法まで解説します。職務経歴書 テンプレート 無料の完全ガイド。',
+            'published'   => '2026-07-07T00:00:00+09:00',
+            'modified'    => '2026-07-07T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -768,6 +774,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-gyakushitsumon', 'monthly', '0.8'],
             ['/column/web-mensetsu-yarikata', 'monthly', '0.8'],
             ['/column/rirekisho-shomeishashin', 'monthly', '0.8'],
+            ['/column/shokumukeirekisho-template', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
