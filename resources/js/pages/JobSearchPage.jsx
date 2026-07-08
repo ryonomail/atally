@@ -322,7 +322,8 @@ export default function JobSearchPage() {
                     if (detailCache.current.has(j.id)) return;
                     setTimeout(() => {
                         if (detailCache.current.has(j.id)) return;
-                        api.get(`/jobs/${j.id}`)
+                        // prefetch=1: 先読みは閲覧数に数えない（実閲覧はクリック時のビーコンで記録）
+                        api.get(`/jobs/${j.id}`, { params: { prefetch: 1 } })
                             .then(r => detailCache.current.set(j.id, { ...r.data, __full: true }))
                             .catch(() => {});
                     }, 120 * i); // 少しずつ取得してサーバー負荷を分散
@@ -366,8 +367,9 @@ export default function JobSearchPage() {
             return;
         }
         // 未取得なら、詳細が揃うまでスケルトンを表示（部分データを見せない＝後埋めを防ぐ）
+        // prefetch=1: 自動選択でも閲覧数に数えない（実閲覧はクリック時のビーコンで記録）
         setDetailLoading(true);
-        api.get(`/jobs/${selectedJobId}`)
+        api.get(`/jobs/${selectedJobId}`, { params: { prefetch: 1 } })
             .then(res => {
                 // __full: 完全データが揃った印
                 const full = { ...res.data, __full: true };
@@ -490,6 +492,8 @@ export default function JobSearchPage() {
         } else {
             // 選択のみ。詳細が揃うまではスケルトン表示（部分データによる後埋めを防ぐ）
             setSelectedJobId(job.id);
+            // ユーザーの明示クリック＝実閲覧としてビーコン記録（プリフェッチは数えない）
+            api.post(`/jobs/${job.id}/view`).catch(() => {});
         }
     };
 
@@ -501,7 +505,7 @@ export default function JobSearchPage() {
         clearTimeout(prefetchTimer.current);
         prefetchTimer.current = setTimeout(() => {
             if (detailCache.current.has(jobId)) return;
-            api.get(`/jobs/${jobId}`)
+            api.get(`/jobs/${jobId}`, { params: { prefetch: 1 } })
                 .then(res => detailCache.current.set(jobId, { ...res.data, __full: true }))
                 .catch(() => {});
         }, 200);

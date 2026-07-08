@@ -53,6 +53,9 @@ Route::middleware(['block.bots', 'throttle:60,1'])->group(function () {
     Route::get('/salary-benchmark/industries', [JobController::class , 'salaryIndustries']);
     Route::get('/salary-benchmark', [JobController::class , 'publicSalaryBenchmark']);
     Route::get('/jobs/{job}', [JobController::class , 'show']);
+    // 計測: 閲覧ビーコン（プリフェッチ表示時の実閲覧）とCTAクリック
+    Route::post('/jobs/{job}/view', [JobController::class , 'recordViewBeacon']);
+    Route::post('/events/cta', [JobController::class , 'ctaEvent']);
 });
 
 // サイト統計（パブリック・レート制限付き）

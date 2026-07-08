@@ -6,6 +6,7 @@ import SEO from '../components/SEO';
 import { formatSalary } from '../utils/salary';
 import { mapPinQuery } from '../utils/mapPin';
 import { cleanJobText } from '../utils/jobText';
+import { trackCta } from '../utils/track';
 import { ArrowLeft, Bookmark, BookmarkCheck, FileText, MapPin } from 'lucide-react';
 
 // 残業表記の正規化：重複（月平均月平均…時間時間）を圧縮し、数字のみには単位を補う
@@ -424,6 +425,7 @@ export default function JobDetailPage() {
 
     const handleQuickApply = async () => {
         if (!defaultResume || quickApplying) return;
+        trackCta('quick_apply', job?.id);
         setQuickApplying(true);
         try {
             await api.post(`/jobs/${job.id}/apply`, { resume_id: defaultResume.id });
@@ -451,6 +453,7 @@ export default function JobDetailPage() {
             } else {
                 await api.post(`/saved-jobs/${id}`);
                 setSaved(true);
+                trackCta('save', job?.id);
             }
         } catch {
         } finally {
@@ -604,7 +607,7 @@ export default function JobDetailPage() {
                                         <button className="btn btn-primary btn-lg" onClick={handleQuickApply} disabled={quickApplying}>
                                             {quickApplying ? '送信中...' : 'かんたん応募'}
                                         </button>
-                                        <button onClick={() => setShowApplyModal(true)}
+                                        <button onClick={() => { trackCta('apply_open', job.id, 'detail_header'); setShowApplyModal(true); }}
                                             style={{ background: 'none', border: 'none', cursor: 'pointer',
                                                 fontSize: 'var(--font-size-xs)', color: 'var(--color-text-accent)',
                                                 textDecoration: 'underline', padding: 0 }}>
@@ -612,7 +615,7 @@ export default function JobDetailPage() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <button className="btn btn-primary btn-lg" onClick={() => setShowApplyModal(true)}>
+                                    <button className="btn btn-primary btn-lg" onClick={() => { trackCta('apply_open', job.id, 'detail_header'); setShowApplyModal(true); }}>
                                         応募する
                                     </button>
                                 )}
@@ -634,12 +637,12 @@ export default function JobDetailPage() {
                             </div>
                         ) : !user && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
-                                <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)} style={{ gap: 8 }}>
+                                <button className="btn btn-primary btn-lg" onClick={() => { trackCta('guest_resume_start', job.id, 'detail_header'); navigate(`/resumes/guest?from_job=${job.id}`); }} style={{ gap: 8 }}>
                                     <FileText size={17} strokeWidth={2} /> 履歴書を作って応募する
                                 </button>
                                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                                     登録不要・無料 /{' '}
-                                    <a href="/login" onClick={e => { e.preventDefault(); navigate('/login'); }} style={{ color: 'var(--color-text-accent)' }}>ログイン</a>
+                                    <a href="/login" onClick={e => { e.preventDefault(); trackCta('login_to_apply', job.id, 'detail_header'); navigate('/login'); }} style={{ color: 'var(--color-text-accent)' }}>ログイン</a>
                                 </span>
                             </div>
                         )}
@@ -698,6 +701,30 @@ export default function JobDetailPage() {
                         </div>
                     )}
                 </div>
+
+                {/* ゲスト向け応募CTA（ファーストビュー直下・Web応募可能求人のみ）。スマホで最下部まで読まなくても次の一歩が見える位置に置く */}
+                {!user && job.source !== 'hellowork' && (
+                    <div className="card" style={{
+                        marginBottom: 'var(--space-md)', padding: 'var(--space-lg)',
+                        background: 'var(--color-accent-light)',
+                        border: '1px solid var(--color-border)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        gap: 'var(--space-md)', flexWrap: 'wrap',
+                    }}>
+                        <div style={{ minWidth: 220, flex: '1 1 auto' }}>
+                            <p style={{ fontWeight: 700, color: 'var(--color-navy)', margin: 0, marginBottom: 4 }}>
+                                この求人はWebから応募できます
+                            </p>
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', margin: 0 }}>
+                                履歴書は登録不要・無料で作成 → そのままこの求人に応募
+                            </p>
+                        </div>
+                        <button className="btn btn-primary" style={{ gap: 8, whiteSpace: 'nowrap' }}
+                            onClick={() => { trackCta('guest_resume_start', job.id, 'detail_top_card'); navigate(`/resumes/guest?from_job=${job.id}`); }}>
+                            <FileText size={16} strokeWidth={2} /> 履歴書を作って応募する
+                        </button>
+                    </div>
+                )}
 
                 {/* 派遣: 派遣元情報（労働者派遣法の明示）＝会社設定から自動表示。ハローワーク等の外部求人は対象外 */}
                 {job.listing_type === 'dispatch' && job.source !== 'hellowork' && (
@@ -1284,51 +1311,44 @@ export default function JobDetailPage() {
                                     {quickApplying ? '送信中...' : 'かんたん応募'}
                                 </button>
                                 <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-sm)' }}
-                                    onClick={() => setShowApplyModal(true)}>
+                                    onClick={() => { trackCta('apply_open', job.id, 'fixed_bar'); setShowApplyModal(true); }}>
                                     志望動機を添える
                                 </button>
                             </>
                         ) : (
                             <button className="btn btn-primary btn-lg" style={{ minWidth: 280 }}
-                                onClick={() => setShowApplyModal(true)}>
+                                onClick={() => { trackCta('apply_open', job.id, 'fixed_bar'); setShowApplyModal(true); }}>
                                 この求人に応募する
                             </button>
                         )}
                     </div>
                 )}
 
-                {/* ゲスト向け応募CTA（ハローワーク求人には表示しない） */}
+                {/* ゲスト向け固定CTAバー（スマホ最優先・Web応募可能求人のみ）。流入のほぼ100%がゲストのため常時見える位置に応募導線を置く */}
                 {!user && job.source !== 'hellowork' && (
-                    <div className="card" style={{
-                        padding: 'var(--space-xl)',
-                        background: 'var(--color-accent-light)',
-                        border: '1px solid var(--color-border)',
-                        textAlign: 'center',
+                    <div style={{
+                        position: 'fixed', bottom: 0, left: 0, right: 0,
+                        padding: 'var(--space-sm) var(--space-md)',
+                        background: 'var(--color-bg-primary)',
+                        borderTop: '1px solid var(--color-border)',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        gap: 'var(--space-md)', zIndex: 100,
+                        boxShadow: '0 -2px 10px rgba(0,0,0,0.08)',
                     }}>
-                        <FileText size={28} strokeWidth={1.75} style={{ color: 'var(--color-text-accent)', marginBottom: 'var(--space-sm)' }} />
-                        <h3 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>この求人に応募するには履歴書が必要です</h3>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)', lineHeight: 1.7 }}>
-                            Atallyでは登録不要・無料で履歴書が作成できます。<br />
-                            作成後そのままこの求人に応募できます。
-                        </p>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
-                            {['履歴書を無料で作る', 'この求人に応募する'].map((step, i) => (
-                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                    {i > 0 && <span style={{ color: 'var(--color-border)' }}>→</span>}
-                                    <span style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '4px 10px' }}>{step}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <button className="btn btn-primary btn-lg" onClick={() => navigate(`/resumes/guest?from_job=${job.id}`)} style={{ gap: 8 }}>
-                                <FileText size={17} strokeWidth={2} /> 履歴書を無料で作る
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => navigate('/login')}>
-                                ログインして応募
-                            </button>
-                        </div>
+                        <button className="btn btn-primary btn-lg"
+                            style={{ flex: '1 1 auto', maxWidth: 420, gap: 8 }}
+                            onClick={() => { trackCta('guest_resume_start', job.id, 'fixed_bar'); navigate(`/resumes/guest?from_job=${job.id}`); }}>
+                            <FileText size={17} strokeWidth={2} /> 履歴書を作って応募（無料・登録不要）
+                        </button>
+                        <button onClick={() => { trackCta('login_to_apply', job.id, 'fixed_bar'); navigate('/login'); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', textDecoration: 'underline', whiteSpace: 'nowrap', padding: 0 }}>
+                            ログイン
+                        </button>
                     </div>
                 )}
+
+                {/* 固定バーの高さぶんの余白（本文が隠れないように） */}
+                {job.source !== 'hellowork' && (!user || user?.role === 'jobseeker') && <div style={{ height: 76 }} />}
 
                 {/* 通報ボタン */}
                 {user && (

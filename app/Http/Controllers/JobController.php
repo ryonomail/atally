@@ -424,14 +424,17 @@ class JobController extends Controller
         $useCache = !$isOwner && !$isAdmin;
         $detailCacheKey = 'job_detail_' . $job->id;
 
+        // 閲覧記録の水増し防止: 検索ページのプリフェッチ(?prefetch=1)とボットは記録しない
+        $shouldRecord = !$request->boolean('prefetch') && !self::isBotUa($request->userAgent());
+
         if ($useCache && $cached = Cache::get($detailCacheKey)) {
             // 閲覧記録だけ非同期的に記録（レスポンスをブロックしない）
-            $this->recordView($job->id, $user?->id, $request->ip());
+            if ($shouldRecord) $this->recordView($job->id, $user?->id, $request->ip());
             return response()->json($cached);
         }
 
         // 閲覧記録
-        $this->recordView($job->id, $user?->id, $request->ip());
+        if ($shouldRecord) $this->recordView($job->id, $user?->id, $request->ip());
 
         $job->load(['company', 'agencyClient', 'photos']);
         $data = $job->toArray();
@@ -571,6 +574,55 @@ class JobController extends Controller
                 'viewed_at'  => Carbon::now(),
             ]);
         }
+    }
+
+    /** クローラー/ボットのUA判定（閲覧・CTA計測から除外して数字の水増しを防ぐ） */
+    public static function isBotUa(?string $ua): bool
+    {
+        if (!$ua) return true; // UAなしは人間のブラウザではない
+        return (bool) preg_match('/bot|crawler|spider|slurp|headless|lighthouse|pingdom|monitor|curl|wget|python-requests|scrapy|facebookexternalhit|preview/i', $ua);
+    }
+
+    /**
+     * 公開: 閲覧ビーコン。検索ページがプリフェッチ済みキャッシュから詳細を表示した時に
+     * 実閲覧としてカウントするための軽量エンドポイント（プリフェッチ自体は記録しない）。
+     */
+    public function recordViewBeacon(Request $request, Job $job)
+    {
+        if ($job->status->value === 'active' && !self::isBotUa($request->userAgent())) {
+            $this->recordView($job->id, Auth::guard('sanctum')->user()?->id, $request->ip());
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * 公開: CTAクリックイベント計測。どのボタンで人が動いた/止まったかを可視化する。
+     * event: apply_open(応募モーダル) / quick_apply(かんたん応募) /
+     *        guest_resume_start(履歴書を作って応募) / login_to_apply / save / phone_tap
+     */
+    public function ctaEvent(Request $request)
+    {
+        $data = $request->validate([
+            'event'  => 'required|string|in:apply_open,quick_apply,guest_resume_start,login_to_apply,save,phone_tap',
+            'job_id' => 'nullable|integer',
+            'source' => 'nullable|string|max:30', // detail / search_panel / fixed_bar など発火場所
+        ]);
+
+        if (!self::isBotUa($request->userAgent())) {
+            try {
+                DB::table('cta_clicks')->insert([
+                    'job_id'     => $data['job_id'] ?? null,
+                    'event'      => $data['event'],
+                    'source'     => $data['source'] ?? null,
+                    'user_id'    => Auth::guard('sanctum')->user()?->id,
+                    'ip_address' => $request->ip(),
+                    'created_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('cta_clicks insert failed: ' . $e->getMessage());
+            }
+        }
+        return response()->json(['ok' => true]);
     }
 
     // 企業: 自社求人一覧
