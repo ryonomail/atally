@@ -283,6 +283,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-07T00:00:00+09:00',
             'modified'    => '2026-07-07T00:00:00+09:00',
         ],
+        'naitei-jitai-tsutaekata' => [
+            'title'       => '内定辞退の伝え方【電話・メール例文つき】言うタイミングとマナー完全ガイド | Atally',
+            'description' => '内定辞退の伝え方を徹底解説。電話・メールそれぞれの例文、伝えるタイミングの目安、辞退理由の伝え方、内定承諾後に辞退する場合の注意点、やってはいけないNG例まで。内定辞退 電話 メール 例文の完全ガイド。',
+            'published'   => '2026-07-08T00:00:00+09:00',
+            'modified'    => '2026-07-08T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -775,6 +781,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/web-mensetsu-yarikata', 'monthly', '0.8'],
             ['/column/rirekisho-shomeishashin', 'monthly', '0.8'],
             ['/column/shokumukeirekisho-template', 'monthly', '0.8'],
+            ['/column/naitei-jitai-tsutaekata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
