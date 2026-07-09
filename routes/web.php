@@ -289,6 +289,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-08T00:00:00+09:00',
             'modified'    => '2026-07-08T00:00:00+09:00',
         ],
+        'naitei-shodaku-henji' => [
+            'title'       => '内定承諾の返事メール・電話の書き方【例文付き】タイミングとマナー完全ガイド | Atally',
+            'description' => '内定承諾の返事の書き方を徹底解説。メール・電話それぞれの例文、返事のタイミングの目安、内定承諾書との違い、返事を保留したい場合の伝え方、承諾後のNG例まで。内定承諾 メール 電話 例文の完全ガイド。',
+            'published'   => '2026-07-09T00:00:00+09:00',
+            'modified'    => '2026-07-09T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -782,6 +788,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/rirekisho-shomeishashin', 'monthly', '0.8'],
             ['/column/shokumukeirekisho-template', 'monthly', '0.8'],
             ['/column/naitei-jitai-tsutaekata', 'monthly', '0.8'],
+            ['/column/naitei-shodaku-henji', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
