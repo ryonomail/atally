@@ -125,6 +125,13 @@ class ApplicationController extends Controller
             'note' => '応募しました',
         ]);
 
+        // 運営へ通知（応募は最重要KPI）
+        \App\Support\AdminNotify::send('応募発生: ' . $job->title, [
+            '求人: ' . $job->title,
+            '企業: ' . ($job->company->company_name ?? '—'),
+            '応募者: ' . $user->name,
+        ]);
+
         $companyUser = $job->company->user;
         if ($companyUser) {
             $companyUser->notify(new \App\Notifications\NewApplicationNotification($application));

@@ -28,13 +28,18 @@ class MarketplaceController extends Controller
         return response()->json($agencies);
     }
 
-    /** パートナー用: 自社の紹介コード/URLと状態。コードは初回アクセス時に発行 */
+    /**
+     * パートナー用: 申請状態と紹介コード/URL。
+     * ★紹介リンクは運営審査の承認後にのみ発行・表示（自己還元などの抜け道防止）。
+     */
     public function partnerStatus(Request $request)
     {
         $company = Auth::user()->company;
         if (!$company) return response()->json(['message' => '企業アカウントが必要です'], 403);
 
-        if (empty($company->referral_code)) {
+        $approved = $company->marketplace_status === 'approved';
+
+        if ($approved && empty($company->referral_code)) {
             // 一意な短コードを発行（衝突時はリトライ）
             do {
                 $code = strtoupper(\Illuminate\Support\Str::random(8));
@@ -43,11 +48,44 @@ class MarketplaceController extends Controller
         }
 
         return response()->json([
-            'referral_code' => $company->referral_code,
-            'referral_url'  => config('app.url') . '/register?role=company&ref=' . $company->referral_code,
+            'approved'      => $approved,
+            'status'        => $company->marketplace_status, // pending / approved / rejected
+            'applied'       => $company->marketplace_status !== null && $company->marketplace_status !== '' ,
+            'referral_code' => $approved ? $company->referral_code : null,
+            'referral_url'  => $approved ? config('app.url') . '/register?role=company&ref=' . $company->referral_code : null,
             'marketplace_listed' => (bool) $company->marketplace_listed,
-            'marketplace_status' => $company->marketplace_status,
         ]);
+    }
+
+    /** パートナー申請（審査制・基準非公開）。却下後の再申請も可 */
+    public function applyPartner(Request $request)
+    {
+        $company = Auth::user()->company;
+        if (!$company) return response()->json(['message' => '企業アカウントが必要です'], 403);
+        if ($company->marketplace_status === 'approved') {
+            return response()->json(['message' => '既に承認済みです'], 422);
+        }
+
+        $data = $request->validate([
+            'service_specialties' => 'nullable|string|max:255',
+            'service_description' => 'nullable|string|max:2000',
+        ]);
+
+        $company->update([
+            'marketplace_status'      => 'pending',
+            'marketplace_reviewed_at' => null,
+            'service_specialties'     => $data['service_specialties'] ?? $company->service_specialties,
+            'service_description'     => $data['service_description'] ?? $company->service_description,
+        ]);
+
+        \App\Support\AdminNotify::send('パートナー申請: ' . $company->company_name, array_filter([
+            '企業名: ' . $company->company_name,
+            '種別: ' . ($company->company_type === 'recruitment_agency' ? '人材紹介会社' : '一般企業'),
+            $company->service_specialties ? '得意領域: ' . $company->service_specialties : null,
+            '審査: 管理画面 →「代理店審査」タブ',
+        ]));
+
+        return response()->json(['message' => '申請を受け付けました。審査結果をお待ちください。', 'status' => 'pending']);
     }
 
     /** 自社（求人主）の現在の運用エンゲージメント（依頼中/稼働中） */

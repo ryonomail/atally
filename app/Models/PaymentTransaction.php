@@ -50,12 +50,26 @@ class PaymentTransaction extends Model
             }
 
             if (!empty($attrs['stripe_payment_intent_id'])) {
-                static::updateOrCreate(
+                $tx = static::updateOrCreate(
                     ['stripe_payment_intent_id' => $attrs['stripe_payment_intent_id']],
                     $attrs
                 );
             } else {
-                static::create($attrs);
+                $tx = static::create($attrs);
+            }
+
+            // 運営へ課金通知（新規計上時のみ＝webhook再送等での重複通知を防ぐ）
+            if ($tx->wasRecentlyCreated && $tx->status === 'succeeded') {
+                $companyName = Company::find($tx->company_id)?->company_name ?? ('企業#' . $tx->company_id);
+                \App\Support\AdminNotify::send(
+                    '課金発生: ¥' . number_format((int) $tx->amount) . '（' . $companyName . '）',
+                    array_filter([
+                        '企業: ' . $companyName,
+                        '金額: ¥' . number_format((int) $tx->amount),
+                        '種別: ' . $tx->type,
+                        $tx->agency_id ? 'パートナー還元: ¥' . number_format((int) $tx->agency_share_amount) . '（企業#' . $tx->agency_id . '）' : null,
+                    ])
+                );
             }
         } catch (\Throwable $e) {
             Log::warning('payment_transaction record failed: ' . $e->getMessage());

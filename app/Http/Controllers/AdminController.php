@@ -426,9 +426,8 @@ class AdminController extends Controller
      */
     public function pendingMarketplace()
     {
-        $data = Company::where('company_type', 'recruitment_agency')
-            ->where('marketplace_listed', true)
-            ->where('marketplace_status', 'pending')
+        // パートナー申請の審査待ち（会社タイプ・掲載希望の有無は問わない）
+        $data = Company::where('marketplace_status', 'pending')
             ->with('user:id,name,email')
             ->orderBy('updated_at', 'asc')
             ->get(['id', 'user_id', 'company_name', 'permit_number', 'service_fee',

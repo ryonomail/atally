@@ -127,6 +127,60 @@ function PartnerView({ toast }) {
 
     const statusLabel = { requested: '依頼中', active: '担当中', declined: '辞退', ended: '終了' };
 
+    // 申請（審査制）: 承認されるまで紹介リンク等は非表示
+    const [applyForm, setApplyForm] = useState({ service_specialties: '', service_description: '' });
+    const [applying, setApplying] = useState(false);
+    const apply = () => {
+        setApplying(true);
+        api.post('/marketplace/apply', applyForm)
+            .then(() => { toast.success('申請を受け付けました。審査結果をお待ちください。'); load(); })
+            .catch(err => toast.error(err.response?.data?.message || '申請に失敗しました'))
+            .finally(() => setApplying(false));
+    };
+
+    if (partner && !partner.approved) {
+        return (
+            <div className="card" style={{ padding: 24, borderRadius: 12, border: '1px solid var(--color-border, #e5e7eb)', maxWidth: 640 }}>
+                <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, marginTop: 0, marginBottom: 8 }}>パートナー申請</h2>
+                <ul style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary, #6b7280)', lineHeight: 1.9, paddingLeft: 18, marginBottom: 16 }}>
+                    <li>専用の<strong>紹介リンク</strong>から企業が登録すると、あなたの担当になります</li>
+                    <li>担当企業の<strong>求人課金の25%が継続的に還元</strong>されます</li>
+                    <li>企業は通常どおり自分で求人を掲載・運用できます（運用代行はあなたの任意サービス）</li>
+                    <li>利用には<strong>運営審査</strong>があります（結果は通知でお知らせします）</li>
+                </ul>
+                {partner.status === 'pending' && (
+                    <div style={{ padding: '12px 14px', borderRadius: 8, background: '#fbf3e0', color: '#8a6314', fontSize: 'var(--font-size-sm)' }}>
+                        審査中です。承認されると紹介リンクが発行されます。
+                    </div>
+                )}
+                {partner.status === 'rejected' && (
+                    <div style={{ padding: '12px 14px', borderRadius: 8, background: '#fbecec', color: '#a3312f', fontSize: 'var(--font-size-sm)', marginBottom: 14 }}>
+                        今回は見送りとなりました。内容を見直して再申請できます。
+                    </div>
+                )}
+                {partner.status !== 'pending' && (
+                    <>
+                        <div className="form-group">
+                            <label className="form-label">得意領域（任意・審査の参考）</label>
+                            <input className="form-input" value={applyForm.service_specialties}
+                                onChange={e => setApplyForm(f => ({ ...f, service_specialties: e.target.value }))}
+                                placeholder="例: 介護, 製造, 沖縄県の企業" />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">紹介できる企業・事業の概要（任意）</label>
+                            <textarea className="form-textarea" rows={3} value={applyForm.service_description}
+                                onChange={e => setApplyForm(f => ({ ...f, service_description: e.target.value }))}
+                                placeholder="例: 営業代行として県内の中小企業50社と取引があります。" />
+                        </div>
+                        <button className="btn btn-primary" onClick={apply} disabled={applying}>
+                            {applying ? '送信中…' : (partner.status === 'rejected' ? '再申請する' : 'パートナー申請する')}
+                        </button>
+                    </>
+                )}
+            </div>
+        );
+    }
+
     return (
         <>
             {/* 還元サマリー */}

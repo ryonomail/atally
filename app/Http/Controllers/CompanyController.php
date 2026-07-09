@@ -64,10 +64,13 @@ class CompanyController extends Controller
         ]);
 
         // パートナー紹介リンク（?ref=コード）経由の登録: 担当関係を自動作成。
-        // 以後この企業の求人課金の25%が紹介パートナーへ自動還元される（admin企業一覧に「代理店経由」表示）。
+        // ★審査承認済み(approved)パートナーのコードのみ有効（自己還元などの抜け道防止）。
+        $partnerName = null;
         if ($request->filled('ref')) {
             try {
-                $partner = Company::where('referral_code', strtoupper(trim($request->ref)))->first();
+                $partner = Company::where('referral_code', strtoupper(trim($request->ref)))
+                    ->where('marketplace_status', 'approved')
+                    ->first();
                 if ($partner && $partner->id !== $company->id) {
                     \App\Models\AgencyEngagement::create([
                         'agency_id'          => $partner->id,
@@ -78,11 +81,20 @@ class CompanyController extends Controller
                         'requested_at'       => now(),
                         'activated_at'       => now(),
                     ]);
+                    $partnerName = $partner->company_name;
                 }
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('referral link engagement failed: ' . $e->getMessage());
             }
         }
+
+        // 運営へ通知（メール＋管理画面）
+        \App\Support\AdminNotify::send('新規企業登録: ' . $company->company_name, array_filter([
+            '企業名: ' . $company->company_name,
+            '種別: ' . ($company->company_type === 'recruitment_agency' ? '人材紹介会社' : '一般企業'),
+            '担当者: ' . $request->user()->name . ' (' . $request->user()->email . ')',
+            $partnerName ? '経由パートナー: ' . $partnerName . '（25%還元対象）' : null,
+        ]));
 
         return response()->json(['company' => $company->fresh()], 201);
     }
