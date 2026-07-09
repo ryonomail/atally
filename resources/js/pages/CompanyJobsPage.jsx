@@ -3512,6 +3512,24 @@ function CampaignPanel({
         setShowCampaignForm(true);
     };
 
+    // 求人追加のサーバー検索: ページ内の50件に縛られず、全求人から自由に選べるようにする
+    const [addSearch, setAddSearch] = useState('');
+    const [addSearchResults, setAddSearchResults] = useState(null); // null=未検索（ページ内リストを表示）
+    const [addSearching, setAddSearching] = useState(false);
+    const addSearchTimer = useRef(null);
+    useEffect(() => {
+        if (!addSearch.trim()) { setAddSearchResults(null); setAddSearching(false); return; }
+        setAddSearching(true);
+        clearTimeout(addSearchTimer.current);
+        addSearchTimer.current = setTimeout(() => {
+            api.get('/my-jobs', { params: { q: addSearch.trim(), per_page: 100 } })
+                .then(r => setAddSearchResults(r.data.data || r.data || []))
+                .catch(() => setAddSearchResults([]))
+                .finally(() => setAddSearching(false));
+        }, 400);
+        return () => clearTimeout(addSearchTimer.current);
+    }, [addSearch]);
+
     const cBtnSm = { padding: '5px 10px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 600, cursor: 'pointer', fontSize: 'var(--font-size-xs)' };
 
     return (
@@ -3665,7 +3683,7 @@ function CampaignPanel({
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', gap: 'var(--space-md)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                                    <span>日額 <strong style={{ color: 'var(--color-accent)' }}>¥{cfmt(c.daily_budget)}</strong></span>
+                                    <span>{c.billing_period === 'monthly' ? '月額' : '日額'} <strong style={{ color: 'var(--color-accent)' }}>¥{cfmt(c.daily_budget)}</strong></span>
                                     <span>求人 <strong>{c.active_jobs_count}/{c.jobs_count}</strong></span>
                                     <span>{ALLOCATION_LABELS[c.budget_allocation]}</span>
                                 </div>
@@ -3708,11 +3726,15 @@ function CampaignPanel({
 
                                     {/* サマリーカード */}
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
-                                        {[
+                                        {(campaignDetail.billing_period === 'monthly' ? [
+                                            { label: '予算グループ月額', value: `¥${cfmt(campaignDetail.daily_budget)}`, accent: true },
+                                            { label: '日割り予算', value: `¥${cfmt(campaignDetail.daily_equivalent)}/日` },
+                                            { label: '実際の配分合計（日）', value: `¥${cfmt(campaignDetail.actual_daily_spend)}` },
+                                        ] : [
                                             { label: '予算グループ日額', value: `¥${cfmt(campaignDetail.daily_budget)}`, accent: true },
                                             { label: '実際の配分合計', value: `¥${cfmt(campaignDetail.actual_daily_spend)}` },
                                             { label: '月額見積もり', value: `¥${cfmt(campaignDetail.monthly_estimate)}` },
-                                        ].map((s, i) => (
+                                        ]).map((s, i) => (
                                             <div key={i} style={{
                                                 padding: 'var(--space-sm)', borderRadius: 'var(--radius-md)', textAlign: 'center',
                                                 background: s.accent ? 'var(--color-accent)' : 'var(--color-bg)',
@@ -3760,19 +3782,30 @@ function CampaignPanel({
                                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>求人がまだ追加されていません</p>
                                     )}
 
-                                    {/* 求人追加 */}
+                                    {/* 求人追加（期間中いつでも自由に付け替え可能。検索で全求人から選べる） */}
                                     {campaignDetail.status !== 'ended' && (
                                         <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--color-border)' }}>
-                                            <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>求人を追加</label>
-                                            <JobCheckboxList
-                                                jobs={jobs.filter(j => j.campaign_id !== campaignDetail.id)}
-                                                selectedIds={addJobIds}
-                                                onToggle={(jobId) => setAddJobIds(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId])}
-                                                emptyText="追加可能な求人がありません"
-                                                companyName={companyName}
-                                            />
+                                            <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>求人を追加（タイトルで全求人から検索できます）</label>
+                                            <input className="form-input" value={addSearch}
+                                                onChange={e => setAddSearch(e.target.value)}
+                                                placeholder="求人タイトルで検索（例: 店長）"
+                                                style={{ marginBottom: 8, fontSize: 'var(--font-size-sm)' }} />
+                                            {addSearching ? (
+                                                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', margin: '4px 0' }}>検索中…</p>
+                                            ) : (
+                                                <JobCheckboxList
+                                                    jobs={(addSearchResults ?? jobs).filter(j => j.campaign_id !== campaignDetail.id)}
+                                                    selectedIds={addJobIds}
+                                                    onToggle={(jobId) => setAddJobIds(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId])}
+                                                    emptyText={addSearchResults ? '該当する求人がありません' : '追加可能な求人がありません'}
+                                                    companyName={companyName}
+                                                />
+                                            )}
                                             {addJobIds.length > 0 && (
-                                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', marginTop: 8 }} onClick={onAddJobs}>{addJobIds.length}件を追加</button>
+                                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', marginTop: 8 }}
+                                                    onClick={() => { onAddJobs(); setAddSearch(''); setAddSearchResults(null); }}>
+                                                    {addJobIds.length}件を追加
+                                                </button>
                                             )}
                                         </div>
                                     )}

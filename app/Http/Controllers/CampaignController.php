@@ -53,7 +53,13 @@ class CampaignController extends Controller
         }]);
 
         $campaign->actual_daily_spend = $campaign->activeJobs()->sum('daily_budget');
-        $campaign->monthly_estimate = (float) $campaign->daily_budget * 30;
+        // 月額グループは daily_budget 自体が月額。×30すると30倍の誤表示になる
+        $campaign->monthly_estimate = $campaign->billing_period === 'monthly'
+            ? (float) $campaign->daily_budget
+            : (float) $campaign->daily_budget * 30;
+        $campaign->daily_equivalent = $campaign->billing_period === 'monthly'
+            ? round((float) $campaign->daily_budget / 30, 2)
+            : (float) $campaign->daily_budget;
 
         return response()->json($campaign);
     }
