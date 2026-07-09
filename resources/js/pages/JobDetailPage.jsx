@@ -726,51 +726,6 @@ export default function JobDetailPage() {
                     </div>
                 )}
 
-                {/* 派遣: 派遣元情報（労働者派遣法の明示）＝会社設定から自動表示。ハローワーク等の外部求人は対象外 */}
-                {job.listing_type === 'dispatch' && job.source !== 'hellowork' && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--color-navy)' }}>
-                        <SectionHeader title="派遣元情報（労働者派遣）" />
-                        <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
-                            <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
-                                これは派遣労働者の募集です
-                            </span>
-                        </div>
-                        <InfoTable>
-                            <InfoRow label="派遣元事業主" value={job.company?.company_name} />
-                            <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
-                            <InfoRow label="電話番号" value={job.company?.phone} />
-                            <InfoRow label="派遣事業許可番号" value={job.company?.dispatch_license_number} />
-                            <InfoRow label="派遣先" value={job.show_dispatch_client && job.dispatch_client_name ? job.dispatch_client_name : '非公開'} />
-                        </InfoTable>
-                    </div>
-                )}
-
-                {/* 紹介: 紹介元（職業紹介事業者）の明示＝会社設定から自動表示。ハローワーク等の外部求人は対象外 */}
-                {job.listing_type === 'referral' && job.source !== 'hellowork' && (
-                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--color-navy)' }}>
-                        <SectionHeader title="紹介元（職業紹介事業者）" />
-                        <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
-                            <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
-                                これは職業紹介です
-                            </span>
-                            {job.employment_type?.includes('派遣') && (
-                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 'var(--space-sm) 0 0', lineHeight: 1.7 }}>
-                                    就業形態は<strong>{job.employment_type}</strong>です。実際の雇用主は紹介先（派遣元となる企業）となります。
-                                </p>
-                            )}
-                        </div>
-                        <InfoTable>
-                            <InfoRow label="紹介事業者（紹介元）" value={job.company?.company_name} />
-                            <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
-                            <InfoRow label="電話番号" value={job.company?.phone} />
-                            <InfoRow label="職業紹介事業 許可番号" value={job.company?.permit_number} />
-                            {job.employment_type?.includes('派遣') && (
-                                <InfoRow label="派遣元（雇用主）" value={job.dispatch_client_name || job.client_company?.name} />
-                            )}
-                        </InfoTable>
-                    </div>
-                )}
-
                 {/* 応募済みバナー */}
                 {applied && (
                     <div className="card" style={{
@@ -1184,13 +1139,13 @@ export default function JobDetailPage() {
                         </div>
                     )
                 ) : (job.listing_type === 'referral' || job.listing_type === 'dispatch') ? (
-                    /* 紹介/派遣: 就業先（紹介先/派遣先）の情報のみ。紹介元/派遣元の連絡先・許可番号は上部に表示済み */
+                    /* 紹介/派遣: 就業先（紹介先/派遣先）の情報のみ。紹介元/派遣元の連絡先・許可番号はこの直後に表示 */
                     (job.industry || job.number_of_employees || (job.show_dispatch_client && job.dispatch_client_name)) && (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                             <SectionHeader title={job.listing_type === 'dispatch' ? '就業先（派遣先）情報' : '就業先（紹介先）情報'} />
                             <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
                                 <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
-                                    {job.listing_type === 'dispatch' ? '派遣元' : '紹介元'}（会社名・所在地・電話番号・許可番号）は上部に記載しています。
+                                    {job.listing_type === 'dispatch' ? '派遣元' : '紹介元'}（会社名・所在地・電話番号・許可番号）はこの下に記載しています。
                                 </p>
                             </div>
                             <InfoTable>
@@ -1257,6 +1212,51 @@ export default function JobDetailPage() {
                                         {job.company.website}
                                     </a>
                                 </div>
+                            )}
+                        </InfoTable>
+                    </div>
+                )}
+
+                {/* 派遣: 派遣元情報（労働者派遣法の明示）＝会社設定から自動表示。求職者体験を優先しページ末尾に配置 */}
+                {job.listing_type === 'dispatch' && job.source !== 'hellowork' && (
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--color-navy)' }}>
+                        <SectionHeader title="派遣元情報（労働者派遣）" />
+                        <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
+                            <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
+                                これは派遣労働者の募集です
+                            </span>
+                        </div>
+                        <InfoTable>
+                            <InfoRow label="派遣元事業主" value={job.company?.company_name} />
+                            <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                            <InfoRow label="電話番号" value={job.company?.phone} />
+                            <InfoRow label="派遣事業許可番号" value={job.company?.dispatch_license_number} />
+                            <InfoRow label="派遣先" value={job.show_dispatch_client && job.dispatch_client_name ? job.dispatch_client_name : '非公開'} />
+                        </InfoTable>
+                    </div>
+                )}
+
+                {/* 紹介: 紹介元（職業紹介事業者）の明示＝会社設定から自動表示。求職者体験を優先しページ末尾に配置 */}
+                {job.listing_type === 'referral' && job.source !== 'hellowork' && (
+                    <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--color-navy)' }}>
+                        <SectionHeader title="紹介元（職業紹介事業者）" />
+                        <div style={{ padding: 'var(--space-md) var(--space-xl) 0' }}>
+                            <span style={{ display: 'inline-block', fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(18,28,52,0.08)', borderRadius: 'var(--radius-full)', padding: '3px 12px' }}>
+                                これは職業紹介です
+                            </span>
+                            {job.employment_type?.includes('派遣') && (
+                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 'var(--space-sm) 0 0', lineHeight: 1.7 }}>
+                                    就業形態は<strong>{job.employment_type}</strong>です。実際の雇用主は紹介先（派遣元となる企業）となります。
+                                </p>
+                            )}
+                        </div>
+                        <InfoTable>
+                            <InfoRow label="紹介事業者（紹介元）" value={job.company?.company_name} />
+                            <InfoRow label="所在地" value={job.company?.address || job.company?.office_address} />
+                            <InfoRow label="電話番号" value={job.company?.phone} />
+                            <InfoRow label="職業紹介事業 許可番号" value={job.company?.permit_number} />
+                            {job.employment_type?.includes('派遣') && (
+                                <InfoRow label="派遣元（雇用主）" value={job.dispatch_client_name || job.client_company?.name} />
                             )}
                         </InfoTable>
                     </div>
