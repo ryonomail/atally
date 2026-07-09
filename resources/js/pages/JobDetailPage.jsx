@@ -924,38 +924,24 @@ export default function JobDetailPage() {
                 </div>
 
                 {/* 給与相場との比較（Atally独自データ） */}
-                {/* 給与相場（参考情報）。この求人との比較は「相場以上」の時だけ表示＝応募の後押しに使い、
-                    相場未満の求人にネガティブな判定を出して応募意欲を削がない（相場帯の数字自体は常時表示＝固有コンテンツとしてSEO維持） */}
+                {/* 給与相場（参考情報）。全求人で完全に同一形式＝この求人との比較・判定は一切表示しない。
+                    企業間で「表示される/されない」の差をつくらず（公平性）、求職者には業種×地域の事実データのみ提供。
+                    数字は業種×地域で変わるため、求人ページの固有コンテンツとしてSEO効果は維持される */}
                 {job.market_context && (() => {
                     const mc = job.market_context;
                     const yen = n => '¥' + Number(n || 0).toLocaleString();
-                    const favorable = mc.position === 'top25' || mc.position === 'above_median';
-                    const barPos = Math.min(Math.max((mc.salary_min - mc.p25) / Math.max(mc.p75 - mc.p25, 1), 0), 1) * 100;
                     return (
                         <div className="card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-lg)', border: '1px solid rgba(200,149,46,0.25)', background: 'linear-gradient(180deg, #fbf6ea 0%, #fdfbf5 100%)' }}>
-                            <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-navy)', marginBottom: 6 }}>
+                            <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-navy)', marginBottom: 8 }}>
                                 参考：{mc.area_label}の{mc.industry}の給与相場
                             </p>
-                            {favorable && (
-                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7, marginBottom: 10 }}>
-                                    この求人の{mc.salary_type} {yen(mc.salary_min)}〜 は、同業種{mc.count.toLocaleString()}件の相場中央値（{yen(mc.median)}）
-                                    {mc.diff_pct > 0
-                                        ? <>より <strong style={{ color: '#1b7a3d' }}>+{mc.diff_pct}%</strong> 高い水準です{mc.position === 'top25' ? '（上位25%に入ります）' : ''}。</>
-                                        : <>と同水準です。</>}
-                                </p>
-                            )}
-                            {favorable && (
-                                <div style={{ position: 'relative', height: 6, background: '#e7dcc4', borderRadius: 999, margin: '2px 0 6px' }}>
-                                    <div style={{ position: 'absolute', left: `${barPos}%`, top: -4, width: 14, height: 14, borderRadius: '50%', background: 'var(--color-accent)', transform: 'translateX(-50%)', border: '2px solid #fff' }} />
-                                </div>
-                            )}
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                                 <span>下位25% {yen(mc.p25)}</span>
                                 <span>中央値 {yen(mc.median)}</span>
                                 <span>上位25% {yen(mc.p75)}</span>
                             </div>
                             <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '8px 0 0' }}>
-                                ※ Atally掲載中の求人データから算出（{mc.scope === 'prefecture' ? mc.area_label : '全国'}・下限給与ベース）
+                                ※ 同業種{mc.count.toLocaleString()}件のAtally掲載求人データから算出（{mc.scope === 'prefecture' ? mc.area_label : '全国'}・下限給与ベース）。個別の求人の評価ではありません
                             </p>
                         </div>
                     );
