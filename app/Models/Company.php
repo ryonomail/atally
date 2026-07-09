@@ -52,6 +52,7 @@ class Company extends Model
         'marketplace_listed',
         'marketplace_status',
         'marketplace_reviewed_at',
+        'referral_code',
         'service_fee',
         'service_description',
         'service_specialties',

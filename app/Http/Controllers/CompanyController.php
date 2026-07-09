@@ -63,6 +63,27 @@ class CompanyController extends Controller
             'company_role' => 'owner',
         ]);
 
+        // パートナー紹介リンク（?ref=コード）経由の登録: 担当関係を自動作成。
+        // 以後この企業の求人課金の25%が紹介パートナーへ自動還元される（admin企業一覧に「代理店経由」表示）。
+        if ($request->filled('ref')) {
+            try {
+                $partner = Company::where('referral_code', strtoupper(trim($request->ref)))->first();
+                if ($partner && $partner->id !== $company->id) {
+                    \App\Models\AgencyEngagement::create([
+                        'agency_id'          => $partner->id,
+                        'client_company_id'  => $company->id,
+                        'status'             => 'active',
+                        'revenue_share_rate' => 0.25,
+                        'note'               => '紹介リンク経由で登録',
+                        'requested_at'       => now(),
+                        'activated_at'       => now(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('referral link engagement failed: ' . $e->getMessage());
+            }
+        }
+
         return response()->json(['company' => $company->fresh()], 201);
     }
 

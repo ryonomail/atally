@@ -196,6 +196,18 @@ function GA4Tracker() {
     return null;
 }
 
+// パートナー紹介リンク（?ref=コード）: どのページで踏んでも保存し、企業登録時に紐付ける
+function ReferralCapture() {
+    const { search } = useLocation();
+    useEffect(() => {
+        const ref = new URLSearchParams(search).get('ref');
+        if (ref) {
+            try { localStorage.setItem('agency_ref', ref.toUpperCase()); } catch { /* no-op */ }
+        }
+    }, [search]);
+    return null;
+}
+
 function AppRoutes() {
     const { user } = useAuth();
     const homePath = getHomePath(user);
@@ -209,6 +221,7 @@ function AppRoutes() {
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <ScrollToTop />
             <GA4Tracker />
+            <ReferralCapture />
             <OfflineBanner />
             <Navbar />
             <Suspense fallback={null}><MobileBottomNav /></Suspense>

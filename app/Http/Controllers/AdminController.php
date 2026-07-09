@@ -790,6 +790,10 @@ class AdminController extends Controller
         $lastMonthFull   = (float) $base()->where('charged_at', '>=', $startLast)->where('charged_at', '<', $startThis)->sum('amount');
         $lastMonthToDate = (float) $base()->where('charged_at', '>=', $startLast)->where('charged_at', '<', $lastCutoff)->sum('amount');
 
+        // パートナー（代理店）への25%還元（Atallyから支払う分）
+        $agencyShareThisMonth = (float) $base()->where('charged_at', '>=', $startThis)->sum('agency_share_amount');
+        $agencyShareTotal     = (float) \App\Models\PaymentTransaction::where('status', 'succeeded')->sum('agency_share_amount');
+
         $growth = $lastMonthToDate > 0
             ? (int) round((($thisMonth - $lastMonthToDate) / $lastMonthToDate) * 100)
             : null; // 比較対象がなければ算出不能
@@ -799,6 +803,8 @@ class AdminController extends Controller
             'last_month'         => (int) round($lastMonthFull),
             'last_month_to_date' => (int) round($lastMonthToDate),
             'mom_growth'         => $growth,
+            'agency_share_this_month' => (int) round($agencyShareThisMonth), // 今月のパートナー還元（支払予定）
+            'agency_share_total'      => (int) round($agencyShareTotal),     // 累計のパートナー還元
         ];
     }
 

@@ -181,7 +181,8 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/marketplace/my-engagement', [MarketplaceController::class , 'myEngagement']);
             Route::post('/marketplace/engagements', [MarketplaceController::class , 'requestEngagement']);
             Route::post('/marketplace/engagements/{engagement}/end', [MarketplaceController::class , 'endEngagement']);
-            // 代理店向け
+            // パートナー（代理店）向け
+            Route::get('/marketplace/partner-status', [MarketplaceController::class , 'partnerStatus']);
             Route::post('/marketplace/profile', [MarketplaceController::class , 'updateProfile']);
             Route::get('/marketplace/engagements', [MarketplaceController::class , 'engagements']);
             Route::post('/marketplace/engagements/{engagement}/respond', [MarketplaceController::class , 'respondEngagement']);

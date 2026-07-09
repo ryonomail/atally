@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\PaymentTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MarketplaceController extends Controller
 {
@@ -15,18 +16,38 @@ class MarketplaceController extends Controller
 
     // ========== 企業（求人主）向け ==========
 
-    /** マーケットプレイス掲載中の代理店一覧 */
+    /** 掲載中のパートナー（代理店）一覧。会社タイプは問わない（営業代行・コンサル等も可）＝運営審査のみで公開 */
     public function agencies(Request $request)
     {
-        // 掲載希望(marketplace_listed)かつ運営審査を通過(approved)した代理店のみ公開
-        $agencies = Company::where('company_type', 'recruitment_agency')
-            ->where('marketplace_listed', true)
+        $agencies = Company::where('marketplace_listed', true)
             ->where('marketplace_status', 'approved')
             ->orderByRaw('COALESCE(service_fee, 999999) asc')
             ->get(['id', 'company_name', 'industry', 'permit_number', 'service_fee',
                    'service_description', 'service_specialties', 'license_verified']);
 
         return response()->json($agencies);
+    }
+
+    /** パートナー用: 自社の紹介コード/URLと状態。コードは初回アクセス時に発行 */
+    public function partnerStatus(Request $request)
+    {
+        $company = Auth::user()->company;
+        if (!$company) return response()->json(['message' => '企業アカウントが必要です'], 403);
+
+        if (empty($company->referral_code)) {
+            // 一意な短コードを発行（衝突時はリトライ）
+            do {
+                $code = strtoupper(\Illuminate\Support\Str::random(8));
+            } while (Company::where('referral_code', $code)->exists());
+            $company->update(['referral_code' => $code]);
+        }
+
+        return response()->json([
+            'referral_code' => $company->referral_code,
+            'referral_url'  => config('app.url') . '/register?role=company&ref=' . $company->referral_code,
+            'marketplace_listed' => (bool) $company->marketplace_listed,
+            'marketplace_status' => $company->marketplace_status,
+        ]);
     }
 
     /** 自社（求人主）の現在の運用エンゲージメント（依頼中/稼働中） */
@@ -54,15 +75,14 @@ class MarketplaceController extends Controller
 
         $company = Auth::user()->company;
         if (!$company) return response()->json(['message' => '企業アカウントが必要です'], 403);
-        if ($company->company_type !== 'direct_employer') {
-            return response()->json(['message' => '運用依頼は求人企業アカウントのみ可能です'], 403);
+        if ((int) $data['agency_id'] === (int) $company->id) {
+            return response()->json(['message' => '自社を担当代理店にはできません'], 422);
         }
 
         $agency = Company::where('id', $data['agency_id'])
-            ->where('company_type', 'recruitment_agency')
             ->where('marketplace_listed', true)
             ->first();
-        if (!$agency) return response()->json(['message' => '対象の代理店が見つかりません'], 404);
+        if (!$agency) return response()->json(['message' => '対象のパートナーが見つかりません'], 404);
 
         // 既に依頼中/稼働中があれば重複させない
         $existing = AgencyEngagement::where('client_company_id', $company->id)
@@ -96,12 +116,12 @@ class MarketplaceController extends Controller
 
     // ========== 代理店向け ==========
 
-    /** 自社（代理店）のマーケットプレイス掲載プロフィールを更新 */
+    /** 自社（パートナー）の掲載プロフィールを更新。会社タイプは問わない（審査で判断） */
     public function updateProfile(Request $request)
     {
         $company = Auth::user()->company;
-        if (!$company || $company->company_type !== 'recruitment_agency') {
-            return response()->json(['message' => '代理店アカウントが必要です'], 403);
+        if (!$company) {
+            return response()->json(['message' => '企業アカウントが必要です'], 403);
         }
 
         $data = $request->validate([
@@ -133,12 +153,12 @@ class MarketplaceController extends Controller
         ]);
     }
 
-    /** 代理店に来ている運用依頼/契約一覧 */
+    /** パートナーの担当企業（エンゲージメント）一覧。各企業の掲載数・今月の還元額つき */
     public function engagements(Request $request)
     {
         $company = Auth::user()->company;
-        if (!$company || $company->company_type !== 'recruitment_agency') {
-            return response()->json(['message' => '代理店アカウントが必要です'], 403);
+        if (!$company) {
+            return response()->json(['message' => '企業アカウントが必要です'], 403);
         }
 
         $engagements = AgencyEngagement::with('clientCompany:id,company_name,industry,office_address')
@@ -146,6 +166,24 @@ class MarketplaceController extends Controller
             ->orderByRaw("CASE status WHEN 'requested' THEN 0 WHEN 'active' THEN 1 ELSE 2 END")
             ->latest()
             ->get();
+
+        // 担当企業ごとの実績（掲載中求人数・今月の課金・今月のあなたの還元額）
+        $clientIds = $engagements->pluck('client_company_id')->unique()->values();
+        $jobCounts = $clientIds->isEmpty() ? collect() : DB::table('jobs')
+            ->whereIn('company_id', $clientIds)->where('status', 'active')
+            ->selectRaw('company_id, COUNT(*) AS c')->groupBy('company_id')->get()->keyBy('company_id');
+        $shareThisMonth = $clientIds->isEmpty() ? collect() : DB::table('payment_transactions')
+            ->where('agency_id', $company->id)->where('status', 'succeeded')
+            ->whereIn('company_id', $clientIds)
+            ->whereRaw("date_trunc('month', charged_at) = date_trunc('month', now())")
+            ->selectRaw('company_id, SUM(agency_share_amount) AS share, SUM(amount) AS billed')
+            ->groupBy('company_id')->get()->keyBy('company_id');
+
+        $engagements->each(function ($e) use ($jobCounts, $shareThisMonth) {
+            $e->setAttribute('client_active_jobs', (int) ($jobCounts[$e->client_company_id]->c ?? 0));
+            $e->setAttribute('client_billed_this_month', (int) ($shareThisMonth[$e->client_company_id]->billed ?? 0));
+            $e->setAttribute('share_this_month', (int) ($shareThisMonth[$e->client_company_id]->share ?? 0));
+        });
 
         return response()->json(['engagements' => $engagements, 'fee_cap' => self::FEE_CAP]);
     }
@@ -176,12 +214,12 @@ class MarketplaceController extends Controller
         return response()->json(['engagement' => $engagement]);
     }
 
-    /** 代理店の求人課金レベニューシェア（25%）実績 */
+    /** パートナーの求人課金レベニューシェア（25%）実績 */
     public function payouts(Request $request)
     {
         $company = Auth::user()->company;
-        if (!$company || $company->company_type !== 'recruitment_agency') {
-            return response()->json(['message' => '代理店アカウントが必要です'], 403);
+        if (!$company) {
+            return response()->json(['message' => '企業アカウントが必要です'], 403);
         }
 
         $base = PaymentTransaction::where('agency_id', $company->id)

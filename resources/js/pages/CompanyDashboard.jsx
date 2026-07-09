@@ -750,12 +750,16 @@ function DirectEmployerDashboard() {
                 if (val !== '' && val != null) formData.append(key, val);
             });
             if (licenseFile) formData.append('license_document', licenseFile);
+            // パートナー紹介リンク経由なら紐付け（担当関係が自動作成される）
+            const agencyRef = localStorage.getItem('agency_ref');
+            if (agencyRef) formData.append('ref', agencyRef);
 
             const res = await api.post('/company', formData);
             const newCompany = res.data.company;
             setCompany(newCompany);
             setRankingScore(0);
             setShowRegister(false);
+            if (agencyRef) { try { localStorage.removeItem('agency_ref'); } catch { /* no-op */ } }
             // userオブジェクトを更新してCompanyDashboardが正しくルーティングするようにする
             updateUser({ ...user, company: newCompany, company_id: newCompany.id });
         } catch (err) {

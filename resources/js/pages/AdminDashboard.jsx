@@ -71,6 +71,11 @@ function OverviewTab({ stats, statsError, onTabChange, revenueSummary }) {
                                 前月同期比 {revenue.mom_growth >= 0 ? '+' : ''}{revenue.mom_growth}%
                             </span>
                         )}
+                        {(revenue.agency_share_this_month ?? 0) > 0 && (
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-accent)' }}>
+                                うちパートナー還元 ¥{revenue.agency_share_this_month.toLocaleString()}
+                            </span>
+                        )}
                     </div>
                 </div>
             )}
@@ -140,6 +145,22 @@ function RevenueTab({ initialData }) {
                     </p>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: 10, margin: '4px 0 0' }}>
                         今月分 vs 先月同期(¥{(data.last_month_to_date ?? 0).toLocaleString()})
+                    </p>
+                </div>
+            </div>
+
+            {/* パートナー（代理店）への25%還元＝Atallyから支払う分 */}
+            <div className="grid grid-2" style={{ gap: 'var(--space-md)' }}>
+                <div className="card" style={{ textAlign: 'center' }}>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>パートナー還元（今月・支払予定）</p>
+                    <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-accent)', margin: 0 }}>
+                        ¥{(data.agency_share_this_month ?? 0).toLocaleString()}
+                    </p>
+                </div>
+                <div className="card" style={{ textAlign: 'center' }}>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-xs)' }}>パートナー還元（累計）</p>
+                    <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#121c34', margin: 0 }}>
+                        ¥{(data.agency_share_total ?? 0).toLocaleString()}
                     </p>
                 </div>
             </div>
