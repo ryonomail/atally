@@ -913,7 +913,8 @@ export default function JobDetailPage() {
                 <div className="card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden', padding: 0 }}>
                     <SectionHeader icon="💰" title="給与・待遇" />
                     <InfoTable>
-                        <InfoRow label="給与" value={job.salary_details || formatSalary(job) || '非公開'} />
+                        {/* 金額は必ず表示し、給与補足はその下に併記（補足だけで金額が消えないように） */}
+                        <InfoRow label="給与" value={[formatSalary(job), job.salary_details].filter(Boolean).join('\n') || '非公開'} />
                         <InfoRow label="昇給" value={job.raise_frequency} />
                         <InfoRow label="賞与" value={job.bonus} />
                         <InfoRow label="手当" value={job.allowances} />

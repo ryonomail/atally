@@ -1419,7 +1419,7 @@ function JobDetailPanel({ job, user, navigate, isSaved, onToggleSave }) {
                   job.raise_frequency || job.bonus || job.allowances || benefitsText || insuranceText) && (
                     <div style={{ marginBottom: 'var(--space-xl)' }}>
                         <SectionHeader icon="💰" title="給与・待遇" />
-                        <InfoRow label="給与" value={job.salary_details || formatSalary(job) || job.salary_type || null} />
+                        <InfoRow label="給与" value={[formatSalary(job), job.salary_details].filter(Boolean).join('\n') || job.salary_type || null} />
                         <InfoRow label="昇給" value={job.raise_frequency} />
                         <InfoRow label="賞与" value={job.bonus} />
                         <InfoRow label="手当" value={job.allowances} />
