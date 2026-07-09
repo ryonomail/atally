@@ -322,15 +322,17 @@ export default function CompanyJobsPage() {
             .finally(() => setCampaignsLoading(false));
     }, []);
 
-    // 予算グループ詳細取得
+    // 予算グループ詳細取得（所属求人はページ送り）
+    const [campaignJobsPage, setCampaignJobsPage] = useState(1);
+    useEffect(() => { setCampaignJobsPage(1); }, [selectedCampaignId]); // グループ切替でページを戻す
     useEffect(() => {
         if (!selectedCampaignId) { setCampaignDetail(null); return; }
         setCampaignDetailLoading(true);
-        api.get(`/campaigns/${selectedCampaignId}`)
+        api.get(`/campaigns/${selectedCampaignId}`, { params: { jobs_page: campaignJobsPage } })
             .then(res => setCampaignDetail(res.data))
             .catch(() => setCampaignDetail(null))
             .finally(() => setCampaignDetailLoading(false));
-    }, [selectedCampaignId]);
+    }, [selectedCampaignId, campaignJobsPage]);
 
     const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -904,6 +906,8 @@ export default function CompanyJobsPage() {
                     companyName={user?.company?.company_name || ''}
                     addJobIds={addJobIds}
                     setAddJobIds={setAddJobIds}
+                    campaignJobsPage={campaignJobsPage}
+                    setCampaignJobsPage={setCampaignJobsPage}
                     onSave={async (e) => {
                         e.preventDefault();
                         setCampaignSaving(true);
@@ -920,7 +924,7 @@ export default function CompanyJobsPage() {
                             setShowCampaignForm(false);
                             fetchCampaigns();
                             if (selectedCampaignId) {
-                                const res = await api.get(`/campaigns/${selectedCampaignId}`);
+                                const res = await api.get(`/campaigns/${selectedCampaignId}`, { params: { jobs_page: campaignJobsPage } });
                                 setCampaignDetail(res.data);
                             }
                         } catch (err) {
@@ -935,7 +939,7 @@ export default function CompanyJobsPage() {
                             showToastMsg(`予算グループを${status === 'active' ? '再開' : status === 'paused' ? '一時停止' : '終了'}しました`);
                             fetchCampaigns();
                             if (selectedCampaignId === id) {
-                                const res = await api.get(`/campaigns/${id}`);
+                                const res = await api.get(`/campaigns/${id}`, { params: { jobs_page: campaignJobsPage } });
                                 setCampaignDetail(res.data);
                             }
                         } catch (err) {
@@ -960,7 +964,7 @@ export default function CompanyJobsPage() {
                             showToastMsg(`${addJobIds.length}件の求人を追加しました`);
                             setAddJobIds([]);
                             fetchCampaigns();
-                            const res = await api.get(`/campaigns/${selectedCampaignId}`);
+                            const res = await api.get(`/campaigns/${selectedCampaignId}`, { params: { jobs_page: campaignJobsPage } });
                             setCampaignDetail(res.data);
                         } catch (err) {
                             showToastMsg(err.response?.data?.message || 'エラーが発生しました', 'error');
@@ -971,7 +975,7 @@ export default function CompanyJobsPage() {
                             await api.delete(`/campaigns/${selectedCampaignId}/jobs`, { data: { job_ids: [jobId] } });
                             showToastMsg('求人を除外しました');
                             fetchCampaigns();
-                            const res = await api.get(`/campaigns/${selectedCampaignId}`);
+                            const res = await api.get(`/campaigns/${selectedCampaignId}`, { params: { jobs_page: campaignJobsPage } });
                             setCampaignDetail(res.data);
                         } catch (err) {
                             showToastMsg(err.response?.data?.message || 'エラーが発生しました', 'error');
@@ -981,7 +985,7 @@ export default function CompanyJobsPage() {
                         try {
                             await api.post(`/campaigns/${selectedCampaignId}/redistribute`);
                             showToastMsg('予算を再配分しました');
-                            const res = await api.get(`/campaigns/${selectedCampaignId}`);
+                            const res = await api.get(`/campaigns/${selectedCampaignId}`, { params: { jobs_page: campaignJobsPage } });
                             setCampaignDetail(res.data);
                         } catch (err) {
                             showToastMsg(err.response?.data?.message || 'エラーが発生しました', 'error');
@@ -3497,7 +3501,7 @@ function CampaignPanel({
     campaignDetail, campaignDetailLoading,
     showCampaignForm, setShowCampaignForm, editingCampaignId, setEditingCampaignId,
     campaignForm, setCampaignForm, campaignSaving, jobs, companyName,
-    addJobIds, setAddJobIds,
+    addJobIds, setAddJobIds, campaignJobsPage, setCampaignJobsPage,
     onSave, onStatusChange, onDelete, onAddJobs, onRemoveJob, onRedistribute,
 }) {
     const resetForm = () => {
@@ -3751,13 +3755,44 @@ function CampaignPanel({
                                 <div style={{ padding: 'var(--space-lg)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
                                         <h4 style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
-                                            所属求人（{cfmt(campaignDetail.jobs_count ?? campaignDetail.jobs?.length ?? 0)}件
-                                            {(campaignDetail.jobs_count ?? 0) > (campaignDetail.jobs?.length ?? 0) ? `・予算上位${campaignDetail.jobs.length}件を表示` : ''}）
+                                            所属求人（{cfmt(campaignDetail.jobs_count ?? campaignDetail.jobs?.length ?? 0)}件）
                                         </h4>
                                         {campaignDetail.status === 'active' && (
                                             <button style={cBtnSm} onClick={onRedistribute}>予算を再配分</button>
                                         )}
                                     </div>
+
+                                    {/* 求人を追加（リストの上に常設。検索で全求人から選択） */}
+                                    {campaignDetail.status !== 'ended' && (
+                                        <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', border: '1px dashed var(--color-accent)', borderRadius: 'var(--radius-md)', background: 'rgba(200,149,46,0.04)' }}>
+                                            <label className="form-label" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', fontWeight: 700 }}>＋ 求人を追加（タイトルで全求人から検索）</label>
+                                            <input className="form-input" value={addSearch}
+                                                onChange={e => setAddSearch(e.target.value)}
+                                                placeholder="求人タイトルで検索（例: 店長）"
+                                                style={{ marginBottom: 8, fontSize: 'var(--font-size-sm)' }} />
+                                            {addSearching ? (
+                                                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', margin: '4px 0' }}>検索中…</p>
+                                            ) : (addSearch.trim() || addJobIds.length > 0) ? (
+                                                <JobCheckboxList
+                                                    jobs={(addSearchResults ?? jobs).filter(j => j.campaign_id !== campaignDetail.id)}
+                                                    selectedIds={addJobIds}
+                                                    onToggle={(jobId) => setAddJobIds(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId])}
+                                                    emptyText="該当する求人がありません"
+                                                    companyName={companyName}
+                                                />
+                                            ) : (
+                                                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', margin: 0 }}>
+                                                    検索すると、このグループに入っていない求人が一覧されます。選択して追加してください。
+                                                </p>
+                                            )}
+                                            {addJobIds.length > 0 && (
+                                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', marginTop: 8 }}
+                                                    onClick={() => { onAddJobs(); setAddSearch(''); setAddSearchResults(null); }}>
+                                                    {addJobIds.length}件を追加
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {campaignDetail.jobs?.length > 0 ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -3785,31 +3820,18 @@ function CampaignPanel({
                                         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>求人がまだ追加されていません</p>
                                     )}
 
-                                    {/* 求人追加（期間中いつでも自由に付け替え可能。検索で全求人から選べる） */}
-                                    {campaignDetail.status !== 'ended' && (
-                                        <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--color-border)' }}>
-                                            <label className="form-label" style={{ fontSize: 'var(--font-size-xs)' }}>求人を追加（タイトルで全求人から検索できます）</label>
-                                            <input className="form-input" value={addSearch}
-                                                onChange={e => setAddSearch(e.target.value)}
-                                                placeholder="求人タイトルで検索（例: 店長）"
-                                                style={{ marginBottom: 8, fontSize: 'var(--font-size-sm)' }} />
-                                            {addSearching ? (
-                                                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', margin: '4px 0' }}>検索中…</p>
-                                            ) : (
-                                                <JobCheckboxList
-                                                    jobs={(addSearchResults ?? jobs).filter(j => j.campaign_id !== campaignDetail.id)}
-                                                    selectedIds={addJobIds}
-                                                    onToggle={(jobId) => setAddJobIds(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId])}
-                                                    emptyText={addSearchResults ? '該当する求人がありません' : '追加可能な求人がありません'}
-                                                    companyName={companyName}
-                                                />
-                                            )}
-                                            {addJobIds.length > 0 && (
-                                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', marginTop: 8 }}
-                                                    onClick={() => { onAddJobs(); setAddSearch(''); setAddSearchResults(null); }}>
-                                                    {addJobIds.length}件を追加
-                                                </button>
-                                            )}
+                                    {/* ページ送り（全所属求人を30件ずつ閲覧） */}
+                                    {(campaignDetail.jobs_last_page ?? 1) > 1 && (
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+                                            <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }}
+                                                disabled={campaignJobsPage <= 1}
+                                                onClick={() => setCampaignJobsPage(p => Math.max(1, p - 1))}>前へ</button>
+                                            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                                {campaignDetail.jobs_current_page ?? campaignJobsPage} / {campaignDetail.jobs_last_page}ページ
+                                            </span>
+                                            <button className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)' }}
+                                                disabled={campaignJobsPage >= (campaignDetail.jobs_last_page ?? 1)}
+                                                onClick={() => setCampaignJobsPage(p => p + 1)}>次へ</button>
                                         </div>
                                     )}
                                 </div>
