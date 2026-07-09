@@ -3750,7 +3750,10 @@ function CampaignPanel({
                                 {/* 所属求人 */}
                                 <div style={{ padding: 'var(--space-lg)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
-                                        <h4 style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>所属求人（{campaignDetail.jobs?.length || 0}件）</h4>
+                                        <h4 style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
+                                            所属求人（{cfmt(campaignDetail.jobs_count ?? campaignDetail.jobs?.length ?? 0)}件
+                                            {(campaignDetail.jobs_count ?? 0) > (campaignDetail.jobs?.length ?? 0) ? `・予算上位${campaignDetail.jobs.length}件を表示` : ''}）
+                                        </h4>
                                         {campaignDetail.status === 'active' && (
                                             <button style={cBtnSm} onClick={onRedistribute}>予算を再配分</button>
                                         )}

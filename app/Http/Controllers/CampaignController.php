@@ -29,7 +29,9 @@ class CampaignController extends Controller
             ->get()
             ->map(function ($campaign) {
                 $campaign->actual_daily_spend = $campaign->activeJobs()->sum('daily_budget');
-                $campaign->monthly_estimate = (float) $campaign->daily_budget * 30;
+                $campaign->monthly_estimate = $campaign->billing_period === 'monthly'
+                    ? (float) $campaign->daily_budget
+                    : (float) $campaign->daily_budget * 30;
                 return $campaign;
             });
 
@@ -44,13 +46,17 @@ class CampaignController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $campaign->load(['jobs' => function ($q) {
-            $q->withCount('views')
-              ->withCount(['views as recent_views_count' => function ($q) {
-                  $q->where('viewed_at', '>=', now()->subDays(7));
-              }])
-              ->withCount('applications');
-        }]);
+        // 所属求人は必要カラムのみ・上位100件に制限（全件ロードは数千件で30MB超になり詳細が開けなくなる）
+        $campaign->loadCount(['jobs', 'jobs as active_jobs_count' => fn($q) => $q->where('status', 'active')]);
+        $jobs = $campaign->jobs()
+            ->select('id', 'campaign_id', 'title', 'status', 'daily_budget')
+            ->withCount(['views as recent_views_count' => fn($q) => $q->where('viewed_at', '>=', now()->subDays(7))])
+            ->withCount('applications')
+            ->orderByDesc('daily_budget')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get();
+        $campaign->setRelation('jobs', $jobs);
 
         $campaign->actual_daily_spend = $campaign->activeJobs()->sum('daily_budget');
         // 月額グループは daily_budget 自体が月額。×30すると30倍の誤表示になる
