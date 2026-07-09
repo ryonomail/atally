@@ -541,10 +541,14 @@ class JobController extends Controller
             return [];
         });
 
-        // 相場コンテキスト（独自コンテンツ）: 同業種×地域の給与相場と本求人の位置づけ。
+        // 相場コンテキスト（独自コンテンツ）: 同業種×地域の給与相場。
+        // ★ハローワーク転載求人のみ表示（本来の目的＝転載ページの重複コンテンツ対策）。
+        //   出稿企業（課金顧客）のページには市場データを並べない＝自社給与と中央値の暗黙比較で企業に不利益を与えない。
         // 統計は12hキャッシュ＋算術のみ（per-jobクエリなし）。失敗してもページは壊さない。
         try {
-            $data['market_context'] = \App\Support\SalaryBenchmark::contextForJob($job);
+            $data['market_context'] = ($job->source === 'hellowork')
+                ? \App\Support\SalaryBenchmark::contextForJob($job)
+                : null;
         } catch (\Throwable $e) {
             $data['market_context'] = null;
         }
