@@ -207,6 +207,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
                     Route::put('/campaigns/{campaign}', [CampaignController::class , 'update']);
                     Route::delete('/campaigns/{campaign}', [CampaignController::class , 'destroy']);
                     Route::post('/campaigns/{campaign}/jobs', [CampaignController::class , 'addJobs']);
+                    Route::post('/campaigns/{campaign}/jobs/bulk', [CampaignController::class , 'bulkAddJobs']);
                     Route::delete('/campaigns/{campaign}/jobs', [CampaignController::class , 'removeJobs']);
                     Route::post('/campaigns/{campaign}/redistribute', [CampaignController::class , 'redistribute']);
 

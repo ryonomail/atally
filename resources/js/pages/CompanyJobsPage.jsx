@@ -970,6 +970,19 @@ export default function CompanyJobsPage() {
                             showToastMsg(err.response?.data?.message || 'エラーが発生しました', 'error');
                         }
                     }}
+                    onBulkAdd={async ({ q, limit, order }) => {
+                        const desc = `${q ? `「${q}」で絞り込み、` : ''}${order === 'newest' ? '新着順' : '直近閲覧が多い順'}に上位${limit}件`;
+                        if (!confirm(`${desc}をこのグループに一括追加します。\n他のグループに入っている求人は自動で移動します。よろしいですか？`)) return;
+                        try {
+                            const res = await api.post(`/campaigns/${selectedCampaignId}/jobs/bulk`, { q, limit, order });
+                            showToastMsg(res.data.message || '一括追加しました');
+                            fetchCampaigns();
+                            const d = await api.get(`/campaigns/${selectedCampaignId}`, { params: { jobs_page: campaignJobsPage } });
+                            setCampaignDetail(d.data);
+                        } catch (err) {
+                            showToastMsg(err.response?.data?.message || 'エラーが発生しました', 'error');
+                        }
+                    }}
                     onRemoveJob={async (jobId) => {
                         try {
                             await api.delete(`/campaigns/${selectedCampaignId}/jobs`, { data: { job_ids: [jobId] } });
@@ -3502,7 +3515,7 @@ function CampaignPanel({
     showCampaignForm, setShowCampaignForm, editingCampaignId, setEditingCampaignId,
     campaignForm, setCampaignForm, campaignSaving, jobs, companyName,
     addJobIds, setAddJobIds, campaignJobsPage, setCampaignJobsPage,
-    onSave, onStatusChange, onDelete, onAddJobs, onRemoveJob, onRedistribute,
+    onSave, onStatusChange, onDelete, onAddJobs, onBulkAdd, onRemoveJob, onRedistribute,
 }) {
     const resetForm = () => {
         setCampaignForm({ name: '', daily_budget: 5000, budget_allocation: 'even', billing_period: 'daily', start_date: '', end_date: '', job_ids: [], attach_all: false });
@@ -3515,6 +3528,10 @@ function CampaignPanel({
         setEditingCampaignId(c.id);
         setShowCampaignForm(true);
     };
+
+    // 一括追加の条件（1件ずつ選ばずに上位N件をまとめて移す）
+    const [bulkOrder, setBulkOrder] = useState('recent_views');
+    const [bulkLimit, setBulkLimit] = useState(50);
 
     // 求人追加のサーバー検索: ページ内の50件に縛られず、全求人から自由に選べるようにする
     const [addSearch, setAddSearch] = useState('');
@@ -3762,25 +3779,61 @@ function CampaignPanel({
                                         )}
                                     </div>
 
-                                    {/* 求人を追加（リストの上に常設。検索で全求人から選択） */}
+                                    {/* 求人を追加（リストの上に常設。検索＋一括追加） */}
                                     {campaignDetail.status !== 'ended' && (
                                         <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', border: '1px dashed var(--color-accent)', borderRadius: 'var(--radius-md)', background: 'rgba(200,149,46,0.04)' }}>
-                                            <label className="form-label" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', fontWeight: 700 }}>＋ 求人を追加（タイトルで全求人から検索）</label>
+                                            <label className="form-label" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', fontWeight: 700 }}>＋ 求人を追加</label>
+
+                                            {/* まとめて追加（1件ずつ選ばずに条件で一括） */}
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+                                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>まとめて追加:</span>
+                                                <select className="form-select" value={bulkOrder} onChange={e => setBulkOrder(e.target.value)}
+                                                    style={{ width: 'auto', fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}>
+                                                    <option value="recent_views">直近7日の閲覧が多い順</option>
+                                                    <option value="newest">新着順</option>
+                                                </select>
+                                                <span style={{ fontSize: 'var(--font-size-xs)' }}>上位</span>
+                                                <input className="form-input" type="number" min={1} max={1000} value={bulkLimit}
+                                                    onChange={e => setBulkLimit(Math.max(1, Math.min(1000, Number(e.target.value) || 1)))}
+                                                    style={{ width: 70, fontSize: 'var(--font-size-xs)', padding: '4px 8px', textAlign: 'right' }} />
+                                                <span style={{ fontSize: 'var(--font-size-xs)' }}>件</span>
+                                                <button className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', padding: '5px 12px' }}
+                                                    onClick={() => onBulkAdd({ q: addSearch.trim() || undefined, limit: bulkLimit, order: bulkOrder })}>
+                                                    一括追加
+                                                </button>
+                                                <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>※下の検索欄に入力があればその条件で絞り込み</span>
+                                            </div>
+
                                             <input className="form-input" value={addSearch}
                                                 onChange={e => setAddSearch(e.target.value)}
                                                 placeholder="求人タイトルで検索（例: 店長）"
                                                 style={{ marginBottom: 8, fontSize: 'var(--font-size-sm)' }} />
                                             {addSearching ? (
                                                 <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', margin: '4px 0' }}>検索中…</p>
-                                            ) : (addSearch.trim() || addJobIds.length > 0) ? (
-                                                <JobCheckboxList
-                                                    jobs={(addSearchResults ?? jobs).filter(j => j.campaign_id !== campaignDetail.id)}
-                                                    selectedIds={addJobIds}
-                                                    onToggle={(jobId) => setAddJobIds(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId])}
-                                                    emptyText="該当する求人がありません"
-                                                    companyName={companyName}
-                                                />
-                                            ) : (
+                                            ) : (addSearch.trim() || addJobIds.length > 0) ? (() => {
+                                                const visible = (addSearchResults ?? jobs).filter(j => j.campaign_id !== campaignDetail.id);
+                                                const allSelected = visible.length > 0 && visible.every(j => addJobIds.includes(j.id));
+                                                return (
+                                                    <>
+                                                        {visible.length > 0 && (
+                                                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-xs)', cursor: 'pointer', marginBottom: 6 }}>
+                                                                <input type="checkbox" checked={allSelected}
+                                                                    onChange={() => setAddJobIds(allSelected
+                                                                        ? addJobIds.filter(id => !visible.some(j => j.id === id))
+                                                                        : [...new Set([...addJobIds, ...visible.map(j => j.id)])])} />
+                                                                表示中の{visible.length}件をすべて選択
+                                                            </label>
+                                                        )}
+                                                        <JobCheckboxList
+                                                            jobs={visible}
+                                                            selectedIds={addJobIds}
+                                                            onToggle={(jobId) => setAddJobIds(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId])}
+                                                            emptyText="該当する求人がありません"
+                                                            companyName={companyName}
+                                                        />
+                                                    </>
+                                                );
+                                            })() : (
                                                 <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', margin: 0 }}>
                                                     検索すると、このグループに入っていない求人が一覧されます。選択して追加してください。
                                                 </p>

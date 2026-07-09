@@ -324,6 +324,61 @@ class CampaignController extends Controller
         ]);
     }
 
+    /**
+     * 条件指定の一括追加。「1件ずつ検索して選ぶ」の代わりに、
+     * キーワード＋並び基準（直近閲覧が多い順/新着順）で上位N件をまとめてこのグループへ移す。
+     * 他グループ所属の求人は自動で移動し、移動元グループの予算も再配分する。
+     */
+    public function bulkAddJobs(Request $request, Campaign $campaign)
+    {
+        $company = Auth::user()->company;
+        if ($campaign->company_id !== $company->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'q'     => 'nullable|string|max:100',
+            'limit' => 'required|integer|min:1|max:1000',
+            'order' => 'nullable|in:recent_views,newest',
+        ]);
+
+        $query = Job::where('company_id', $company->id)
+            ->where('status', 'active')
+            ->where(function ($w) use ($campaign) {
+                $w->whereNull('campaign_id')->orWhere('campaign_id', '!=', $campaign->id);
+            })
+            ->when(trim((string) ($data['q'] ?? '')) !== '', fn($qq) => $qq->where('title', 'ilike', '%' . trim($data['q']) . '%'));
+
+        if (($data['order'] ?? 'recent_views') === 'recent_views') {
+            $query->withCount(['views as recent_views_count' => fn($q) => $q->where('viewed_at', '>=', now()->subDays(7))])
+                ->orderByDesc('recent_views_count')
+                ->orderByDesc('created_at');
+        } else {
+            $query->orderByDesc('created_at');
+        }
+
+        $targets = $query->limit((int) $data['limit'])->get(['id', 'campaign_id']);
+        if ($targets->isEmpty()) {
+            return response()->json(['message' => '条件に合う求人がありません。', 'updated_count' => 0]);
+        }
+
+        $sourceCampaignIds = $targets->pluck('campaign_id')->filter()->unique()->values();
+        Job::whereIn('id', $targets->pluck('id'))->update(['campaign_id' => $campaign->id]);
+
+        // 追加先と移動元の両方を再配分（移動元の配分が古いまま残らないように）
+        $campaign->refresh();
+        if ($campaign->status === 'active') {
+            $campaign->distributeBudget();
+        }
+        Campaign::whereIn('id', $sourceCampaignIds)->where('status', 'active')->get()
+            ->each(fn($c) => $c->distributeBudget());
+
+        return response()->json([
+            'message' => "{$targets->count()}件の求人を一括追加しました。",
+            'updated_count' => $targets->count(),
+        ]);
+    }
+
     // 求人を予算グループから除外
     public function removeJobs(Request $request, Campaign $campaign)
     {
