@@ -295,6 +295,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-09T00:00:00+09:00',
             'modified'    => '2026-07-09T00:00:00+09:00',
         ],
+        'tenshoku-katsudo-susumekata' => [
+            'title'       => '転職活動の進め方・スケジュール完全ガイド【初めての転職者向け】 | Atally',
+            'description' => '初めての転職活動の進め方を解説。自己分析から内定・入社準備までの全体の流れ、在職中と離職中の進め方の違い、スケジュールを立てるときのポイント、よくある失敗例まで。転職活動 進め方 スケジュールの完全ガイド。',
+            'published'   => '2026-07-10T00:00:00+09:00',
+            'modified'    => '2026-07-10T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -789,6 +795,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/shokumukeirekisho-template', 'monthly', '0.8'],
             ['/column/naitei-jitai-tsutaekata', 'monthly', '0.8'],
             ['/column/naitei-shodaku-henji', 'monthly', '0.8'],
+            ['/column/tenshoku-katsudo-susumekata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
