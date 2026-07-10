@@ -5,6 +5,12 @@ import { Database, User, FolderUp, Building2, BarChart3, Lock, FileText, ScrollT
 
 const FEATURES = [
     {
+        Icon: FileText,
+        title: '紹介・派遣求人を歓迎',
+        desc: '大手サイトで制限されがちな紹介・派遣求人もそのまま掲載OK。許可番号・紹介元/派遣元の明示など職業安定法・派遣法の表示要件はシステムが自動対応します。',
+        group: '紹介業務を効率化',
+    },
+    {
         Icon: Database,
         title: '求人データベース',
         desc: '他社企業の紹介受入求人を一覧検索。キーワード・勤務地・給与で絞り込み、候補者にぴったりの求人を探せます。',
@@ -78,7 +84,7 @@ export default function ForAgenciesPage() {
     return (
         <div className="animate-fade-in">
             <Helmet>
-                <title>人材紹介会社の方へ - Atally</title>
+                <title>人材紹介・派遣会社の方へ | 紹介・派遣求人を歓迎 - Atally</title>
                 <meta name="description" content="AtallyはBtoB人材紹介に必要な機能をワンストップで提供。求人DB・候補者マッチング・収益管理まで一つのプラットフォームで完結します。" />
             </Helmet>
 
@@ -103,12 +109,15 @@ export default function ForAgenciesPage() {
                         人材紹介会社の方へ
                     </div>
                     <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: 'var(--space-lg)', color: 'var(--color-navy)' }}>
-                        紹介業務を、<br />もっとシンプルに。
+                        紹介・派遣の求人、<br />Atallyは歓迎します。
                     </h1>
-                    <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-2xl)', maxWidth: 560, margin: '0 auto var(--space-2xl)' }}>
-                        求人DB検索から候補者マッチング、紹介申請、成約管理、収益分析まで。<br />
-                        自社求人は<strong style={{ color: 'var(--color-navy)' }}>無料</strong>で掲載可能。紹介申請は¥500/件のみ。<br />
-                        月額固定費なし、採用成功報酬への上乗せなし。
+                    <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-lg)', maxWidth: 600, margin: '0 auto var(--space-lg)' }}>
+                        大手求人サイトでは掲載制限を受けがちな人材紹介・派遣の求人も、Atallyならそのまま掲載できます。<br />
+                        許可番号・紹介元/派遣元の明示など<strong style={{ color: 'var(--color-navy)' }}>法令表示はシステムが自動対応</strong>。<br />
+                        自社求人は<strong style={{ color: 'var(--color-navy)' }}>無料</strong>で掲載可能。CSVでの一括登録にも対応しています。
+                    </p>
+                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-2xl)', maxWidth: 560, margin: '0 auto var(--space-2xl)' }}>
+                        求人DB検索・候補者マッチング・成約管理まで。月額固定費なし、採用成功報酬への上乗せなし。
                     </p>
                     <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
@@ -123,7 +132,7 @@ export default function ForAgenciesPage() {
                         </Link>
                     </div>
                     <p style={{ marginTop: 'var(--space-md)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                        職業安定法準拠 · ライセンス審査あり · 自社求人掲載無料から · 紹介申請¥500/件 · 月額固定費¥0
+                        紹介・派遣求人歓迎 · 職業安定法/派遣法の表示に自動対応 · 自社求人掲載無料 · CSV一括登録 · 月額固定費¥0
                     </p>
                 </div>
             </section>

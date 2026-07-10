@@ -89,8 +89,8 @@ Route::get('/pricing', function () {
 Route::get('/for-agencies', function () {
     $baseUrl = config('app.url');
     $seo = [
-        'title'       => '人材紹介会社の方へ | 求人データベース・一括管理 | Atally',
-        'description' => '人材紹介会社向けサービス。求人データベースへのアクセス・候補者管理・クライアント管理を一元化。ハローワーク47万件の求人データも活用できます。',
+        'title'       => '人材紹介・派遣会社の方へ | 紹介・派遣求人を歓迎、無料掲載 | Atally',
+        'description' => '大手求人サイトで掲載制限を受けがちな人材紹介・派遣の求人も、Atallyならそのまま無料掲載。許可番号・紹介元/派遣元の法令表示はシステムが自動対応。CSV一括登録・変換サポートあり。',
         'url'         => $baseUrl . '/for-agencies',
     ];
     return view('app', compact('seo'));
