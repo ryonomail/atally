@@ -301,6 +301,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-10T00:00:00+09:00',
             'modified'    => '2026-07-10T00:00:00+09:00',
         ],
+        'baito-mensetsu-shitsumon' => [
+            'title'       => 'パート・アルバイト面接でよく聞かれる質問と答え方【シフト・志望動機・NG回答例】 | Atally',
+            'description' => 'パート・アルバイトの面接でよく聞かれる質問と回答のコツを解説。志望動機・シフトの希望・経験・長所短所など定番質問への答え方、面接前の準備、当日の服装・持ち物、よくあるNG回答例まで。バイト 面接 質問の完全ガイド。',
+            'published'   => '2026-07-11T00:00:00+09:00',
+            'modified'    => '2026-07-11T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -796,6 +802,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/naitei-jitai-tsutaekata', 'monthly', '0.8'],
             ['/column/naitei-shodaku-henji', 'monthly', '0.8'],
             ['/column/tenshoku-katsudo-susumekata', 'monthly', '0.8'],
+            ['/column/baito-mensetsu-shitsumon', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
