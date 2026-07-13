@@ -730,7 +730,7 @@ a:hover {
   }
 
   .hide-mobile {
-    display: none;
+    display: none !important; /* インラインstyle(display:flex等)より優先して確実に隠す */
   }
 
   /* Cards: reduce padding on mobile */
