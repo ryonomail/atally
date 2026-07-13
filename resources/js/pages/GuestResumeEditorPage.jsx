@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Send, Save, Check } from 'lucide-react';
+import api from '../api';
 
 const STORAGE_KEY = 'guest_resume_draft';
 
@@ -24,11 +25,16 @@ export default function GuestResumeEditorPage() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // 応募予定の求人（from_job）: IDを保持し、タイトルを取得して「この求人に応募する流れ」を画面に明示する
+    const [returnJobTitle, setReturnJobTitle] = useState(null);
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const fromJob = params.get('from_job');
+        const fromJob = params.get('from_job') || localStorage.getItem('atally_return_job');
         if (fromJob && /^\d+$/.test(fromJob)) {
             localStorage.setItem('atally_return_job', fromJob);
+            api.get(`/jobs/${fromJob}`, { params: { prefetch: 1 } })
+                .then(res => setReturnJobTitle(res.data?.title || null))
+                .catch(() => {});
         }
     }, [location.search]);
 
@@ -136,19 +142,13 @@ export default function GuestResumeEditorPage() {
             }}>
                 <div>
                     <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 2 }}>
-                        履歴書ができたら、そのまま求人に応募できます
+                        {returnJobTitle
+                            ? <>完成したら、そのまま「<span style={{ color: 'var(--color-accent)' }}>{returnJobTitle}</span>」に応募できます</>
+                            : '履歴書ができたら、そのまま求人に応募できます'}
                     </div>
                     <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                        47万件以上の求人を掲載中 · 登録（無料）後すぐに応募可能
+                        入力内容はこのブラウザに自動保存 · 上の「保存・応募する」で次へ進めます
                     </div>
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                    <Link to="/jobs" className="btn btn-secondary" style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}>
-                        求人を探す
-                    </Link>
-                    <Link to="/register" className="btn btn-primary" style={{ fontSize: 'var(--font-size-xs)', whiteSpace: 'nowrap' }}>
-                        無料登録して応募する
-                    </Link>
                 </div>
             </div>
 
@@ -392,6 +392,11 @@ export default function GuestResumeEditorPage() {
                             <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-sm)', color: 'var(--color-navy)' }}>
                                 履歴書が完成しました！
                             </h2>
+                            {returnJobTitle && (
+                                <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-navy)', background: 'rgba(200,149,46,0.1)', border: '1px solid rgba(200,149,46,0.3)', borderRadius: 'var(--radius-md)', padding: '8px 12px', marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
+                                    あと1歩：無料登録すると「{returnJobTitle}」にそのまま応募できます
+                                </p>
+                            )}
                             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7, marginBottom: 'var(--space-md)' }}>
                                 無料登録すると、この履歴書が保存され<br />
                                 <strong>47万件の求人に何度でも使い回せます。</strong>

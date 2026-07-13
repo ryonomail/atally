@@ -597,7 +597,8 @@ export default function JobDetailPage() {
                                 )}
                             </div>
                         ) : user?.role === 'jobseeker' ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
+                            /* スマホでは非表示（下部固定バーがCTAを担う。狭幅ではflexが潰れて縦書き崩れするため） */
+                            <div className="hide-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
                                 {applied ? (
                                     <span className="badge badge-success" style={{ fontSize: 'var(--font-size-sm)', padding: '8px 16px' }}>
                                         応募済み
@@ -636,7 +637,8 @@ export default function JobDetailPage() {
                                 </button>
                             </div>
                         ) : !user && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
+                            /* スマホでは非表示（下部固定バーがCTAを担う。狭幅ではflexが潰れて縦書き崩れするため） */
+                            <div className="hide-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', alignItems: 'flex-end' }}>
                                 <button className="btn btn-primary btn-lg" onClick={() => { trackCta('guest_resume_start', job.id, 'detail_header'); navigate(`/resumes/guest?from_job=${job.id}`); }} style={{ gap: 8 }}>
                                     <FileText size={17} strokeWidth={2} /> 履歴書を作って応募する
                                 </button>
