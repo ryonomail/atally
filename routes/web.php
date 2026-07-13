@@ -307,6 +307,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-11T00:00:00+09:00',
             'modified'    => '2026-07-11T00:00:00+09:00',
         ],
+        'mensetsu-nittei-chosei-mail' => [
+            'title'       => '面接の日程調整メールの返信マナー・例文【候補日の選び方・変更依頼・リスケ対応まで】 | Atally',
+            'description' => '面接の日程調整メールの返信の書き方を解説。候補日から選んで返信する例文、候補日が合わない場合の代替日提示、やむを得ない変更・リスケ依頼、返信までの目安時間、オンライン面接での注意点まで。',
+            'published'   => '2026-07-13T00:00:00+09:00',
+            'modified'    => '2026-07-13T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -803,6 +809,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/naitei-shodaku-henji', 'monthly', '0.8'],
             ['/column/tenshoku-katsudo-susumekata', 'monthly', '0.8'],
             ['/column/baito-mensetsu-shitsumon', 'monthly', '0.8'],
+            ['/column/mensetsu-nittei-chosei-mail', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
