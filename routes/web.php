@@ -313,6 +313,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-13T00:00:00+09:00',
             'modified'    => '2026-07-13T00:00:00+09:00',
         ],
+        'mensetsu-chikoku-kesseki-renraku' => [
+            'title'       => '面接に遅刻・欠席する場合の連絡マナー・例文【電話・メール】転職・就活対応 | Atally',
+            'description' => '面接に遅刻しそう・欠席せざるを得ない場合の連絡方法を解説。電話で伝える例文、メールで連絡する場合の文例、体調不良・交通機関の遅延など理由別の伝え方、無断キャンセルのリスク、リスケのお願いの仕方まで。',
+            'published'   => '2026-07-14T00:00:00+09:00',
+            'modified'    => '2026-07-14T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -840,6 +846,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/tenshoku-katsudo-susumekata', 'monthly', '0.8'],
             ['/column/baito-mensetsu-shitsumon', 'monthly', '0.8'],
             ['/column/mensetsu-nittei-chosei-mail', 'monthly', '0.8'],
+            ['/column/mensetsu-chikoku-kesseki-renraku', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
