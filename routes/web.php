@@ -319,6 +319,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-14T00:00:00+09:00',
             'modified'    => '2026-07-14T00:00:00+09:00',
         ],
+        'saishu-mensetsu-taisaku' => [
+            'title'       => '最終面接で聞かれること・対策【一次面接との違い・逆質問・確認されやすいポイント】 | Atally',
+            'description' => '最終面接で聞かれやすい質問と対策を解説。一次・二次面接との違い、面接官が確認しやすいポイント、志望動機・入社意思を聞かれたときの答え方例文、最終面接ならではの逆質問、当日のNG例まで。',
+            'published'   => '2026-07-15T00:00:00+09:00',
+            'modified'    => '2026-07-15T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -847,6 +853,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/baito-mensetsu-shitsumon', 'monthly', '0.8'],
             ['/column/mensetsu-nittei-chosei-mail', 'monthly', '0.8'],
             ['/column/mensetsu-chikoku-kesseki-renraku', 'monthly', '0.8'],
+            ['/column/saishu-mensetsu-taisaku', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
