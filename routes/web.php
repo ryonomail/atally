@@ -325,6 +325,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-15T00:00:00+09:00',
             'modified'    => '2026-07-15T00:00:00+09:00',
         ],
+        'mensetsu-chosho-tansho-kotaekata' => [
+            'title'       => '面接で聞かれる「長所・短所」の答え方【例文20選】転職・パート・アルバイト対応 | Atally',
+            'description' => '面接で聞かれる長所・短所の答え方を解説。長所の伝え方の基本構成、短所を答えるときのコツ、長所・短所の例文20選、転職・パート・アルバイト別の答え方、NG例まで。',
+            'published'   => '2026-07-17T00:00:00+09:00',
+            'modified'    => '2026-07-17T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -854,6 +860,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-nittei-chosei-mail', 'monthly', '0.8'],
             ['/column/mensetsu-chikoku-kesseki-renraku', 'monthly', '0.8'],
             ['/column/saishu-mensetsu-taisaku', 'monthly', '0.8'],
+            ['/column/mensetsu-chosho-tansho-kotaekata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
