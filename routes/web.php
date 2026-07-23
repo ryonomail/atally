@@ -331,6 +331,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-17T00:00:00+09:00',
             'modified'    => '2026-07-17T00:00:00+09:00',
         ],
+        'mensetsu-goohi-renraku-konai' => [
+            'title'       => '面接の合否連絡が来ない時の対処法【問い合わせメール・電話の例文つき】 | Atally',
+            'description' => '面接後、合否の連絡が来ないときの対処法を解説。連絡が来るまでの目安、問い合わせをしてよいタイミング、メール・電話での問い合わせ例文、パート・アルバイトの場合の注意点まで。',
+            'published'   => '2026-07-23T00:00:00+09:00',
+            'modified'    => '2026-07-23T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -861,6 +867,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-chikoku-kesseki-renraku', 'monthly', '0.8'],
             ['/column/saishu-mensetsu-taisaku', 'monthly', '0.8'],
             ['/column/mensetsu-chosho-tansho-kotaekata', 'monthly', '0.8'],
+            ['/column/mensetsu-goohi-renraku-konai', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
