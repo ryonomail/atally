@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -55,6 +56,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (Throwable $e, Request $request) {
             if (!$request->is('api/*') && !$request->expectsJson()) {
                 return null; // Web: デフォルトのLaravelハンドリング
+            }
+
+            // 未認証: SPA構成で 'login' 名前付きルートが無いため、
+            // これを先に処理しないと Laravel がリダイレクト先を解決できず 500 になる（履歴書APIが落ちていた原因）
+            if ($e instanceof AuthenticationException) {
+                return response()->json(['message' => 'ログインが必要です。'], 401);
             }
 
             if ($e instanceof ValidationException) {

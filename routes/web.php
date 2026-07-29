@@ -54,6 +54,8 @@ Route::get('/register', function () {
 });
 
 // ログインページ
+// ★ ->name('login') は必須: 未認証時にLaravelが route('login') を解決する。
+//    名前が無いと RouteNotFoundException になり、APIが401ではなく500を返す（履歴書が作れない障害の原因だった）
 Route::get('/login', function () {
     $seo = [
         'title'       => 'ログイン | Atally',
@@ -61,7 +63,7 @@ Route::get('/login', function () {
         'url'         => config('app.url') . '/login',
     ];
     return view('app', compact('seo'));
-});
+})->name('login');
 
 // 企業向けランディングページ
 Route::get('/for-companies', function () {
