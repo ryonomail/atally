@@ -52,6 +52,28 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->is('api/*') || $request->expectsJson();
         });
 
+        // 500系の想定外エラーは即アラート（Web/API問わず）。
+        // 「エラーが出続けているのに気づかない」状態を防ぐ。同一エラーは30分に1回に抑制。
+        $exceptions->report(function (Throwable $e) {
+            $ignored = [
+                AuthenticationException::class,
+                ValidationException::class,
+                NotFoundHttpException::class,
+                \Illuminate\Auth\Access\AuthorizationException::class,
+                \Illuminate\Session\TokenMismatchException::class,
+                \Illuminate\Database\Eloquent\ModelNotFoundException::class,
+                \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class,
+                \Illuminate\Http\Exceptions\ThrottleRequestsException::class,
+            ];
+            foreach ($ignored as $class) {
+                if ($e instanceof $class) return;
+            }
+            // 4xxのHttpExceptionはユーザー起因なので通知しない（5xxのみ）
+            if ($e instanceof HttpException && $e->getStatusCode() < 500) return;
+
+            \App\Support\ErrorAlert::notify($e, request()->path(), request()->method());
+        });
+
         // 本番環境ではスタックトレースを隠す
         $exceptions->render(function (Throwable $e, Request $request) {
             if (!$request->is('api/*') && !$request->expectsJson()) {

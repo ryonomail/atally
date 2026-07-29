@@ -40,3 +40,6 @@ Schedule::command('app:post-jobs-to-x --limit=5')->dailyAt('10:00');
 
 // 毎朝6時30分: Google Search Console のSEOレポート生成（狙い目クエリ抽出）。朝の記事ルーチンが読む
 Schedule::command('app:seo-report')->dailyAt('06:30');
+
+// 10分ごと: 主要ページ/APIの死活監視。異常時のみアラート（500の放置を防ぐ）
+Schedule::command('app:health-check')->everyTenMinutes()->withoutOverlapping();
