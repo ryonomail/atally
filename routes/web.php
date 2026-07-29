@@ -337,6 +337,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-23T00:00:00+09:00',
             'modified'    => '2026-07-23T00:00:00+09:00',
         ],
+        'taishoku-tsutaekata' => [
+            'title'       => '退職の伝え方・切り出し方【上司への言い出しにくい退職理由も】円満退職の例文つき | Atally',
+            'description' => '退職を上司にどう切り出すか悩む方向けに、伝えるタイミング・順番・切り出し方の例文を解説。引き止められたときの対応、人手不足で言い出しにくい場合の伝え方、伝えたあとの流れまで。',
+            'published'   => '2026-07-29T00:00:00+09:00',
+            'modified'    => '2026-07-29T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -868,6 +874,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/saishu-mensetsu-taisaku', 'monthly', '0.8'],
             ['/column/mensetsu-chosho-tansho-kotaekata', 'monthly', '0.8'],
             ['/column/mensetsu-goohi-renraku-konai', 'monthly', '0.8'],
+            ['/column/taishoku-tsutaekata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
