@@ -103,6 +103,8 @@ class HiringReputationService
         float $platformAvgRate,
         array $categoryAvgRates
     ): float {
+        // 注意: withCount はサブクエリのため、PostgreSQLでは HAVING でそのエイリアスを参照できない
+        //（MySQLは許容するがPGは "column does not exist" になる）。取得後にコレクション側で絞り込む。
         $jobs = $company->jobs()
             ->whereIn('status', ['active', 'closed'])
             ->withCount([
@@ -111,8 +113,9 @@ class HiringReputationService
                     $q->where('status', ApplicationStatus::Hired->value);
                 },
             ])
-            ->having('applications_count', '>=', self::MIN_APPLICATIONS_THRESHOLD)
-            ->get();
+            ->get()
+            ->filter(fn($job) => $job->applications_count >= self::MIN_APPLICATIONS_THRESHOLD)
+            ->values();
 
         if ($jobs->isEmpty()) {
             return 0.0; // データ不足 → 中立
