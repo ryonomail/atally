@@ -345,6 +345,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-29T00:00:00+09:00',
             'modified'    => '2026-07-29T00:00:00+09:00',
         ],
+        'mikeiken-tenshoku-shibo-doki' => [
+            'title'       => '未経験職種への転職 志望動機・自己PRの書き方【異業種チェンジ例文つき】前職の経験の活かし方 | Atally',
+            'description' => '未経験の職種・異業種へ転職する際の志望動機・自己PRの書き方を解説。前職の経験を新しい仕事にどう言い換えて伝えるか（ポータブルスキル）、職種別の例文、面接で聞かれる「なぜ未経験なのに」への答え方、NG例まで。',
+            'published'   => '2026-07-31T00:00:00+09:00',
+            'modified'    => '2026-07-31T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -877,6 +883,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-chosho-tansho-kotaekata', 'monthly', '0.8'],
             ['/column/mensetsu-goohi-renraku-konai', 'monthly', '0.8'],
             ['/column/taishoku-tsutaekata', 'monthly', '0.8'],
+            ['/column/mikeiken-tenshoku-shibo-doki', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
