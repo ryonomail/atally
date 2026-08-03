@@ -351,6 +351,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-07-31T00:00:00+09:00',
             'modified'    => '2026-07-31T00:00:00+09:00',
         ],
+        'rirekisho-fuutou-kakikata' => [
+            'title'       => '履歴書を郵送するときの封筒の書き方・送付状マナー完全ガイド【サイズ・宛名・入れ方】 | Atally',
+            'description' => '履歴書を郵送する際の封筒の書き方を解説。封筒のサイズ・色の選び方、表面の宛名・裏面の書き方、履歴書の折り方・入れ方、送付状（添え状）の例文、切手や投函時の注意点まで網羅。',
+            'published'   => '2026-08-03T00:00:00+09:00',
+            'modified'    => '2026-08-03T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -884,6 +890,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/mensetsu-goohi-renraku-konai', 'monthly', '0.8'],
             ['/column/taishoku-tsutaekata', 'monthly', '0.8'],
             ['/column/mikeiken-tenshoku-shibo-doki', 'monthly', '0.8'],
+            ['/column/rirekisho-fuutou-kakikata', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
