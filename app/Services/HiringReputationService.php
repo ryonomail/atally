@@ -105,18 +105,36 @@ class HiringReputationService
     ): float {
         // 注意1: withCount はサブクエリのため、PostgreSQLでは HAVING でそのエイリアスを参照できない
         //        （MySQLは許容するがPGは "column does not exist"）。
-        // 注意2: 取得後にPHP側で絞ると、求人を数十万件持つ企業で全件ロードになり実質フリーズする。
-        //        → 応募数の条件は has() でDB側に押し込み、対象求人だけを取得する。
+        // 注意2: jobs 起点で has()/withCount を使うと、求人を数十万件持つ企業で
+        //        全行に対しサブクエリが評価され Seq Scan になる（実測5.5秒）。
+        //        → 小さい applications 側で先に集計し、その求人IDだけを jobs に突き合わせる（実測数ms）。
+        $agg = \Illuminate\Support\Facades\DB::table('applications')
+            ->selectRaw('job_id, COUNT(*) AS applications_count, '
+                . 'COUNT(*) FILTER (WHERE status = ?) AS hired_count', [ApplicationStatus::Hired->value])
+            ->groupBy('job_id')
+            ->havingRaw('COUNT(*) >= ?', [self::MIN_APPLICATIONS_THRESHOLD])
+            ->pluck('applications_count', 'job_id'); // job_id => applications_count
+
+        if ($agg->isEmpty()) {
+            return 0.0; // 応募が閾値に達する求人が全体に無い
+        }
+
+        // hired_count も取得（上の pluck は件数のみのため、別途マップ化）
+        $hiredMap = \Illuminate\Support\Facades\DB::table('applications')
+            ->selectRaw('job_id, COUNT(*) AS hired_count')
+            ->where('status', ApplicationStatus::Hired->value)
+            ->whereIn('job_id', $agg->keys())
+            ->groupBy('job_id')
+            ->pluck('hired_count', 'job_id');
+
         $jobs = $company->jobs()
             ->whereIn('status', ['active', 'closed'])
-            ->has('applications', '>=', self::MIN_APPLICATIONS_THRESHOLD)
-            ->withCount([
-                'applications',
-                'applications as hired_count' => function ($q) {
-                    $q->where('status', ApplicationStatus::Hired->value);
-                },
-            ])
-            ->get();
+            ->whereIn('id', $agg->keys())
+            ->get(['id', 'job_category_major'])
+            ->each(function ($job) use ($agg, $hiredMap) {
+                $job->applications_count = (int) ($agg[$job->id] ?? 0);
+                $job->hired_count = (int) ($hiredMap[$job->id] ?? 0);
+            });
 
         if ($jobs->isEmpty()) {
             return 0.0; // データ不足 → 中立
