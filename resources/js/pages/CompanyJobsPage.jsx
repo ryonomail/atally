@@ -3509,6 +3509,24 @@ const CAMPAIGN_STATUS_COLORS = { active: '#22c55e', paused: '#f59e0b', ended: '#
 const ALLOCATION_LABELS = { even: '均等配分', weighted: 'パフォーマンス比' };
 const cfmt = (n) => Number(n || 0).toLocaleString();
 
+// 次回更新日（月額グループのみ）: 「8月9日（あと6日）」の形で返す。日額・未設定はnull
+const renewalInfo = (campaign) => {
+    if (!campaign || campaign.billing_period !== 'monthly' || !campaign.next_billing_date) return null;
+    const d = new Date(campaign.next_billing_date);
+    if (isNaN(d)) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(d);
+    target.setHours(0, 0, 0, 0);
+    const days = Math.round((target - today) / 86400000);
+    return {
+        dateText: `${target.getMonth() + 1}月${target.getDate()}日`,
+        days,
+        soon: days >= 0 && days <= 3, // 3日以内は強調
+        label: days === 0 ? '本日' : days === 1 ? '明日' : days > 0 ? `あと${days}日` : '更新処理待ち',
+    };
+};
+
 function CampaignPanel({
     campaigns, loading, selectedCampaignId, setSelectedCampaignId,
     campaignDetail, campaignDetailLoading,
@@ -3604,7 +3622,7 @@ function CampaignPanel({
                                 </div>
                                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                                     {campaignForm.billing_period === 'monthly'
-                                        ? `今すぐ¥${cfmt(campaignForm.daily_budget)}を課金 → 30日間配信・毎月自動更新`
+                                        ? `今すぐ¥${cfmt(campaignForm.daily_budget)}を課金 → 30日間配信。以後1ヶ月ごとに同額を自動更新（次回更新日は詳細画面に表示。一時停止すれば更新は止まります）`
                                         : `月額見積もり: ¥${cfmt(campaignForm.daily_budget * 30)}`}
                                 </span>
                             </div>
@@ -3708,6 +3726,12 @@ function CampaignPanel({
                                     <span>求人 <strong>{c.active_jobs_count}/{c.jobs_count}</strong></span>
                                     <span>{ALLOCATION_LABELS[c.budget_allocation]}</span>
                                 </div>
+                                {/* 月額グループの次回自動更新日（課金がいつ発生するか一目で分かるように） */}
+                                {c.status === 'active' && renewalInfo(c) && (
+                                    <div style={{ fontSize: 10, marginTop: 4, color: renewalInfo(c).soon ? '#d97706' : 'var(--color-text-muted)', fontWeight: renewalInfo(c).soon ? 700 : 400 }}>
+                                        次回更新 {renewalInfo(c).dateText}（{renewalInfo(c).label}）に ¥{cfmt(c.daily_budget)} を課金
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -3728,7 +3752,8 @@ function CampaignPanel({
                                         <div>
                                             <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>{campaignDetail.name}</h3>
                                             <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                                                {ALLOCATION_LABELS[campaignDetail.budget_allocation]}
+                                                {campaignDetail.billing_period === 'monthly' ? '月額（毎月自動更新）' : '日額（毎日課金）'}
+                                                {' | '}{ALLOCATION_LABELS[campaignDetail.budget_allocation]}
                                                 {campaignDetail.start_date && ` | ${campaignDetail.start_date}`}
                                                 {campaignDetail.end_date && ` 〜 ${campaignDetail.end_date}`}
                                             </span>
@@ -3750,7 +3775,14 @@ function CampaignPanel({
                                         {(campaignDetail.billing_period === 'monthly' ? [
                                             { label: '予算グループ月額', value: `¥${cfmt(campaignDetail.daily_budget)}`, accent: true },
                                             { label: '日割り予算', value: `¥${cfmt(campaignDetail.daily_equivalent)}/日` },
-                                            { label: '実際の配分合計（日）', value: `¥${cfmt(campaignDetail.actual_daily_spend)}` },
+                                            {
+                                                label: campaignDetail.status === 'active' ? '次回自動更新' : '更新停止中',
+                                                value: campaignDetail.status === 'active'
+                                                    ? (renewalInfo(campaignDetail)?.dateText ?? '—')
+                                                    : '—',
+                                                sub: campaignDetail.status === 'active' ? renewalInfo(campaignDetail)?.label : null,
+                                                warn: campaignDetail.status === 'active' && renewalInfo(campaignDetail)?.soon,
+                                            },
                                         ] : [
                                             { label: '予算グループ日額', value: `¥${cfmt(campaignDetail.daily_budget)}`, accent: true },
                                             { label: '実際の配分合計', value: `¥${cfmt(campaignDetail.actual_daily_spend)}` },
@@ -3762,7 +3794,10 @@ function CampaignPanel({
                                                 border: s.accent ? 'none' : '1px solid var(--color-border)',
                                             }}>
                                                 <div style={{ fontSize: 'var(--font-size-xs)', color: s.accent ? 'rgba(255,255,255,.7)' : 'var(--color-text-muted)', marginBottom: 2 }}>{s.label}</div>
-                                                <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, color: s.accent ? '#fff' : 'var(--color-text)' }}>{s.value}</div>
+                                                <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, color: s.accent ? '#fff' : (s.warn ? '#d97706' : 'var(--color-text)') }}>{s.value}</div>
+                                                {s.sub && (
+                                                    <div style={{ fontSize: 10, color: s.warn ? '#d97706' : 'var(--color-text-muted)', marginTop: 1 }}>{s.sub}</div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
