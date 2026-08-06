@@ -515,8 +515,12 @@ export default function JobSearchPage() {
     return (
         <div className="page" style={{ background: 'var(--color-bg-primary)' }}>
             <SEO
-                title="求人検索"
-                description="Atallyで求人を検索。正社員、契約社員、パート、業務委託など多様な働き方から、あなたに最適な仕事を見つけましょう。"
+                title={filters.prefecture
+                    ? `${filters.prefecture}${filters.city}の求人・仕事一覧${meta?.total ? `（${meta.total.toLocaleString()}件）` : ''}`
+                    : '求人検索'}
+                description={filters.prefecture
+                    ? `${filters.prefecture}${filters.city}の求人情報をまとめて掲載。正社員・契約社員・パート・アルバイト・派遣など、給与・勤務時間・休日・待遇から条件を絞って探せます。ハローワーク求人も含め登録不要で全件閲覧でき、作成した履歴書でそのまま応募できます。`
+                    : 'Atallyで求人を検索。正社員、契約社員、パート、業務委託など多様な働き方から、あなたに最適な仕事を見つけましょう。'}
             />
 
             {/* 検索ヘッダー（sticky） */}
