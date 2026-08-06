@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { trackCta } from '../utils/track';
 import { columnList } from '../data/columns';
 
 export default function ColumnIndexPage() {
@@ -76,7 +77,7 @@ export default function ColumnIndexPage() {
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
                     登録不要・完全無料。作成後そのまま47万件以上の求人に応募できます。
                 </p>
-                <Link to="/resumes/guest" className="btn btn-primary btn-lg">履歴書を無料で作る</Link>
+                <Link to="/resumes/guest" onClick={() => trackCta('guest_resume_start', null, 'column_index')} className="btn btn-primary btn-lg">履歴書を無料で作る</Link>
             </div>
         </div>
     );

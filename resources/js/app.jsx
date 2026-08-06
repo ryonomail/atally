@@ -17,6 +17,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
 import Navbar from './components/Navbar';
 import api from './api';
+import { trackCta } from './utils/track';
 
 // ── 遅延ロード（必要になるまでJSを読み込まない）────────────────────────
 const LandingPage    = lazy(() => import('./pages/LandingPage'));
@@ -309,7 +310,7 @@ function AppRoutes() {
                                 { to: '/resumes/guest', label: '履歴書作成（無料）' },
                             ].map(l => (
                                 <div key={l.to} style={{ marginBottom: 6 }}>
-                                    <Link to={l.to} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
+                                    <Link to={l.to} onClick={l.to === '/resumes/guest' ? () => trackCta('guest_resume_start', null, 'footer') : undefined} style={{ color: 'var(--color-text-muted)', textDecoration: 'none' }}>{l.label}</Link>
                                 </div>
                             ))}
                         </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 import SEO from '../components/SEO';
+import { trackCta } from '../utils/track';
 import { formatSalary } from '../utils/salary';
 import {
     Search, MapPin, ArrowRight, ArrowUpRight,
@@ -97,6 +98,7 @@ export default function LandingPage() {
                     }}>
                         <Link
                             to="/resumes/guest"
+                            onClick={() => trackCta('guest_resume_start', null, 'landing_hero')}
                             className="btn btn-primary"
                             style={{
                                 gap: 8, padding: '13px 30px',
@@ -352,6 +354,7 @@ export default function LandingPage() {
                             </p>
                             <Link
                                 to="/resumes/guest"
+                                onClick={() => trackCta('guest_resume_start', null, 'landing_resume_section')}
                                 className="btn btn-primary"
                                 style={{ gap: 8, padding: '13px 32px', fontSize: 'var(--font-size-base)', fontWeight: 600, borderRadius: 'var(--radius-md)' }}
                             >

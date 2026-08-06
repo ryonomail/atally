@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api';
+import { trackCta } from '../utils/track';
 import { Bell, MessageSquare, FileText, User, ChevronDown, Menu, X, ClipboardList, Target, Settings, Pin } from 'lucide-react';
 
 /* ============================================
@@ -356,7 +357,7 @@ function NavLinks({ user, logout, showAll = false }) {
 
             {!user && (
                 <>
-                    <li><Link to="/resumes/guest" className={`navbar-link ${hideMobile}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={14} strokeWidth={2} />履歴書を作る</Link></li>
+                    <li><Link to="/resumes/guest" onClick={() => trackCta('guest_resume_start', null, 'navbar')} className={`navbar-link ${hideMobile}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={14} strokeWidth={2} />履歴書を作る</Link></li>
                     <li><Link to="/login" className="navbar-link">ログイン</Link></li>
                     <li><Link to="/register" className="btn btn-primary">無料登録</Link></li>
                 </>
