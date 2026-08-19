@@ -357,6 +357,12 @@ Route::get('/column/{slug}', function (string $slug) {
             'published'   => '2026-08-03T00:00:00+09:00',
             'modified'    => '2026-08-03T00:00:00+09:00',
         ],
+        'rirekisho-sumaho-sakusei' => [
+            'title'       => '履歴書はスマホだけで作れる？無料で作成する方法とアプリ・サイトの選び方【2026年版】 | Atally',
+            'description' => '履歴書をスマホだけで無料作成する方法を解説。Web型履歴書作成サービス・アプリでの作り方の手順、証明写真をスマホで用意する方法、パソコン作成との違いや注意点、そのまま求人に応募できる無料ツールまで紹介します。',
+            'published'   => '2026-08-19T00:00:00+09:00',
+            'modified'    => '2026-08-19T00:00:00+09:00',
+        ],
     ];
 
     $m = $meta[$slug] ?? null;
@@ -891,6 +897,7 @@ Route::get('/sitemap-static.xml', function () {
             ['/column/taishoku-tsutaekata', 'monthly', '0.8'],
             ['/column/mikeiken-tenshoku-shibo-doki', 'monthly', '0.8'],
             ['/column/rirekisho-fuutou-kakikata', 'monthly', '0.8'],
+            ['/column/rirekisho-sumaho-sakusei', 'monthly', '0.8'],
         ] as [$path, $freq, $pri]) {
             $xml .= "  <url><loc>{$baseUrl}{$path}</loc><changefreq>{$freq}</changefreq><priority>{$pri}</priority></url>\n";
         }
