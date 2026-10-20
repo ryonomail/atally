@@ -29,8 +29,9 @@ Schedule::command('app:send-interview-reminders')->dailyAt('08:00');
 // 毎朝9時: 求人アラート通知（前日の新着求人をマッチング）
 Schedule::command('app:send-job-alert-notifications')->dailyAt('09:00');
 
-// 毎朝7時: ハローワーク求人同期（メンテナンス時間帯 0:00-6:00 を避けて実行）
-Schedule::command('app:sync-hellowork-jobs')->dailyAt('07:00');
+// ハローワーク求人同期は停止中（2026-10 オーナー判断: 新規取得は行わず、既存の在庫のみ維持）。
+// 再開する場合は docker/entrypoint.prod.sh の起動時同期と合わせて戻すこと。
+// Schedule::command('app:sync-hellowork-jobs')->dailyAt('07:00');
 
 // 4分ごと: 求人リストキャッシュをウォームアップ（TTL5分切れ前に再生成）
 Schedule::command('app:warm-jobs-cache')->everyFourMinutes();
