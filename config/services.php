@@ -32,6 +32,11 @@ return [
         'pass'     => env('HELLOWORK_PASS', ''),
     ],
 
+    // Google Places API (New) — 営業リード収集用（正規API。SNSの直接スクレイピングは行わない）
+    'google_places' => [
+        'api_key' => env('GOOGLE_PLACES_API_KEY', ''),
+    ],
+
     // Google Search Console API（SEO分析ループ用・サービスアカウント）
     'gsc' => [
         // URLプレフィックスなら 'https://atally.io/'、ドメインプロパティなら 'sc-domain:atally.io'

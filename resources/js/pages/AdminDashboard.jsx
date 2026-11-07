@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw, Store } from 'lucide-react';
+import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw, Store, Target } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
 
@@ -15,6 +15,7 @@ const TABS = [
     { key: 'licenses', label: 'ライセンス', Icon: ScrollText },
     { key: 'marketplace', label: '代理店審査', Icon: Store },
     { key: 'agency-perf', label: '代理店実績', Icon: BarChart3 },
+    { key: 'sales-leads', label: '営業リード', Icon: Target },
     { key: 'reports', label: '通報', Icon: AlertTriangle },
     { key: 'audit', label: '監査ログ', Icon: History },
     { key: 'settings', label: '設定', Icon: Settings },
@@ -2170,6 +2171,212 @@ function UserDetailModal({ userId, onClose }) {
 }
 
 /* ============================================
+   営業リードタブ
+   ============================================ */
+function SalesLeadsTab() {
+    const toast = useToast();
+    const [leads, setLeads] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [summary, setSummary] = useState(null);
+    const [q, setQ] = useState('');
+    const [industry, setIndustry] = useState('');
+    const [prefecture, setPrefecture] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [hasEmail, setHasEmail] = useState(false);
+    const [page, setPage] = useState(1);
+    const [meta, setMeta] = useState(null);
+    const [exporting, setExporting] = useState(false);
+    const [collecting, setCollecting] = useState(false);
+
+    const STATUS_LABEL = {
+        new: { label: '新規', cls: 'badge-info' },
+        contacted: { label: '連絡済', cls: 'badge-warning' },
+        qualified: { label: '有望', cls: 'badge-success' },
+        rejected: { label: '見送り', cls: 'badge-danger' },
+        excluded: { label: '除外', cls: 'badge-danger' },
+    };
+
+    const buildParams = (p = 1) => ({
+        page: p,
+        q: q || undefined,
+        industry: industry || undefined,
+        prefecture: prefecture || undefined,
+        status: statusFilter || undefined,
+        has_email: hasEmail ? 1 : undefined,
+    });
+
+    const fetchData = (p = 1) => {
+        setLoading(true);
+        api.get('/admin/sales-leads', { params: buildParams(p) }).then(res => {
+            setLeads(res.data.data || []);
+            setMeta({ current_page: res.data.current_page, last_page: res.data.last_page, total: res.data.total });
+            setPage(p);
+        }).catch(() => toast.error('リードの取得に失敗しました')).finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        api.get('/admin/sales-leads/summary').then(res => setSummary(res.data)).catch(() => {});
+        fetchData();
+    }, []);
+
+    const updateStatus = (lead, newStatus) => {
+        api.put(`/admin/sales-leads/${lead.id}/status`, { status: newStatus })
+            .then(() => {
+                setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: newStatus } : l));
+            })
+            .catch(() => toast.error('ステータス更新に失敗しました'));
+    };
+
+    const handleExport = () => {
+        setExporting(true);
+        api.get('/admin/sales-leads/export', { params: buildParams(1), responseType: 'blob' })
+            .then(res => {
+                const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sales_leads_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            })
+            .catch(() => toast.error('CSVの出力に失敗しました'))
+            .finally(() => setExporting(false));
+    };
+
+    const handleCollectNow = () => {
+        if (!confirm('Google Places APIを呼び出して最大50件を即時収集します。よろしいですか？')) return;
+        setCollecting(true);
+        api.post('/admin/sales-leads/collect', { limit: 50 })
+            .then(() => {
+                toast.success('収集を実行しました');
+                fetchData(1);
+                api.get('/admin/sales-leads/summary').then(res => setSummary(res.data)).catch(() => {});
+            })
+            .catch(() => toast.error('収集の実行に失敗しました'))
+            .finally(() => setCollecting(false));
+    };
+
+    const industries = summary?.industries || {};
+    const prefectures = summary?.prefectures || [];
+
+    return (
+        <div>
+            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-md)' }}>
+                Google Places APIで収集した不動産・人材・飲食・観光・中小企業の営業リード一覧です（Web制作・マーケティング会社は自動除外）。
+                毎日5:00に最大300件、全国を日次ローテーションで自動収集されます。
+            </p>
+
+            {summary && (
+                <div className="grid grid-4" style={{ gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
+                    <div className="card" style={{ textAlign: 'center' }}>
+                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>総件数</p>
+                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, margin: 0 }}>{summary.total}</p>
+                    </div>
+                    <div className="card" style={{ textAlign: 'center' }}>
+                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>新規</p>
+                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, margin: 0, color: '#3b82f6' }}>{summary.by_status?.new || 0}</p>
+                    </div>
+                    <div className="card" style={{ textAlign: 'center' }}>
+                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>連絡済</p>
+                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, margin: 0, color: '#f59e0b' }}>{summary.by_status?.contacted || 0}</p>
+                    </div>
+                    <div className="card" style={{ textAlign: 'center' }}>
+                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>有望</p>
+                        <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, margin: 0, color: '#22c55e' }}>{summary.by_status?.qualified || 0}</p>
+                    </div>
+                </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+                <input className="form-input" placeholder="会社名で検索..." value={q}
+                    onChange={e => setQ(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && fetchData(1)}
+                    style={{ maxWidth: 240 }} />
+                <select className="form-input" value={industry} onChange={e => { setIndustry(e.target.value); setTimeout(() => fetchData(1), 0); }} style={{ maxWidth: 180 }}>
+                    <option value="">全業種</option>
+                    {Object.entries(industries).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}
+                </select>
+                <select className="form-input" value={prefecture} onChange={e => { setPrefecture(e.target.value); setTimeout(() => fetchData(1), 0); }} style={{ maxWidth: 140 }}>
+                    <option value="">全都道府県</option>
+                    {prefectures.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <select className="form-input" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setTimeout(() => fetchData(1), 0); }} style={{ maxWidth: 140 }}>
+                    <option value="">全ステータス</option>
+                    {Object.entries(STATUS_LABEL).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}
+                </select>
+                <label style={{ fontSize: 'var(--font-size-xs)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <input type="checkbox" checked={hasEmail} onChange={e => { setHasEmail(e.target.checked); setTimeout(() => fetchData(1), 0); }} />
+                    メールありのみ
+                </label>
+                <button className="btn btn-secondary" onClick={() => fetchData(1)}>検索</button>
+                <div style={{ flex: 1 }} />
+                <button className="btn btn-secondary" disabled={collecting} onClick={handleCollectNow}>
+                    {collecting ? '収集中...' : '今すぐ収集(50件)'}
+                </button>
+                <button className="btn" disabled={exporting} onClick={handleExport}>
+                    {exporting ? '出力中...' : 'CSVダウンロード'}
+                </button>
+            </div>
+
+            {loading ? <div className="skeleton" style={{ height: 200 }} /> : (
+                <>
+                    {meta && <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>{meta.total}件</p>}
+                    <div className="card" style={{ overflow: 'auto' }}>
+                        <table style={{ width: '100%', fontSize: 'var(--font-size-sm)' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>会社名</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>業種</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>都道府県</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>電話番号</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>メール</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>サイト / SNS</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>ステータス</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leads.map(l => (
+                                    <tr key={l.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                        <td style={{ padding: '8px', fontWeight: 600 }}>{l.company_name}</td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>{industries[l.industry_category]?.label || l.industry_category}</td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>{l.prefecture}</td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>{l.phone || '—'}</td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>{l.email || '—'}</td>
+                                        <td style={{ padding: '8px', fontSize: 'var(--font-size-xs)' }}>
+                                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                                {l.website_url && <a href={l.website_url} target="_blank" rel="noreferrer">サイト</a>}
+                                                {l.instagram_url && <a href={l.instagram_url} target="_blank" rel="noreferrer">Instagram</a>}
+                                                {l.facebook_url && <a href={l.facebook_url} target="_blank" rel="noreferrer">Facebook</a>}
+                                                {l.tiktok_url && <a href={l.tiktok_url} target="_blank" rel="noreferrer">TikTok</a>}
+                                                {!l.website_url && !l.instagram_url && !l.facebook_url && !l.tiktok_url && '—'}
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '8px' }}>
+                                            <select className="form-input" style={{ fontSize: 10, padding: '2px 6px' }}
+                                                value={l.status} onChange={e => updateStatus(l, e.target.value)}>
+                                                {Object.entries(STATUS_LABEL).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}
+                                            </select>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {meta && meta.last_page > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
+                            <button className="btn btn-secondary" disabled={page <= 1} onClick={() => fetchData(page - 1)}>前へ</button>
+                            <span style={{ fontSize: 'var(--font-size-sm)', alignSelf: 'center' }}>{page} / {meta.last_page}</span>
+                            <button className="btn btn-secondary" disabled={page >= meta.last_page} onClick={() => fetchData(page + 1)}>次へ</button>
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    );
+}
+
+/* ============================================
    メインコンポーネント
    ============================================ */
 export default function AdminDashboard() {
@@ -2302,6 +2509,7 @@ export default function AdminDashboard() {
             {tab === 'licenses' && <LicensesTab initialData={prefetched.pendingLicenses} />}
             {tab === 'marketplace' && <MarketplaceTab initialData={prefetched.pendingMarketplace} />}
             {tab === 'agency-perf' && <AgencyPerformanceTab initialData={prefetched.agencyPerf} />}
+            {tab === 'sales-leads' && <SalesLeadsTab />}
             {tab === 'reports' && <ReportsTab initialData={prefetched.reports} />}
             {tab === 'audit' && <AuditLogTab initialData={prefetched.auditLogs} />}
             {tab === 'settings' && <SettingsTab initialData={prefetched.settings} />}

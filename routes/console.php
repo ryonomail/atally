@@ -44,3 +44,6 @@ Schedule::command('app:seo-report')->dailyAt('06:30');
 
 // 10分ごと: 主要ページ/APIの死活監視。異常時のみアラート（500の放置を防ぐ）
 Schedule::command('app:health-check')->everyTenMinutes()->withoutOverlapping();
+
+// 毎日5:00: 営業リード（不動産/人材/飲食/観光/中小企業）をGoogle Places APIから収集（1日最大300件、全国を日次ローテーション）
+Schedule::command('app:collect-sales-leads')->dailyAt('05:00')->withoutOverlapping();

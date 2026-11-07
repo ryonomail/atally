@@ -11,6 +11,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\InterviewScheduleController;
 use App\Http\Controllers\ScoutController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminSalesLeadController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\ReportController;
@@ -322,5 +323,10 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/users/{user}/detail', [AdminController::class , 'userDetail']);
             Route::get('/settings', [AdminController::class , 'getSettings']);
             Route::put('/settings', [AdminController::class , 'updateSettings']);
+            Route::get('/sales-leads', [AdminSalesLeadController::class , 'index']);
+            Route::get('/sales-leads/summary', [AdminSalesLeadController::class , 'summary']);
+            Route::get('/sales-leads/export', [AdminSalesLeadController::class , 'export']);
+            Route::put('/sales-leads/{salesLead}/status', [AdminSalesLeadController::class , 'updateStatus']);
+            Route::post('/sales-leads/collect', [AdminSalesLeadController::class , 'triggerCollect']);
         }
         );    });
