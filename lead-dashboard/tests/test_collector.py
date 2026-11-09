@@ -44,19 +44,15 @@ def test_decode_shift_jis():
 
 
 @responses.activate
-def test_hellowork_flow(monkeypatch):
-    monkeypatch.setenv("HELLOWORK_EXPORT_URL", "https://atally.example/api/lead-export/hellowork-employers")
-    monkeypatch.setenv("HELLOWORK_EXPORT_TOKEN", "tok")
+def test_csv_import_enrich_flow(monkeypatch):
     monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "b")
-    responses.get("https://atally.example/api/lead-export/hellowork-employers", json={"data": [
-        {"employer_name": "社会福祉法人 みどり会", "prefecture": "東京都", "city": "世田谷区", "office_address": "東京都世田谷区1-1",
-         "homepage_url": "", "industry": "介護", "job_count": 5},
-        {"employer_name": "株式会社山田工務店", "prefecture": "東京都", "city": "練馬区", "office_address": "東京都練馬区2-2",
-         "homepage_url": "www.yamada.co.jp", "industry": "建設", "job_count": 2},
-    ], "next_page": None})
+    rows = [collector.hellowork_row(x) for x in [
+        {"会社名": "社会福祉法人 みどり会", "住所": "東京都世田谷区1-1", "業種": "介護", "求人数": "5"},
+        {"会社名": "株式会社山田工務店", "住所": "東京都練馬区2-2", "ホームページ": "www.yamada.co.jp", "業種": "建設", "求人数": "2"},
+    ]]
 
     def brave(req):
-        if "みどり会" in req.url or "%E3%81%BF%E3%81%A9%E3%82%8A%E4%BC%9A" in req.url:
+        if "%E3%81%BF%E3%81%A9%E3%82%8A%E4%BC%9A" in req.url:
             return 200, {}, json.dumps({"web": {"results": [
                 {"url": "https://jp.indeed.com/cmp/midori", "title": "社会福祉法人みどり会の求人 | Indeed"},
                 {"url": "https://www.midorikai.or.jp/recruit/", "title": "社会福祉法人 みどり会 | 採用情報"},
@@ -65,28 +61,31 @@ def test_hellowork_flow(monkeypatch):
             ]}})
         return 200, {}, json.dumps({"web": {"results": []}})
     responses.add_callback(responses.GET, re.compile(r"https://api\.search\.brave\.com/.*"), callback=brave)
-    responses.get("http://www.yamada.co.jp", body='<a href="/company/">会社概要</a><a href="https://www.instagram.com/yamada_k/">ig</a>',
+    responses.get("http://www.yamada.co.jp", body='<meta name="generator" content="WordPress 5.8.2"><a href="/company/">会社概要</a>'
+                  '<a href="https://www.instagram.com/yamada_k/">ig</a>', content_type="text/html",
+                  headers={"X-Powered-By": "PHP/7.4.33"})
+    responses.get("http://www.yamada.co.jp/company/", body="<p>E-mail: info@yamada.co.jp</p><p>※営業目的のメールはお断りしております</p>",
                   content_type="text/html")
-    responses.get("http://www.yamada.co.jp/company/", body="<p>E-mail: info@yamada.co.jp</p>", content_type="text/html")
     responses.get("https://www.midorikai.or.jp/", body='<a href="mailto:contact@midorikai.or.jp">mail</a>', content_type="text/html")
     responses.get(re.compile(r"https://msearch\.gsi\.go\.jp/.*"), json=[{"geometry": {"coordinates": [139.65, 35.64]}}])
 
-    run_id = collector.create_run("", "東京", ["hellowork"])
-    run = collector.run_to_completion(run_id, 60)
+    run = collector.run_to_completion(collector.import_csv_rows(rows), 60)
     assert run["status"] == "done", run["message"]
     ls = leads()
     m, y = ls["社会福祉法人 みどり会"], ls["株式会社山田工務店"]
     assert m["website"] == "https://www.midorikai.or.jp/" and m["website_found_by"] == "search"
     assert m["facebook"] == "https://www.facebook.com/midorikai.tokyo" and m["instagram"] is None
-    assert m["email"] == "contact@midorikai.or.jp"
+    assert m["email"] == "contact@midorikai.or.jp" and m["uses_php"] == 0
     assert y["email"] == "info@yamada.co.jp" and y["instagram"] == "https://www.instagram.com/yamada_k/"
-    assert m["lat"] == 35.64 and m["enriched_at"]
-    assert "公式サイト発見 1件" in run["message"]
+    assert y["uses_php"] == 1 and y["php_version"] == "7.4.33" and y["php_status"] == "eol" and y["cms"] == "WordPress 5.8.2"
+    assert y["no_sales_email"] == 1
+    assert m["lat"] == 35.64 and m["enriched_at"] and y["job_count"] == 2
+    assert "公式サイト発見 1件" in run["message"] and "PHP使用 1件" in run["message"]
 
     # 再取り込みでもステータスは保持
     with get_db() as d:
         d.execute("UPDATE leads SET status = 'contacted'")
-    run2 = collector.run_to_completion(collector.create_run("", "", ["hellowork"]), 60)
+    run2 = collector.run_to_completion(collector.import_csv_rows(rows), 60)
     assert run2["status"] == "done"
     assert {l["status"] for l in leads().values()} == {"contacted"}
 

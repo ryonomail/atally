@@ -1,6 +1,6 @@
 """
 常駐ワーカー（任意）。PythonAnywhere の「Always-on tasks」に登録すると、
-ブラウザを閉じていても収集・調査が最後まで進む。
+ブラウザを閉じていても収集・調査・メール自動送信が進む。
 
   コマンド例: /home/<ユーザー名>/.virtualenvs/leads/bin/python /home/<ユーザー名>/atally/lead-dashboard/worker.py
 
@@ -18,6 +18,7 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 import collector  # noqa: E402
+import mailer  # noqa: E402
 from db import init_db  # noqa: E402
 
 
@@ -33,6 +34,12 @@ def main() -> None:
         if code_mtime() != started:
             print("code updated, exiting for restart", flush=True)
             return
+        try:
+            r = mailer.send_step()
+            if r.get("status"):
+                print(f"mail {r['status']}: {r.get('to')} ({r.get('campaign')}) {r.get('error') or ''}", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"mail error: {e}", flush=True)
         run_id = collector.active_run_id()
         if run_id:
             run = collector.step(run_id)

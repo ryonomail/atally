@@ -2,7 +2,7 @@
 営業リスト（見込み企業）の自動収集エンジン。
 
 収集元:
-  - ハローワーク求人 … Atally 本体に取り込み済みの求人から事業所を取得（エクスポートAPI or CSVアップロード）
+  - CSV 取り込み    … ハローワーク等で集めた企業一覧（会社名・住所・HP・業種・求人数）
   - Googleマップ   … Google Places API (Text Search)。ホームページを持たない企業も取得できる
   - OpenStreetMap  … Nominatim + Overpass（APIキー不要）
 補完（1社ずつ）:
@@ -31,6 +31,7 @@ from urllib.parse import parse_qs, quote, urljoin, urlparse
 
 import requests
 
+import techdetect
 from db import SNS_FIELDS, get_db, now, row_to_dict, update_lead, update_run
 
 USER_AGENT = "Mozilla/5.0 (compatible; LeadCollector/1.0)"
@@ -88,7 +89,6 @@ def env(key: str, default: str = "") -> str:
 
 def available_sources() -> dict:
     return {
-        "hellowork_api": bool(env("HELLOWORK_EXPORT_URL") and env("HELLOWORK_EXPORT_TOKEN")),
         "google": bool(env("GOOGLE_PLACES_API_KEY")),
         "osm": True,
         "web_search": bool(env("BRAVE_SEARCH_API_KEY")),
@@ -209,11 +209,6 @@ def _fetch_stage(run: dict) -> None:
 
     places: list[dict] = []
     hw_rows: list[dict] = []
-    if "hellowork" in sources:
-        if available_sources()["hellowork_api"]:
-            hw_rows = _safely(logs, "ハローワーク求人", lambda: fetch_hellowork(keyword, area))
-        else:
-            logs.append("ハローワーク求人: エクスポートAPI未設定のためスキップ（CSVアップロードは利用可）")
     if "google" in sources and keyword:
         if available_sources()["google"]:
             places += _safely(logs, "Googleマップ", lambda: fetch_google(keyword, area, logs))
@@ -315,7 +310,7 @@ def _stats_summary(s: dict) -> list[str]:
     if s.get("search_skipped"):
         out.append(f"HP無し {s['search_skipped']}件: Web検索APIキー未設定 or 上限のため検索をスキップ")
     if s.get("sites"):
-        out.append(f"公式サイト巡回: {s.get('sites_ok', 0)}/{s['sites']}件を取得（メール判明 {s.get('emails', 0)}件）")
+        out.append(f"公式サイト巡回: {s.get('sites_ok', 0)}/{s['sites']}件を取得（メール判明 {s.get('emails', 0)}件 / PHP使用 {s.get('php', 0)}件）")
     if s.get("geo"):
         out.append(f"住所→地図位置: {s.get('geo_ok', 0)}/{s['geo']}件")
     return out
@@ -332,21 +327,6 @@ def _safely(logs: list, label: str, fn):
 # =====================================================================
 # 収集元
 # =====================================================================
-def fetch_hellowork(keyword: str, area: str) -> list[dict]:
-    """Atally 本体のエクスポートAPIから ハローワーク求人の事業所一覧を取得"""
-    url = env("HELLOWORK_EXPORT_URL")
-    headers = {"Authorization": f"Bearer {env('HELLOWORK_EXPORT_TOKEN')}", "Accept": "application/json"}
-    rows, page = [], 1
-    s = http()
-    while page and page <= 200:
-        res = s.get(url, params={"keyword": keyword, "area": area, "page": page}, headers=headers, timeout=60)
-        res.raise_for_status()
-        body = res.json()
-        rows += [hellowork_row(x) for x in body.get("data", [])]
-        page = body.get("next_page")
-    return [r for r in rows if r]
-
-
 def hellowork_row(x: dict) -> dict | None:
     """ハローワーク事業所 1 件（API / CSV 共通）→ leads 行"""
     name = (x.get("employer_name") or x.get("name") or x.get("会社名") or x.get("事業所名") or "").strip()
@@ -548,6 +528,17 @@ def enrich_leads(leads: list[dict], search_budget: int, stats: dict) -> dict[int
                     if site["email"] and not l.get("email"):
                         setf(l, "email", site["email"])
                         stats["emails"] = stats.get("emails", 0) + 1
+                    t = site["tech"]
+                    setf(l, "uses_php", 1 if t["php"] else 0)
+                    setf(l, "php_version", t["php_version"])
+                    setf(l, "php_status", techdetect.php_status(t["php_version"]) if t["php"] else None)
+                    setf(l, "cms", t["cms"])
+                    setf(l, "tech_evidence", t["evidence"] or None)
+                    setf(l, "tech_checked_at", now())
+                    if site["no_sales"]:
+                        setf(l, "no_sales_email", 1)
+                    if t["php"]:
+                        stats["php"] = stats.get("php", 0) + 1
             if "geo" in out:
                 stats["geo"] = stats.get("geo", 0) + 1
                 if out["geo"]:
@@ -560,27 +551,42 @@ def enrich_leads(leads: list[dict], search_budget: int, stats: dict) -> dict[int
 
 
 def crawl_site(url: str) -> dict | None:
-    """トップページ（＋必要ならお問い合わせ/会社概要ページ）から SNS・メールを抽出"""
-    html = fetch_page(url)
-    if html is None:
+    """トップページ（＋必要ならお問い合わせ/会社概要ページ）から SNS・メール・使用技術を調べる"""
+    page = fetch_page_full(url)
+    if page is None:
         return None
+    html, headers, final_url = page
     host = urlparse(url).hostname
+    tech = techdetect.detect(headers, html, final_url)
+    no_sales = techdetect.no_sales_notice(html)
     sns = extract_sns_links(html)
     email = extract_email(html, host)
-    if not email:
-        for u in contact_links(html, url):
-            sub = fetch_page(u)
-            if sub is None:
-                continue
-            for f, v in extract_sns_links(sub).items():
-                sns.setdefault(f, v)
-            email = extract_email(sub, host)
-            if email:
-                break
-    return {"sns": sns, "email": email}
+    for u in contact_links(html, final_url):
+        if email and no_sales:
+            break
+        sub = fetch_page_full(u)
+        if sub is None:
+            continue
+        for f, v in extract_sns_links(sub[0]).items():
+            sns.setdefault(f, v)
+        email = email or extract_email(sub[0], host)
+        no_sales = no_sales or techdetect.no_sales_notice(sub[0])
+        if not tech["php"]:
+            t2 = techdetect.detect(sub[1], sub[0], sub[2])
+            if t2["php"]:
+                tech = t2
+        if email:
+            break
+    return {"sns": sns, "email": email, "tech": tech, "no_sales": no_sales}
 
 
 def fetch_page(url: str) -> str | None:
+    page = fetch_page_full(url)
+    return page[0] if page else None
+
+
+def fetch_page_full(url: str) -> tuple[str, dict, str] | None:
+    """(html, レスポンスヘッダー, 最終URL)"""
     if not is_safe_public_url(url):
         return None
     try:
@@ -593,7 +599,13 @@ def fetch_page(url: str) -> str | None:
             if len(buf) >= 2_000_000:
                 break
         res.close()
-        return decode_html(bytes(buf), res.headers.get("content-type"))
+        headers = dict(res.headers)
+        # 複数の Set-Cookie をまとめて判定できるように
+        try:
+            headers["Set-Cookie"] = "; ".join(res.raw.headers.getlist("Set-Cookie")) or headers.get("Set-Cookie", "")
+        except AttributeError:
+            pass
+        return decode_html(bytes(buf), res.headers.get("content-type")), headers, res.url
     except (requests.RequestException, OSError, ValueError):
         return None
 

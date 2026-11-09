@@ -34,8 +34,6 @@ return [
         'brave_search_key'  => env('BRAVE_SEARCH_API_KEY'),
         // 1回の調査で Web 検索する最大件数（Brave 無料枠は月2,000クエリ）
         'search_limit'      => (int) env('LEAD_SEARCH_LIMIT', 50),
-        // 外部ダッシュボード（PythonAnywhere）がハローワーク事業所を取得するためのトークン
-        'export_token'      => env('LEAD_EXPORT_TOKEN', ''),
     ],
 
     'hellowork' => [

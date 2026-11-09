@@ -21,6 +21,7 @@ from flask import (Flask, Response, abort, jsonify, redirect, render_template, r
 
 import collector  # noqa: E402
 import deploy  # noqa: E402
+import mailer  # noqa: E402
 from db import SNS_FIELDS, STATUSES, get_db, init_db, now, row_to_dict, update_lead  # noqa: E402
 
 app = Flask(__name__)
@@ -115,6 +116,12 @@ def _filters(args) -> tuple[str, list]:
         where.append("email IS NOT NULL")
     elif args.get("email") == "no":
         where.append("email IS NULL")
+    if args.get("php") == "yes":
+        where.append("uses_php = 1")
+    elif args.get("php") == "old":
+        where.append("php_status IN ('eol','near_eol')")
+    elif args.get("php") == "no":
+        where.append("uses_php = 0")
     if args.get("source") in ("hellowork", "google", "osm"):
         where.append("source = ?"); params.append(args["source"])
     if (args.get("run_id") or "").isdigit():
@@ -144,7 +151,7 @@ def api_leads():
 @login_required
 def api_map():
     where, params = _filters(request.args)
-    cols = "id, name, category, address, lat, lng, status, has_website, email, job_count, " + ", ".join(SNS_FIELDS)
+    cols = "id, name, category, address, lat, lng, status, has_website, email, job_count, uses_php, php_version, php_status, cms, " + ", ".join(SNS_FIELDS)
     with get_db() as db:
         rows = db.execute(f"SELECT {cols} FROM leads WHERE {where} AND lat IS NOT NULL AND lng IS NOT NULL "
                           "ORDER BY id DESC LIMIT 3000", params).fetchall()
@@ -164,6 +171,8 @@ def api_stats():
             no_website_with_sns=one(f"SELECT COUNT(*) FROM leads WHERE has_website = 0 AND enriched_at IS NOT NULL AND {sns_any}"),
             with_email=one("SELECT COUNT(*) FROM leads WHERE email IS NOT NULL"),
             unenriched=one("SELECT COUNT(*) FROM leads WHERE enriched_at IS NULL"),
+            php=one("SELECT COUNT(*) FROM leads WHERE uses_php = 1"),
+            php_old=one("SELECT COUNT(*) FROM leads WHERE php_status IN ('eol','near_eol')"),
             by_status={r[0]: r[1] for r in db.execute("SELECT status, COUNT(*) FROM leads GROUP BY status")},
             sources=collector.available_sources(),
         )
@@ -186,10 +195,10 @@ def api_collect():
     body = request.get_json(silent=True) or {}
     keyword = str(body.get("keyword") or "").strip()[:100]
     area = str(body.get("area") or "").strip()[:100]
-    sources = [s for s in body.get("sources") or [] if s in ("hellowork", "google", "osm")]
+    sources = [s for s in body.get("sources") or [] if s in ("google", "osm")]
     if not sources:
         return jsonify(message="収集元を1つ以上選択してください"), 422
-    if {"google", "osm"} & set(sources) and (not keyword or not area):
+    if not keyword or not area:
         return jsonify(message="Googleマップ / OpenStreetMap から収集するには業種とエリアの両方を入力してください"), 422
     if collector.active_run_id():
         return jsonify(message="別の収集が実行中です。完了までお待ちください"), 409
@@ -305,7 +314,9 @@ def api_export():
         "name": "会社名", "category": "業種", "address": "住所", "phone": "電話番号", "email": "メール",
         "website": "ホームページ", "instagram": "Instagram", "twitter": "X(Twitter)", "facebook": "Facebook",
         "tiktok": "TikTok", "youtube": "YouTube", "line": "LINE", "google_maps_url": "Googleマップ",
-        "rating": "評価", "review_count": "口コミ数", "job_count": "ハローワーク求人数", "lat": "緯度", "lng": "経度",
+        "rating": "評価", "review_count": "口コミ数", "job_count": "ハローワーク求人数",
+        "uses_php": "PHP使用", "php_version": "PHPバージョン", "php_status": "PHPサポート状況", "cms": "CMS",
+        "no_sales_email": "営業メールお断り表記", "lat": "緯度", "lng": "経度",
         "status": "ステータス", "memo": "メモ", "source": "取得元", "search_keyword": "検索キーワード",
         "search_area": "検索エリア", "created_at": "登録日時",
     }
@@ -326,6 +337,147 @@ def api_export():
     name = f"leads_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     return Response(gen(), mimetype="text/csv; charset=utf-8",
                     headers={"Content-Disposition": f"attachment; filename={name}"})
+
+
+# ---------------------------------------------------------------------
+# メール配信
+# ---------------------------------------------------------------------
+def _campaign_from(body: dict) -> dict | tuple:
+    c = {
+        "name": str(body.get("name") or "").strip()[:100],
+        "subject": str(body.get("subject") or "").strip()[:200],
+        "body": str(body.get("body") or "").strip()[:20000],
+        "target": body.get("target") if body.get("target") in mailer.TARGETS else "all",
+        "daily_limit": max(1, min(1000, int(body.get("daily_limit") or 50))),
+    }
+    if not c["name"] or not c["subject"] or not c["body"]:
+        return None
+    return c
+
+
+@app.get("/api/campaigns")
+@login_required
+def api_campaigns():
+    with get_db() as db:
+        rows = [row_to_dict(r) for r in db.execute("SELECT * FROM campaigns ORDER BY id DESC")]
+        for c in rows:
+            c["active"] = bool(c["active"])
+            c["stats"] = mailer.campaign_stats(db, c)
+        recent = [row_to_dict(r) for r in db.execute(
+            """SELECT g.*, l.name AS lead_name, c.name AS campaign_name FROM email_log g
+               LEFT JOIN leads l ON l.id = g.lead_id LEFT JOIN campaigns c ON c.id = g.campaign_id
+               ORDER BY g.id DESC LIMIT 30""")]
+        suppressed = db.execute("SELECT COUNT(*) FROM suppressions").fetchone()[0]
+    return jsonify(campaigns=rows, recent=recent, suppressed=suppressed, config=mailer.config_status(),
+                   targets=mailer.TARGETS, templates=mailer.DEFAULT_TEMPLATES)
+
+
+@app.post("/api/campaigns")
+@login_required
+def api_campaign_create():
+    c = _campaign_from(request.get_json(silent=True) or {})
+    if not c:
+        return jsonify(message="名前・件名・本文を入力してください"), 422
+    with get_db() as db:
+        cur = db.execute("INSERT INTO campaigns (name, subject, body, target, daily_limit, active, created_at, updated_at) "
+                         "VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
+                         (c["name"], c["subject"], c["body"], c["target"], c["daily_limit"], now(), now()))
+    return jsonify(id=cur.lastrowid, message="作成しました（まだ送信は始まっていません）"), 201
+
+
+@app.put("/api/campaigns/<int:cid>")
+@login_required
+def api_campaign_update(cid):
+    body = request.get_json(silent=True) or {}
+    with get_db() as db:
+        if not db.execute("SELECT 1 FROM campaigns WHERE id = ?", (cid,)).fetchone():
+            abort(404)
+        if set(body) == {"active"}:
+            if body["active"] and not mailer.config_status()["ready"]:
+                return jsonify(message="メール送信の設定が足りません: " + "、".join(mailer.config_status()["missing"])), 422
+            db.execute("UPDATE campaigns SET active = ?, updated_at = ? WHERE id = ?", (1 if body["active"] else 0, now(), cid))
+            return jsonify(message="自動送信を開始しました" if body["active"] else "自動送信を停止しました")
+        c = _campaign_from(body)
+        if not c:
+            return jsonify(message="名前・件名・本文を入力してください"), 422
+        db.execute("UPDATE campaigns SET name=?, subject=?, body=?, target=?, daily_limit=?, updated_at=? WHERE id=?",
+                   (c["name"], c["subject"], c["body"], c["target"], c["daily_limit"], now(), cid))
+    return jsonify(message="保存しました")
+
+
+@app.delete("/api/campaigns/<int:cid>")
+@login_required
+def api_campaign_delete(cid):
+    with get_db() as db:
+        db.execute("DELETE FROM campaigns WHERE id = ?", (cid,))
+    return jsonify(message="削除しました")
+
+
+def _sample_lead(db, target: str, lead_id=None) -> dict:
+    if lead_id:
+        r = db.execute("SELECT * FROM leads WHERE id = ?", (lead_id,)).fetchone()
+    else:
+        r = db.execute(f"SELECT l.* FROM leads l WHERE {mailer._target_sql(target)} ORDER BY l.id LIMIT 1").fetchone()
+    return row_to_dict(r) if r else {
+        "name": "サンプル株式会社", "email": "sample@example.com", "website": "https://www.example.co.jp/",
+        "address": "東京都千代田区1-1", "category": "サービス業", "php_version": "7.4.33", "php_status": "eol", "cms": "WordPress 5.8",
+    }
+
+
+@app.post("/api/campaigns/preview")
+@login_required
+def api_campaign_preview():
+    body = request.get_json(silent=True) or {}
+    c = _campaign_from(body) or {"subject": body.get("subject", ""), "body": body.get("body", ""), "target": "all"}
+    with get_db() as db:
+        lead = _sample_lead(db, c["target"], body.get("lead_id"))
+    subject, text = mailer.render(c, lead)
+    return jsonify(to=lead.get("email"), lead=lead.get("name"), subject=subject, body=text)
+
+
+@app.post("/api/campaigns/test")
+@login_required
+def api_campaign_test():
+    body = request.get_json(silent=True) or {}
+    to = str(body.get("to") or "").strip()
+    if "@" not in to:
+        return jsonify(message="テスト送信先のメールアドレスを入力してください"), 422
+    cfg = mailer.config_status()
+    if not cfg["ready"]:
+        return jsonify(message="メール送信の設定が足りません: " + "、".join(cfg["missing"])), 422
+    c = _campaign_from(body)
+    if not c:
+        return jsonify(message="件名・本文を入力してください"), 422
+    with get_db() as db:
+        lead = _sample_lead(db, c["target"])
+    try:
+        mailer.smtp_send(mailer.build_message(c, lead, to=to))
+    except Exception as e:  # noqa: BLE001
+        return jsonify(message=f"送信に失敗しました: {e}"), 502
+    return jsonify(message=f"{to} にテスト送信しました（差し込みは「{lead.get('name')}」）")
+
+
+@app.post("/api/mail/tick")
+@login_required
+def api_mail_tick():
+    """ダッシュボードを開いている間、定期的に呼ばれて 1 通ずつ送る"""
+    return jsonify(mailer.send_step())
+
+
+@app.route("/u", methods=["GET", "POST"])
+def unsubscribe():
+    """配信停止（ログイン不要）。メールソフトのワンクリック停止(POST)にも対応"""
+    email = (request.values.get("e") or "").strip().lower()
+    token = request.values.get("t") or ""
+    if not mailer.verify_unsubscribe(email, token):
+        return render_template("unsubscribe.html", state="invalid"), 400
+    if request.method == "POST":
+        mailer.suppress(email, "unsubscribe")
+        with get_db() as db:
+            db.execute("UPDATE leads SET status = 'excluded', updated_at = ? WHERE lower(email) = ? AND status IN ('new','contacted')",
+                       (now(), email))
+        return render_template("unsubscribe.html", state="done", email=email)
+    return render_template("unsubscribe.html", state="confirm", email=email, token=token)
 
 
 # ---------------------------------------------------------------------

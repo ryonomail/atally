@@ -72,9 +72,22 @@ WSGI_FILE=${WSGI_FILE}
 GOOGLE_PLACES_API_KEY=
 BRAVE_SEARCH_API_KEY=
 LEAD_SEARCH_LIMIT=50
-# Atally 本体のハローワーク事業所エクスポートAPI（本体 .env の LEAD_EXPORT_TOKEN と同じ値）
-HELLOWORK_EXPORT_URL=https://atally.io/api/lead-export/hellowork-employers
-HELLOWORK_EXPORT_TOKEN=
+
+# --- メール自動送信（特定電子メール法により送信者名・住所・連絡先の表示が必須） ---
+PUBLIC_BASE_URL=https://${DOMAIN}
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURITY=starttls
+SMTP_USER=
+SMTP_PASSWORD=
+MAIL_FROM=
+MAIL_FROM_NAME=
+MAIL_REPLY_TO=
+SENDER_COMPANY=
+SENDER_ADDRESS=
+SENDER_CONTACT=
+SEND_DAILY_LIMIT=100
+SEND_INTERVAL_SEC=20
 ENV
   chmod 600 "$APP_DIR/.env"
   echo "==> .env を作成しました"

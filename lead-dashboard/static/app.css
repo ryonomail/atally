@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 :root {
   --bg: #f5f5f7; --surface: #fff; --text: #1d1d1f; --muted: #86868b; --border: rgba(0,0,0,.09);
   --divider: rgba(0,0,0,.05); --navy: #121c34; --accent-bg: rgba(200,149,46,.08); --sel: rgba(18,28,52,.06);
@@ -80,3 +81,16 @@ textarea.input { resize: vertical; }
 .login-body { display: grid; place-items: center; min-height: 100vh; padding: 16px; }
 .login-card { width: 100%; max-width: 360px; display: grid; gap: 12px; }
 .login-card h1 { margin: 0; font-size: 20px; }
+
+.tabs { display: flex; gap: 4px; padding: 8px 16px 0; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { border: 0; background: none; padding: 10px 14px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.active { color: var(--text); font-weight: 600; border-bottom-color: var(--navy); }
+.badge-php { background: #ede9fe; color: #5b21b6; } .badge-php-old { background: #fee2e2; color: #991b1b; }
+.campaign { display: grid; gap: 8px; }
+.campaign .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.campaign .nums { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+.campaign .nums b { font-size: 16px; }
+.switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; }
+.preview { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; max-height: 420px; overflow: auto; }
+.vars code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-right: 4px; cursor: pointer; font-size: 12px; }
+.ok-box { color: #166534; } .ng-box { color: #991b1b; }

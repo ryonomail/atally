@@ -65,9 +65,6 @@ Route::middleware(['block.bots', 'throttle:30,1'])->get('/stats', [JobController
 // 企業プロフィール（パブリック）
 Route::middleware(['block.bots', 'throttle:60,1'])->get('/companies/{company}/profile', [CompanyController::class , 'publicProfile']);
 
-// 営業リストダッシュボード（PythonAnywhere）向けエクスポート。トークン認証（LEAD_EXPORT_TOKEN）
-Route::get('/lead-export/hellowork-employers', [LeadController::class, 'helloworkEmployers'])->middleware('throttle:30,1');
-
 /* |-------------------------------------------------------------------------- | 認証済みユーザー |-------------------------------------------------------------------------- */
 Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
     // 認証
