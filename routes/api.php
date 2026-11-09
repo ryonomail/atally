@@ -5,6 +5,7 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\MessageController;
@@ -322,5 +323,17 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/users/{user}/detail', [AdminController::class , 'userDetail']);
             Route::get('/settings', [AdminController::class , 'getSettings']);
             Route::put('/settings', [AdminController::class , 'updateSettings']);
+            // 営業リスト（見込み企業の自動収集）
+            Route::get('/leads', [LeadController::class, 'index']);
+            Route::get('/leads/map', [LeadController::class, 'map']);
+            Route::get('/leads/stats', [LeadController::class, 'stats']);
+            Route::get('/leads/runs', [LeadController::class, 'runs']);
+            Route::get('/leads/export', [LeadController::class, 'export']);
+            Route::post('/leads/collect', [LeadController::class, 'collect'])->middleware('throttle:10,1');
+            Route::post('/leads/bulk-delete', [LeadController::class, 'bulkDestroy']);
+            Route::put('/leads/{lead}', [LeadController::class, 'update']);
+            Route::post('/leads/{lead}/enrich', [LeadController::class, 'enrich'])->middleware('throttle:30,1');
+            Route::delete('/leads/{lead}', [LeadController::class, 'destroy']);
+
         }
         );    });
