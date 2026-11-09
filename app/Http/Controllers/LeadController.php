@@ -214,6 +214,49 @@ class LeadController extends Controller
         }, 'leads_' . now()->format('Ymd_His') . '.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    /**
+     * 外部（PythonAnywhere の営業リストダッシュボード）向け: ハローワーク求人の事業所一覧。
+     * Authorization: Bearer {LEAD_EXPORT_TOKEN} が必要。未設定なら 404。
+     */
+    public function helloworkEmployers(Request $request)
+    {
+        $token = (string) config('services.lead_collector.export_token');
+        if ($token === '') abort(404);
+        if (!hash_equals($token, (string) $request->bearerToken())) abort(401);
+
+        $perPage = 2000;
+        $page = max(1, (int) $request->input('page', 1));
+        $q = DB::table('jobs')
+            ->where('source', 'hellowork')
+            ->whereNotNull('employer_name')->where('employer_name', '<>', '')
+            ->select([
+                'employer_name', 'prefecture', 'city',
+                DB::raw('max(office_address) as office_address'),
+                DB::raw('max(homepage_url) as homepage_url'),
+                DB::raw('max(industry) as industry'),
+                DB::raw('count(*) as job_count'),
+            ])
+            ->groupBy('employer_name', 'prefecture', 'city');
+
+        if ($kw = trim((string) $request->input('keyword'))) {
+            $like = '%' . addcslashes($kw, '%_\\') . '%';
+            $q->where(fn ($w) => $w->where('employer_name', 'like', $like)->orWhere('industry', 'like', $like)->orWhere('title', 'like', $like));
+        }
+        if ($area = trim((string) $request->input('area'))) {
+            $like = '%' . addcslashes($area, '%_\\') . '%';
+            $q->where(fn ($w) => $w->where('prefecture', 'like', $like)->orWhere('city', 'like', $like)->orWhere('office_address', 'like', $like));
+        }
+
+        $rows = $q->orderBy('employer_name')->orderBy('prefecture')->orderBy('city')
+            ->offset(($page - 1) * $perPage)->limit($perPage + 1)->get();
+        $hasMore = $rows->count() > $perPage;
+
+        return response()->json([
+            'data'      => $rows->take($perPage)->values(),
+            'next_page' => $hasMore ? $page + 1 : null,
+        ]);
+    }
+
     private function filtered(Request $request): Builder
     {
         $q = LeadCompany::query();

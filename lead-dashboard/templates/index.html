@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>営業リスト</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <h1>営業リスト</h1>
+  <form method="post" action="{{ url_for('logout') }}"><button class="btn btn-ghost btn-sm">ログアウト</button></form>
+</header>
+
+<main class="container">
+  <!-- 収集フォーム -->
+  <form id="collect-form" class="card">
+    <div class="card-title">企業を自動収集</div>
+    <div class="row">
+      <label class="grow">
+        <span class="label">業種・キーワード <span id="kw-hint" class="muted"></span></span>
+        <input class="input" id="keyword" maxlength="100" placeholder="例: 介護、建設、美容室">
+      </label>
+      <label class="grow">
+        <span class="label">エリア <span id="area-hint" class="muted"></span></span>
+        <input class="input" id="area" maxlength="100" placeholder="例: 東京都、世田谷区、大阪市北区">
+      </label>
+      <button class="btn btn-primary" id="collect-btn" type="submit">▶ 収集</button>
+    </div>
+    <div class="row small">
+      <label><input type="checkbox" name="src" value="hellowork" checked> ハローワーク求人
+        {% if not sources.hellowork_api %}<span class="muted">（API未設定。下のCSV取り込みは利用可）</span>{% endif %}</label>
+      <label class="{{ '' if sources.google else 'disabled' }}"><input type="checkbox" name="src" value="google" {{ '' if sources.google else 'disabled' }}> Googleマップ
+        {% if not sources.google %}<span class="muted">（GOOGLE_PLACES_API_KEY 未設定）</span>{% endif %}</label>
+      <label><input type="checkbox" name="src" value="osm"> OpenStreetMap</label>
+    </div>
+    <div class="small muted">HPあり→サイト・問い合わせページからメール/SNS抽出 ／ HPなし→{{ 'Web検索で公式サイト・SNSを特定' if sources.web_search else 'Web検索は BRAVE_SEARCH_API_KEY 設定で有効' }}</div>
+
+    <div class="row small" style="margin-top:10px">
+      <button type="button" class="btn btn-secondary btn-sm" id="enrich-btn">🔍 HP・メールを探す</button>
+      <span id="unenriched" class="muted"></span>
+      <label class="btn btn-secondary btn-sm file-btn">CSV取り込み<input type="file" id="csv-file" accept=".csv,text/csv" hidden></label>
+      <span class="muted">列: 会社名(事業所名), 住所, ホームページ, 業種, 求人数</span>
+    </div>
+
+    <div id="progress" class="progress" hidden>
+      <div class="progress-text" id="progress-text"></div>
+      <div class="bar"><div id="progress-bar"></div></div>
+      <div class="small muted">このページを開いている間、収集・調査が進みます（常駐ワーカー設定時は閉じてもOK）。
+        <button type="button" class="link" id="cancel-btn">中止</button></div>
+    </div>
+
+    <details id="runs-box" class="small" hidden>
+      <summary>収集履歴</summary>
+      <div id="runs"></div>
+    </details>
+  </form>
+
+  <!-- 統計 -->
+  <div class="stats" id="stats"></div>
+
+  <!-- フィルター -->
+  <div class="row filters">
+    <form id="search-form" class="grow row nowrap">
+      <input class="input input-sm" id="q" placeholder="会社名・住所・業種・電話・メールで絞り込み">
+      <button class="btn btn-secondary btn-sm" type="submit">検索</button>
+    </form>
+    <select class="input input-sm auto" data-filter="status"></select>
+    <select class="input input-sm auto" data-filter="website">
+      <option value="">HP: すべて</option><option value="yes">HPあり</option><option value="no">HPなし</option>
+    </select>
+    <select class="input input-sm auto" data-filter="email">
+      <option value="">メール: すべて</option><option value="yes">メールあり</option><option value="no">メールなし</option>
+    </select>
+    <select class="input input-sm auto" data-filter="sns"></select>
+    <select class="input input-sm auto" data-filter="source">
+      <option value="">取得元: すべて</option><option value="hellowork">ハローワーク求人</option>
+      <option value="google">Googleマップ</option><option value="osm">OpenStreetMap</option>
+    </select>
+    <select class="input input-sm auto" data-filter="run_id"><option value="">全収集結果</option></select>
+    <div class="row nowrap push">
+      <button type="button" class="btn btn-sm view-btn active" data-view="both">地図＋一覧</button>
+      <button type="button" class="btn btn-sm view-btn" data-view="list">一覧</button>
+      <button type="button" class="btn btn-sm view-btn" data-view="map">地図</button>
+      <a class="btn btn-secondary btn-sm" id="export-btn" href="/api/export.csv">CSV</a>
+    </div>
+  </div>
+
+  <div id="detail"></div>
+
+  <div class="grid" id="grid">
+    <div class="card flush" id="list-pane">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>会社名</th><th>住所・電話</th><th>HP</th><th>メール</th><th>SNS</th><th>ステータス</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="6" class="empty">読み込み中…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager"></div>
+    </div>
+    <div id="map-pane">
+      <div id="map"></div>
+      <div class="small muted" id="map-count"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

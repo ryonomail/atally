@@ -1,0 +1,66 @@
+name: Lead dashboard (PythonAnywhere)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lead-dashboard/**'
+      - '.github/workflows/lead-dashboard.yml'
+  pull_request:
+    paths:
+      - 'lead-dashboard/**'
+  workflow_dispatch:
+
+concurrency:
+  group: lead-dashboard-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lead-dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: lead-dashboard/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  deploy:
+    # テストが通ったら PythonAnywhere の /deploy を署名付きで呼ぶ
+    # → git pull・依存更新・WSGI touch（自動リロード）まで PythonAnywhere 側で実行
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger PythonAnywhere deploy
+        env:
+          PA_DEPLOY_URL: ${{ secrets.PA_DEPLOY_URL }}
+          PA_DEPLOY_SECRET: ${{ secrets.PA_DEPLOY_SECRET }}
+        run: |
+          if [ -z "$PA_DEPLOY_URL" ] || [ -z "$PA_DEPLOY_SECRET" ]; then
+            echo "::warning::PA_DEPLOY_URL / PA_DEPLOY_SECRET が未設定のためデプロイをスキップしました"
+            exit 0
+          fi
+          BODY=$(printf '{"ref":"%s","after":"%s"}' "$GITHUB_REF" "$GITHUB_SHA")
+          SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$PA_DEPLOY_SECRET" -r | cut -d' ' -f1)"
+          HTTP=$(curl -sS -o resp.json -w '%{http_code}' --max-time 600 -X POST "$PA_DEPLOY_URL" \
+            -H "Content-Type: application/json" -H "X-Hub-Signature-256: $SIG" --data "$BODY")
+          cat resp.json; echo
+          [ "$HTTP" = "200" ] || { echo "::error::デプロイ失敗 (HTTP $HTTP)"; exit 1; }
+      - name: Health check
+        env:
+          PA_DEPLOY_URL: ${{ secrets.PA_DEPLOY_URL }}
+        if: env.PA_DEPLOY_URL != ''
+        run: |
+          BASE="${PA_DEPLOY_URL%/deploy}"
+          for i in 1 2 3 4 5 6; do
+            sleep 10
+            if V=$(curl -sf "$BASE/healthz"); then echo "$V"; grep -q "${GITHUB_SHA::7}" <<<"$V" && exit 0; fi
+          done
+          echo "::warning::リロード後のバージョン確認ができませんでした（PythonAnywhere の Web タブとエラーログを確認してください）"

@@ -3,6 +3,9 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'lead-dashboard/**'
+      - '.github/workflows/lead-dashboard.yml'
 
 env:
   REGISTRY: ghcr.io
