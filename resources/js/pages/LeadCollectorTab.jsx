@@ -36,6 +36,9 @@ const RUN_STATUS = {
     failed:  { label: '失敗',   cls: 'badge-error' },
 };
 
+const SOURCE_LABEL = { hellowork: 'ハローワーク求人', google: 'Googleマップ', osm: 'OpenStreetMap' };
+const FOUND_BY = { hellowork: 'ハローワーク掲載', google: 'Googleマップ掲載', osm: 'OpenStreetMap', search: 'Web検索で発見' };
+
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function SnsLinks({ lead, size = 'sm' }) {
@@ -104,7 +107,8 @@ function LeadMap({ points, selectedId, onSelect }) {
                     <div style="font-weight:700;font-size:14px">${esc(p.name)}</div>
                     <div style="color:#666;font-size:12px">${esc(p.category || '')}</div>
                     <div style="font-size:12px;margin:4px 0">${esc(p.address || '')}</div>
-                    <div style="font-size:12px">${p.has_website ? 'HPあり' : '<b style="color:#dc2626">HPなし</b>'} ・ ${esc(STATUS[p.status]?.label || '')}</div>
+                    <div style="font-size:12px">${p.has_website ? 'HPあり' : '<b style="color:#dc2626">HPなし</b>'} ・ ${esc(STATUS[p.status]?.label || '')}${p.job_count ? ` ・ 求人${p.job_count}件` : ''}</div>
+                    ${p.email ? `<div style="font-size:12px"><a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>` : ''}
                     ${sns ? `<div style="margin-top:4px;font-size:12px">${sns}</div>` : ''}
                 </div>`);
             m.on('click', () => onSelect?.(p.id, false));
@@ -195,7 +199,9 @@ function LeadDetail({ lead, onSaved, onDeleted, onClose }) {
                 <div>
                     <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>{lead.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                        {lead.category} {lead.rating ? ` ・ ★${lead.rating}（${lead.review_count ?? 0}件）` : ''} ・ 取得元: {lead.source === 'google' ? 'Googleマップ' : 'OpenStreetMap'}
+                        {lead.category} {lead.rating ? ` ・ ★${lead.rating}（${lead.review_count ?? 0}件）` : ''}{lead.job_count ? ` ・ ハローワーク求人 ${lead.job_count}件` : ''} ・ 取得元: {SOURCE_LABEL[lead.source] || lead.source}
+                        {lead.website && lead.website_found_by ? ` ・ HP: ${FOUND_BY[lead.website_found_by] || lead.website_found_by}` : ''}
+                        {lead.enriched_at ? '' : ' ・ HP/メール未調査'}
                     </div>
                     <div style={{ fontSize: 13, marginTop: 4 }}>{lead.address}</div>
                     <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 13, flexWrap: 'wrap' }}>
@@ -241,12 +247,13 @@ export default function LeadCollectorTab() {
     const toast = useToast();
     const [keyword, setKeyword] = useState('');
     const [area, setArea] = useState('');
-    const [sources, setSources] = useState({ google: true, osm: true });
+    const [sources, setSources] = useState({ hellowork: true, google: false, osm: false });
+    const [enriching, setEnriching] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const [stats, setStats] = useState(null);
     const [runs, setRuns] = useState([]);
-    const [filters, setFilters] = useState({ q: '', status: '', website: '', sns: '', run_id: '' });
+    const [filters, setFilters] = useState({ q: '', status: '', website: '', sns: '', email: '', source: '', run_id: '' });
     const [qInput, setQInput] = useState('');
     const [page, setPage] = useState(1);
     const [list, setList] = useState(null);
@@ -274,10 +281,6 @@ export default function LeadCollectorTab() {
     useEffect(() => { loadList(); }, [loadList]);
     useEffect(() => { loadMap(); }, [loadMap]);
 
-    // Google APIキー未設定なら Google をオフに
-    useEffect(() => {
-        if (stats && !stats.sources?.google) setSources(s => ({ ...s, google: false }));
-    }, [stats?.sources?.google]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 実行中の収集があればポーリング。完了したら一覧を更新
     const active = runs.some(r => r.status === 'queued' || r.status === 'running');
@@ -298,6 +301,9 @@ export default function LeadCollectorTab() {
         e.preventDefault();
         const src = Object.entries(sources).filter(([, v]) => v).map(([k]) => k);
         if (!src.length) { toast.error('収集元を1つ以上選択してください'); return; }
+        if ((sources.google || sources.osm) && (!keyword.trim() || !area.trim())) {
+            toast.error('Googleマップ / OpenStreetMap は業種とエリアの両方が必要です'); return;
+        }
         setSubmitting(true);
         try {
             const res = await api.post('/admin/leads/collect', { keyword, area, sources: src });
@@ -306,6 +312,17 @@ export default function LeadCollectorTab() {
         } catch (err) {
             toast.error(err.response?.data?.message || '収集の開始に失敗しました');
         } finally { setSubmitting(false); }
+    };
+
+    const enrichMore = async () => {
+        setEnriching(true);
+        try {
+            const res = await api.post('/admin/leads/enrich-batch');
+            toast.success(res.data.message);
+            loadRuns();
+        } catch (err) {
+            toast.error(err.response?.data?.message || '開始に失敗しました');
+        } finally { setEnriching(false); }
     };
 
     const setFilter = (k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); };
@@ -349,7 +366,11 @@ export default function LeadCollectorTab() {
             .then(r => setSelected(r.data.data.find(x => x.id === id) || null)).catch(() => {});
     };
 
-    const runOptions = runs.filter(r => r.status === 'done');
+    const runOptions = runs.filter(r => r.status === 'done' && !(r.sources || []).includes('enrich'));
+    const onlyHw = sources.hellowork && !sources.google && !sources.osm;
+    const runLabel = (r) => (r.sources || []).includes('enrich')
+        ? 'HP・メール調査（続き）'
+        : `${(r.sources || []).map(x => SOURCE_LABEL[x] || x).join('+')}：${r.keyword || '全業種'} / ${r.area || '全国'}`;
 
     return (
         <div>
@@ -373,18 +394,22 @@ export default function LeadCollectorTab() {
                 <div style={{ fontWeight: 700, marginBottom: 'var(--space-sm)' }}>企業を自動収集</div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <label style={{ flex: '1 1 200px' }}>
-                        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>業種・キーワード</span>
-                        <input className="form-input" required maxLength={100} value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="例: 美容室、工務店、歯科" />
+                        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>業種・キーワード{onlyHw && '（空欄で全業種）'}</span>
+                        <input className="form-input" required={!onlyHw} maxLength={100} value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="例: 介護、建設、美容室" />
                     </label>
                     <label style={{ flex: '1 1 200px' }}>
-                        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>エリア</span>
-                        <input className="form-input" required maxLength={100} value={area} onChange={e => setArea(e.target.value)} placeholder="例: 渋谷区、大阪市北区" />
+                        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>エリア{onlyHw && '（空欄で全国）'}</span>
+                        <input className="form-input" required={!onlyHw} maxLength={100} value={area} onChange={e => setArea(e.target.value)} placeholder="例: 東京都、世田谷区、大阪市北区" />
                     </label>
                     <button className="btn btn-primary" type="submit" disabled={submitting || active} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
                         {active ? <><Loader size={16} className="lead-spin" /> 収集中…</> : <><Play size={16} /> 収集</>}
                     </button>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-lg)', marginTop: 'var(--space-sm)', fontSize: 13, flexWrap: 'wrap' }}>
+                    <label>
+                        <input type="checkbox" checked={sources.hellowork} onChange={e => setSources({ ...sources, hellowork: e.target.checked })} /> ハローワーク求人
+                        {stats?.hellowork_employers != null && <span style={{ color: 'var(--color-text-muted)' }}>（取り込み可能 {stats.hellowork_employers.toLocaleString()}社）</span>}
+                    </label>
                     <label style={{ opacity: stats?.sources?.google === false ? 0.5 : 1 }}>
                         <input type="checkbox" checked={sources.google} disabled={stats?.sources?.google === false}
                             onChange={e => setSources({ ...sources, google: e.target.checked })} /> Googleマップ
@@ -392,9 +417,19 @@ export default function LeadCollectorTab() {
                     </label>
                     <label><input type="checkbox" checked={sources.osm} onChange={e => setSources({ ...sources, osm: e.target.checked })} /> OpenStreetMap</label>
                     <span style={{ color: 'var(--color-text-secondary)' }}>
-                        HPあり→サイトからSNS抽出 ／ HPなし→{stats?.sources?.sns_search ? 'Web検索でSNS特定' : 'SNS検索は BRAVE_SEARCH_API_KEY 設定で有効'}
+                        HPあり→サイト・問い合わせページからメール/SNS抽出 ／ HPなし→{stats?.sources?.sns_search ? 'Web検索で公式サイト・SNSを特定' : 'Web検索は BRAVE_SEARCH_API_KEY 設定で有効'}
                     </span>
                 </div>
+                {stats?.unenriched > 0 && (
+                    <div style={{ marginTop: 'var(--space-sm)', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 13 }}>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={enrichMore} disabled={enriching || active}>
+                            <Search size={14} /> HP・メールを探す
+                        </button>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>
+                            未調査 {stats.unenriched.toLocaleString()}件（求人数の多い企業から1回{150}件ずつ調査）
+                        </span>
+                    </div>
+                )}
 
                 {runs.length > 0 && (
                     <details style={{ marginTop: 'var(--space-md)' }} open={active}>
@@ -403,12 +438,12 @@ export default function LeadCollectorTab() {
                             {runs.slice(0, 8).map(r => (
                                 <div key={r.id} style={{ fontSize: 12, display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
                                     <span className={`badge ${RUN_STATUS[r.status]?.cls || ''}`}>{RUN_STATUS[r.status]?.label || r.status}</span>
-                                    <b>{r.keyword} / {r.area}</b>
+                                    <b>{runLabel(r)}</b>
                                     <span style={{ color: 'var(--color-text-secondary)' }}>
                                         {new Date(r.created_at).toLocaleString('ja-JP')}
-                                        {r.status === 'done' && ` ・ ${r.found_count}件（新規${r.new_count}）`}
+                                        {r.status === 'done' && ` ・ ${r.found_count}件`}{r.status === 'done' && !(r.sources || []).includes('enrich') && `（新規${r.new_count}）`}
                                     </span>
-                                    {r.status === 'done' && (
+                                    {r.status === 'done' && !(r.sources || []).includes('enrich') && (
                                         <button type="button" className="btn btn-secondary" style={{ padding: '1px 8px', fontSize: 11 }}
                                             onClick={() => setFilter('run_id', String(r.id))}>この結果を表示</button>
                                     )}
@@ -422,9 +457,10 @@ export default function LeadCollectorTab() {
 
             {/* 統計 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
-                <StatCard label="収集済み企業" value={stats?.total} active={!filters.website && !filters.sns} onClick={() => { setFilter('website', ''); setFilter('sns', ''); }} />
+                <StatCard label="収集済み企業" value={stats?.total} active={!filters.website && !filters.sns && !filters.email} onClick={() => { setFilter('website', ''); setFilter('sns', ''); setFilter('email', ''); }} />
                 <StatCard label="ホームページなし" value={stats?.no_website} color="#dc2626" active={filters.website === 'no' && !filters.sns} onClick={() => { setFilter('website', 'no'); setFilter('sns', ''); }} />
                 <StatCard label="SNSあり" value={stats?.with_sns} color="#e1306c" active={filters.sns === 'any' && !filters.website} onClick={() => { setFilter('sns', 'any'); setFilter('website', ''); }} />
+                <StatCard label="メールあり" value={stats?.with_email} color="#0891b2" active={filters.email === 'yes'} onClick={() => setFilter('email', filters.email === 'yes' ? '' : 'yes')} />
                 <StatCard label="HPなし・SNSのみ" value={stats?.no_website_with_sns} color="#8b5cf6" active={filters.website === 'no' && filters.sns === 'any'} onClick={() => { setFilter('website', 'no'); setFilter('sns', 'any'); }} />
                 <StatCard label="未対応" value={stats?.by_status?.new ?? 0} color={STATUS.new.color} active={filters.status === 'new'} onClick={() => setFilter('status', filters.status === 'new' ? '' : 'new')} />
             </div>
@@ -450,9 +486,18 @@ export default function LeadCollectorTab() {
                     <option value="none">SNSなし</option>
                     {SNS.map(s => <option key={s.key} value={s.key}>{s.name}あり</option>)}
                 </select>
+                <select className="form-select" value={filters.email} onChange={e => setFilter('email', e.target.value)} style={{ width: 'auto', padding: '6px 10px', fontSize: 13 }}>
+                    <option value="">メール: すべて</option>
+                    <option value="yes">メールあり</option>
+                    <option value="no">メールなし</option>
+                </select>
+                <select className="form-select" value={filters.source} onChange={e => setFilter('source', e.target.value)} style={{ width: 'auto', padding: '6px 10px', fontSize: 13 }}>
+                    <option value="">取得元: すべて</option>
+                    {Object.entries(SOURCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
                 <select className="form-select" value={filters.run_id} onChange={e => setFilter('run_id', e.target.value)} style={{ width: 'auto', padding: '6px 10px', fontSize: 13 }}>
                     <option value="">全収集結果</option>
-                    {runOptions.map(r => <option key={r.id} value={r.id}>{r.keyword} / {r.area}</option>)}
+                    {runOptions.map(r => <option key={r.id} value={r.id}>{runLabel(r)}</option>)}
                 </select>
                 <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
                     {[['both', '地図＋一覧'], ['list', '一覧'], ['map', '地図']].map(([k, label]) => (
@@ -478,14 +523,15 @@ export default function LeadCollectorTab() {
                                         <th>会社名</th>
                                         <th>住所・電話</th>
                                         <th>HP</th>
+                                        <th>メール</th>
                                         <th>SNS</th>
                                         <th>ステータス</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {!list && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>読み込み中…</td></tr>}
+                                    {!list && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>読み込み中…</td></tr>}
                                     {list && list.data.length === 0 && (
-                                        <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
+                                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
                                             企業がありません。上のフォームで業種とエリアを入れて「収集」を押してください。
                                         </td></tr>
                                     )}
@@ -494,7 +540,7 @@ export default function LeadCollectorTab() {
                                             <td style={{ minWidth: 160 }}>
                                                 <div style={{ fontWeight: 600 }}>{l.name}</div>
                                                 <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                                                    {l.category}{l.rating ? ` ・ ★${l.rating}` : ''}
+                                                    {l.category}{l.rating ? ` ・ ★${l.rating}` : ''}{l.job_count ? ` ・ 求人${l.job_count}件` : ''}
                                                 </div>
                                             </td>
                                             <td style={{ minWidth: 180 }}>
@@ -504,7 +550,14 @@ export default function LeadCollectorTab() {
                                             <td>
                                                 {l.website
                                                     ? <a href={l.website} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title={l.website}><ExternalLink size={14} /></a>
-                                                    : <span className="badge badge-error" style={{ fontSize: 10, whiteSpace: 'nowrap' }}>なし</span>}
+                                                    : l.enriched_at
+                                                        ? <span className="badge badge-error" style={{ fontSize: 10, whiteSpace: 'nowrap' }}>なし</span>
+                                                        : <span style={{ fontSize: 11, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>未調査</span>}
+                                            </td>
+                                            <td style={{ fontSize: 12, maxWidth: 180, wordBreak: 'break-all' }}>
+                                                {l.email
+                                                    ? <a href={`mailto:${l.email}`} onClick={e => e.stopPropagation()}>{l.email}</a>
+                                                    : <span style={{ color: 'var(--color-text-muted)' }}>{l.enriched_at ? '—' : '未調査'}</span>}
                                             </td>
                                             <td><SnsLinks lead={l} /></td>
                                             <td onClick={e => e.stopPropagation()}>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\LeadCollectionRun;
 use App\Models\LeadCompany;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -13,13 +14,15 @@ use Illuminate\Support\Str;
  * 営業リスト（見込み企業）の自動収集。
  *
  * 収集元:
+ *  0. ハローワーク求人（jobs テーブルに取り込み済み）の事業所 … 企業数が最も多い。外部アクセス不要
  *  1. Google Places API (Text Search)  … Googleマップ掲載の店舗・企業。ホームページ未保有の企業も取得できる
  *  2. OpenStreetMap (Nominatim + Overpass) … APIキー不要のフォールバック。SNSタグ(contact:instagram 等)も保有
  * 補完:
- *  3. 公式サイトのトップページを取得し、SNSリンク・メールアドレスを抽出
- *  4. ホームページが無い企業は Brave Search API（任意）で SNS アカウントを検索
+ *  3. ホームページが無い企業は Brave Search API（任意）で 公式サイト・SNS を検索
+ *  4. 公式サイトのトップ＋お問い合わせ/会社概要ページから メールアドレス・SNSリンクを抽出
+ *  5. 住所から緯度経度（国土地理院API）を求めて地図に表示
  *
- * Googleマップの画面スクレイピングは利用規約違反のため行わず、公式APIのみを使う。
+ * Googleマップ・Indeed 等の画面スクレイピングは利用規約違反のため行わず、公式APIのみを使う。
  */
 class LeadCollectorService
 {
@@ -27,9 +30,6 @@ class LeadCollectorService
 
     /** 1回の収集でサイト巡回する最大件数 */
     private const MAX_SITE_FETCH = 120;
-
-    /** 1回の収集で SNS 検索する最大件数（Brave の無料枠は月2,000クエリ） */
-    private const MAX_SNS_SEARCH = 40;
 
     /** 日本語キーワード → OSM タグ（名前に業種名が含まれない店舗も拾うため） */
     private const OSM_TAG_MAP = [
@@ -81,17 +81,22 @@ class LeadCollectorService
 
     private array $log = [];
 
+    /** 1回の調査で処理する最大件数（続きは「HP・メールを探す」ボタンで） */
+    public const ENRICH_BATCH = 150;
+
     public static function availableSources(): array
     {
         return [
-            'google' => (bool) config('services.lead_collector.google_places_key'),
-            'osm'    => true,
+            'hellowork'  => true,
+            'google'     => (bool) config('services.lead_collector.google_places_key'),
+            'osm'        => true,
             'sns_search' => (bool) config('services.lead_collector.brave_search_key'),
         ];
     }
 
     /**
      * 収集のメイン処理（キュージョブから呼ばれる）
+     *   sources に 'enrich' のみ → 未調査企業の HP/メール/SNS 調査の続きだけ行う
      */
     public function run(LeadCollectionRun $run): void
     {
@@ -99,26 +104,40 @@ class LeadCollectorService
 
         $sources = $run->sources ?: ['google', 'osm'];
         $available = self::availableSources();
-        $places = [];
+        $ids = [];
+        $new = 0;
+        $updated = 0;
 
-        if (in_array('google', $sources, true)) {
+        if ($sources === ['enrich']) {
+            $targets = LeadCompany::whereNull('enriched_at')
+                ->orderByRaw('job_count is null')->orderByDesc('job_count')->orderBy('id')
+                ->limit(self::ENRICH_BATCH)->get();
+            $this->safely('HP・メール・SNS調査', function () use ($targets) { $this->enrich($targets); return []; });
+            $remain = LeadCompany::whereNull('enriched_at')->count();
+            $this->log[] = sprintf('調査 %d件 / 残り未調査 %d件', $targets->count(), $remain);
+            $run->update(['found_count' => $targets->count(), 'status' => 'done', 'finished_at' => now(), 'message' => implode("\n", $this->log)]);
+            return;
+        }
+
+        // ハローワーク求人（DB内）から事業所を取り込み
+        if (in_array('hellowork', $sources, true)) {
+            $r = $this->safely('ハローワーク求人', fn () => [$this->importFromHellowork($run)]);
+            if ($r) { $new += $r[0]['new']; $updated += $r[0]['updated']; }
+        }
+
+        $places = [];
+        if (in_array('google', $sources, true) && $run->keyword !== '') {
             if ($available['google']) {
                 $places = array_merge($places, $this->safely('Googleマップ', fn () => $this->fetchGooglePlaces($run->keyword, $run->area)));
             } else {
                 $this->log[] = 'Googleマップ: APIキー(GOOGLE_PLACES_API_KEY)未設定のためスキップ';
             }
         }
-        if (in_array('osm', $sources, true)) {
+        if (in_array('osm', $sources, true) && $run->keyword !== '' && $run->area !== '') {
             $places = array_merge($places, $this->safely('OpenStreetMap', fn () => $this->fetchOsm($run->keyword, $run->area)));
         }
-
         $places = $this->dedupe($places);
-        $run->update(['found_count' => count($places)]);
 
-        // 保存
-        $new = 0;
-        $updated = 0;
-        $ids = [];
         foreach ($places as $p) {
             $lead = LeadCompany::firstOrNew(['source' => $p['source'], 'external_id' => $p['external_id']]);
             $isNew = !$lead->exists;
@@ -127,6 +146,7 @@ class LeadCollectorService
                 if ($v === null || $v === '') continue;
                 $lead->{$k} = $v;
             }
+            if (!empty($p['website']) && empty($lead->website_found_by)) $lead->website_found_by = $p['source'];
             $lead->has_website = !empty($lead->website);
             $lead->search_keyword = $run->keyword;
             $lead->search_area = $run->area;
@@ -135,15 +155,20 @@ class LeadCollectorService
             $ids[] = $lead->id;
             $isNew ? $new++ : $updated++;
         }
-        $run->update(['new_count' => $new, 'updated_count' => $updated]);
 
-        // 公式サイト・SNS 補完
-        $this->safely('SNS補完', function () use ($ids) {
-            $this->enrich(LeadCompany::whereIn('id', $ids)->get());
-            return [];
-        });
+        $total = LeadCompany::where('last_run_id', $run->id)->count();
+        $run->update(['found_count' => $total, 'new_count' => $new, 'updated_count' => $updated]);
 
-        $this->log[] = sprintf('取得 %d件（新規 %d / 更新 %d）', count($places), $new, $updated);
+        // 公式サイト・メール・SNS 補完（求人数の多い企業から最大 ENRICH_BATCH 件）
+        $targets = LeadCompany::where('last_run_id', $run->id)
+            ->where(fn ($q) => $q->whereNull('enriched_at')->orWhereIn('id', $ids))
+            ->orderByRaw('job_count is null')->orderByDesc('job_count')->orderBy('id')
+            ->limit(self::ENRICH_BATCH)->get();
+        $this->safely('HP・メール・SNS調査', function () use ($targets) { $this->enrich($targets); return []; });
+
+        $remain = LeadCompany::where('last_run_id', $run->id)->whereNull('enriched_at')->count();
+        $this->log[] = sprintf('対象 %d件（新規 %d / 更新 %d）', $total, $new, $updated);
+        if ($remain) $this->log[] = "未調査が {$remain}件 残っています。「HP・メールを探す」で続きを調査できます";
         $run->update([
             'status'      => 'done',
             'finished_at' => now(),
@@ -151,9 +176,77 @@ class LeadCollectorService
         ]);
     }
 
+    /* =========================================================
+       ハローワーク求人（jobs テーブル）から事業所を取り込み
+       ========================================================= */
+    private function importFromHellowork(LeadCollectionRun $run): array
+    {
+        $q = DB::table('jobs')
+            ->where('source', 'hellowork')
+            ->whereNotNull('employer_name')->where('employer_name', '<>', '')
+            ->select([
+                'employer_name', 'prefecture', 'city',
+                DB::raw('max(office_address) as office_address'),
+                DB::raw('max(homepage_url) as homepage_url'),
+                DB::raw('max(industry) as industry'),
+                DB::raw('count(*) as job_count'),
+            ])
+            ->groupBy('employer_name', 'prefecture', 'city');
+
+        if ($run->keyword !== '') {
+            $like = '%' . addcslashes($run->keyword, '%_\\') . '%';
+            $q->where(fn ($w) => $w->where('employer_name', 'like', $like)->orWhere('industry', 'like', $like)->orWhere('title', 'like', $like));
+        }
+        if ($run->area !== '') {
+            $like = '%' . addcslashes($run->area, '%_\\') . '%';
+            $q->where(fn ($w) => $w->where('prefecture', 'like', $like)->orWhere('city', 'like', $like)->orWhere('office_address', 'like', $like));
+        }
+
+        $new = 0;
+        $updated = 0;
+        $rows = [];
+        $flush = function () use (&$rows, &$new, &$updated, $run) {
+            if (!$rows) return;
+            $existing = LeadCompany::where('source', 'hellowork')
+                ->whereIn('external_id', array_column($rows, 'external_id'))
+                ->pluck('external_id')->flip();
+            $now = now();
+            foreach ($rows as &$r) {
+                isset($existing[$r['external_id']]) ? $updated++ : $new++;
+                $r += ['status' => 'new', 'last_run_id' => $run->id, 'search_keyword' => $run->keyword,
+                    'search_area' => $run->area, 'created_at' => $now, 'updated_at' => $now];
+            }
+            unset($r);
+            // 既存企業はステータス・メモ・調査済みのHP等を保持し、求人数と取り込み回のみ更新
+            LeadCompany::upsert($rows, ['source', 'external_id'], ['job_count', 'category', 'last_run_id', 'search_keyword', 'search_area', 'updated_at']);
+            $rows = [];
+        };
+
+        foreach ($q->orderBy('employer_name')->cursor() as $j) {
+            $name = trim($j->employer_name);
+            $website = $this->normalizeWebsite($j->homepage_url);
+            $rows[] = [
+                'source'           => 'hellowork',
+                'external_id'      => 'hw:' . md5($this->normalizeName($name) . '|' . $j->prefecture . '|' . $j->city),
+                'name'             => Str::limit($name, 250, ''),
+                'category'         => $j->industry ? Str::limit($j->industry, 95, '') : null,
+                'address'          => $j->office_address ?: trim(($j->prefecture ?? '') . ($j->city ?? '')) ?: null,
+                'website'          => $website,
+                'has_website'      => (bool) $website,
+                'website_found_by' => $website ? 'hellowork' : null,
+                'job_count'        => (int) $j->job_count,
+            ];
+            if (count($rows) >= 500) $flush();
+        }
+        $flush();
+
+        $this->log[] = sprintf('ハローワーク求人: %d社（新規 %d / 更新 %d）', $new + $updated, $new, $updated);
+        return ['new' => $new, 'updated' => $updated];
+    }
+
     public function enrich(iterable $leads): void
     {
-        $toFetch = [];
+        $leads = collect($leads);
         $toSearch = [];
         foreach ($leads as $lead) {
             // Google が「ウェブサイト」として Instagram 等を登録しているケースを SNS に振り分け
@@ -162,23 +255,31 @@ class LeadCollectorService
                 if (empty($lead->{$field})) $lead->{$field} = $url;
                 $lead->website = null;
                 $lead->has_website = false;
-                $lead->save();
+                $lead->website_found_by = null;
+            } elseif ($lead->website) {
+                $lead->website = $this->normalizeWebsite($lead->website);
+                $lead->has_website = (bool) $lead->website;
             }
+            if ($lead->isDirty()) $lead->save();
 
-            if ($lead->website) {
-                $toFetch[] = $lead;
-            } elseif (!$this->hasAnySns($lead)) {
-                $toSearch[] = $lead;
-            }
+            if (!$lead->website) $toSearch[] = $lead;
         }
 
-        $this->enrichFromWebsites(array_slice($toFetch, 0, self::MAX_SITE_FETCH));
-
+        // 1) HPが無い企業 → Web検索で公式サイト・SNSを探す
         if (config('services.lead_collector.brave_search_key')) {
-            $this->enrichFromSearch(array_slice($toSearch, 0, self::MAX_SNS_SEARCH));
+            $this->enrichFromSearch(array_slice($toSearch, 0, (int) config('services.lead_collector.search_limit', 50)));
         } elseif ($toSearch) {
-            $this->log[] = sprintf('ホームページ無し %d件: SNS検索APIキー(BRAVE_SEARCH_API_KEY)未設定のため SNS 検索をスキップ', count($toSearch));
+            $this->log[] = sprintf('ホームページ無し %d件: 検索APIキー(BRAVE_SEARCH_API_KEY)未設定のため HP・SNS 検索をスキップ', count($toSearch));
         }
+
+        // 2) HPがある企業（検索で見つかった分も含む）→ サイトからメール・SNS を抽出
+        $this->enrichFromWebsites($leads->filter(fn ($l) => $l->website)->take(self::MAX_SITE_FETCH)->values()->all());
+
+        // 3) 位置情報が無い企業 → 住所から緯度経度（地図表示用）
+        $this->geocode($leads->filter(fn ($l) => $l->lat === null && $l->address)->take(self::ENRICH_BATCH)->values()->all());
+
+        // 調査済みにする（見つからなかった企業も再調査の対象から外す）
+        LeadCompany::whereIn('id', $leads->pluck('id'))->whereNull('enriched_at')->update(['enriched_at' => now()]);
     }
 
     /* =========================================================
@@ -346,80 +447,233 @@ class LeadCollectorService
     }
 
     /* =========================================================
-       公式サイトから SNS / メール抽出
+       公式サイトから メール / SNS 抽出
+       トップページで見つからなければ「お問い合わせ」「会社概要」ページも見る
        ========================================================= */
     private function enrichFromWebsites(array $leads): void
     {
-        $count = 0;
+        $ok = 0;
+        $mail = 0;
         foreach (array_chunk($leads, 8) as $chunk) {
             $chunk = array_values(array_filter($chunk, fn ($l) => $this->isSafePublicUrl($l->website)));
             if (!$chunk) continue;
 
-            $responses = Http::pool(fn (Pool $pool) => array_map(
-                fn ($l) => $pool->withHeaders(['User-Agent' => self::USER_AGENT])
-                    ->withOptions(['allow_redirects' => ['max' => 3]])
-                    ->timeout(10)->get($l->website),
-                $chunk
-            ));
-
+            $pages = $this->fetchPages(array_map(fn ($l) => $l->website, $chunk));
+            $second = [];
             foreach ($chunk as $i => $lead) {
-                $res = $responses[$i] ?? null;
-                if (!$res instanceof \Illuminate\Http\Client\Response || !$res->successful()) continue;
-                $html = substr($res->body(), 0, 2_000_000);
-                $found = $this->extractSnsLinks($html);
-                foreach ($found as $field => $url) {
-                    if (empty($lead->{$field})) $lead->{$field} = $url;
+                $html = $pages[$i] ?? null;
+                if ($html === null) continue;
+                $ok++;
+                $this->applyPage($lead, $html);
+                if (empty($lead->email)) {
+                    foreach ($this->contactLinks($html, $lead->website) as $u) $second[] = [$lead, $u];
                 }
-                if (empty($lead->email) && ($email = $this->extractEmail($html))) {
-                    $lead->email = $email;
+            }
+
+            // 2段目: お問い合わせ・会社概要ページ
+            if ($second) {
+                $second = array_values(array_filter($second, fn ($x) => $this->isSafePublicUrl($x[1])));
+                $pages2 = $this->fetchPages(array_column($second, 1));
+                foreach ($second as $i => [$lead, $u]) {
+                    if (!empty($lead->email) || ($pages2[$i] ?? null) === null) continue;
+                    $this->applyPage($lead, $pages2[$i]);
                 }
+            }
+
+            foreach ($chunk as $lead) {
+                if (!empty($lead->email)) $mail++;
                 $lead->enriched_at = now();
                 $lead->save();
-                $count++;
             }
         }
-        if ($leads) $this->log[] = "公式サイト巡回: {$count}/" . count($leads) . '件';
+        if ($leads) $this->log[] = "公式サイト巡回: {$ok}/" . count($leads) . "件を取得（メール判明 {$mail}件）";
+    }
+
+    /** 複数URLを並列取得し、成功したものだけ HTML を返す（インデックス維持） */
+    private function fetchPages(array $urls): array
+    {
+        if (!$urls) return [];
+        $responses = Http::pool(fn (Pool $pool) => array_map(
+            fn ($u) => $pool->withHeaders(['User-Agent' => self::USER_AGENT, 'Accept-Language' => 'ja'])
+                ->withOptions(['allow_redirects' => ['max' => 3]])
+                ->timeout(10)->get($u),
+            $urls
+        ));
+        $out = [];
+        foreach ($urls as $i => $u) {
+            $res = $responses[$i] ?? null;
+            if ($res instanceof \Illuminate\Http\Client\Response && $res->successful()) {
+                $out[$i] = $this->toUtf8(substr($res->body(), 0, 2_000_000), $res->header('Content-Type'));
+            }
+        }
+        return $out;
+    }
+
+    private function applyPage(LeadCompany $lead, string $html): void
+    {
+        foreach ($this->extractSnsLinks($html) as $field => $url) {
+            if (empty($lead->{$field})) $lead->{$field} = $url;
+        }
+        if (empty($lead->email) && ($email = $this->extractEmail($html, parse_url($lead->website, PHP_URL_HOST)))) {
+            $lead->email = $email;
+        }
+    }
+
+    /** 同一ドメイン内の「お問い合わせ」「会社概要」系リンクを最大2件 */
+    private function contactLinks(string $html, string $base): array
+    {
+        $baseHost = preg_replace('/^www\./', '', strtolower((string) parse_url($base, PHP_URL_HOST)));
+        if (!preg_match_all('#<a\s[^>]*href=["\']([^"\'\#]+)["\'][^>]*>(.*?)</a>#is', $html, $m, PREG_SET_ORDER)) return [];
+        $hits = [];
+        foreach ($m as [, $href, $text]) {
+            $text = strip_tags($text);
+            if (!preg_match('/(contact|inquiry|toiawase|otoiawase|company|about|gaiyo|outline|profile|access|お問い?合わせ|会社概要|会社案内|企業情報|事業所概要|アクセス)/iu', $href . ' ' . $text)) continue;
+            $abs = $this->absUrl($href, $base);
+            if (!$abs) continue;
+            $host = preg_replace('/^www\./', '', strtolower((string) parse_url($abs, PHP_URL_HOST)));
+            if ($host !== $baseHost) continue;
+            $hits[$abs] = true;
+            if (count($hits) >= 2) break;
+        }
+        return array_keys($hits);
+    }
+
+    private function absUrl(string $href, string $base): ?string
+    {
+        $href = html_entity_decode(trim($href), ENT_QUOTES | ENT_HTML5);
+        if (preg_match('#^(mailto|tel|javascript):#i', $href)) return null;
+        if (preg_match('#^https?://#i', $href)) return $href;
+        $b = parse_url($base);
+        if (empty($b['host'])) return null;
+        $root = ($b['scheme'] ?? 'https') . '://' . $b['host'] . (isset($b['port']) ? ':' . $b['port'] : '');
+        if (str_starts_with($href, '//')) return ($b['scheme'] ?? 'https') . ':' . $href;
+        if (str_starts_with($href, '/')) return $root . $href;
+        $dir = preg_replace('#/[^/]*$#', '/', $b['path'] ?? '/');
+        return $root . ($dir ?: '/') . $href;
+    }
+
+    private function toUtf8(string $html, ?string $contentType): string
+    {
+        $charset = null;
+        if ($contentType && preg_match('/charset=([\w\-]+)/i', $contentType, $m)) $charset = $m[1];
+        elseif (preg_match('/<meta[^>]+charset=["\']?([\w\-]+)/i', $html, $m)) $charset = $m[1];
+        $charset = strtoupper((string) $charset);
+        if (in_array($charset, ['SHIFT_JIS', 'SHIFT-JIS', 'SJIS', 'X-SJIS', 'WINDOWS-31J', 'CP932'], true)) return mb_convert_encoding($html, 'UTF-8', 'SJIS-win');
+        if ($charset === 'EUC-JP') return mb_convert_encoding($html, 'UTF-8', 'eucJP-win');
+        return $html;
     }
 
     /* =========================================================
-       ホームページ無し企業の SNS を検索（Brave Search API）
+       ホームページ無し企業の 公式サイト / SNS を検索（Brave Search API）
        ========================================================= */
     private function enrichFromSearch(array $leads): void
     {
         $key = config('services.lead_collector.brave_search_key');
-        $hit = 0;
+        $web = 0;
+        $sns = 0;
         foreach ($leads as $lead) {
             $city = $this->cityFromAddress($lead->address);
-            $q = "\"{$lead->name}\" {$city} (instagram OR facebook OR twitter OR x.com)";
             try {
                 $res = Http::withHeaders(['X-Subscription-Token' => $key, 'Accept' => 'application/json'])
                     ->timeout(15)
                     ->get('https://api.search.brave.com/res/v1/web/search', [
-                        'q' => $q, 'count' => 10, 'country' => 'JP', 'search_lang' => 'jp',
+                        'q' => trim("\"{$lead->name}\" {$city}"), 'count' => 10, 'country' => 'JP', 'search_lang' => 'jp',
                     ]);
                 if ($res->status() === 429) { sleep(2); continue; }
                 if (!$res->successful()) continue;
 
-                $nameKey = $this->normalizeName($lead->name);
-                $changed = false;
-                foreach ($res->json('web.results', []) as $r) {
-                    $sns = $this->classifySnsUrl($r['url'] ?? '');
-                    if (!$sns) continue;
-                    // 検索結果のタイトル/説明に社名が含まれるものだけ採用（誤マッチ防止）
-                    $text = $this->normalizeName(($r['title'] ?? '') . ($r['description'] ?? ''));
-                    if ($nameKey === '' || mb_strpos($text, $nameKey) === false) continue;
-                    [$field, $url] = $sns;
-                    if (empty($lead->{$field})) { $lead->{$field} = $url; $changed = true; }
-                }
-                $lead->enriched_at = now();
+                [$foundWeb, $foundSns] = $this->pickFromSearchResults($lead, $res->json('web.results', []));
+                if ($foundWeb) $web++;
+                if ($foundSns) $sns++;
                 $lead->save();
-                if ($changed) $hit++;
             } catch (\Throwable $e) {
-                Log::info('lead sns search failed', ['lead' => $lead->id, 'error' => $e->getMessage()]);
+                Log::info('lead search failed', ['lead' => $lead->id, 'error' => $e->getMessage()]);
             }
             usleep(1_100_000); // 無料プランは 1 req/sec
         }
-        if ($leads) $this->log[] = "SNS検索（HP無し企業）: {$hit}/" . count($leads) . '件で発見';
+        if ($leads) $this->log[] = "Web検索（HP無し " . count($leads) . "件）: 公式サイト発見 {$web}件 / SNS発見 {$sns}件";
+    }
+
+    /**
+     * 検索結果から 公式サイト と SNS を選ぶ。誤マッチ防止のためタイトル/説明に社名を含むものだけ採用し、
+     * 求人サイト・口コミサイト・企業DB などのポータルは公式サイトとみなさない。
+     */
+    public function pickFromSearchResults(LeadCompany $lead, array $results): array
+    {
+        $nameKey = $this->normalizeName($lead->name);
+        if ($nameKey === '') return [false, false];
+        $foundWeb = false;
+        $foundSns = false;
+        foreach ($results as $r) {
+            $url = $r['url'] ?? '';
+            $text = $this->normalizeName(strip_tags(($r['title'] ?? '') . ($r['description'] ?? '')));
+            if (mb_strpos($text, $nameKey) === false) continue;
+
+            if ($s = $this->classifySnsUrl($url)) {
+                [$field, $u] = $s;
+                if (empty($lead->{$field})) { $lead->{$field} = $u; $foundSns = true; }
+                continue;
+            }
+            if (!$lead->website && !$this->isPortal($url)) {
+                $p = parse_url($url);
+                $lead->website = ($p['scheme'] ?? 'https') . '://' . $p['host'] . '/';
+                $lead->has_website = true;
+                $lead->website_found_by = 'search';
+                $foundWeb = true;
+            }
+        }
+        return [$foundWeb, $foundSns];
+    }
+
+    /** 求人・口コミ・企業DB・地図などのポータル/まとめサイト */
+    private function isPortal(string $url): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if ($host === '') return true;
+        $portals = [
+            'indeed.com', 'hellowork.mhlw.go.jp', 'mhlw.go.jp', 'townwork.net', 'baitoru.com', 'mynavi.jp', 'rikunabi.com',
+            'en-japan.com', 'doda.jp', 'kyujinbox.com', 'stanby.com', 'careerjet.jp', 'jobtalk.jp', 'jobs.tsunagaru',
+            'jobmedley.com', 'jobposting', 'airwork.net', 'engage-job', 'en-gage.net', 'wantedly.com', 'green-japan.com',
+            'openwork.jp', 'vorkers.com', 'jobhouse.jp', 'hatarako.net', 'e-aidem.com', 'an-career', 'jobcatalog',
+            'shigoto-in', 'ekiten.jp', 'hotpepper.jp', 'tabelog.com', 'gnavi.co.jp', 'retty.me', 'mapion.co.jp',
+            'navitime.co.jp', 'itp.ne.jp', 'goo.ne.jp', 'yahoo.co.jp', 'google.com', 'google.co.jp', 'houjin.info',
+            'houjin-bangou.nta.go.jp', 'info.gbiz.go.jp', 'catr.jp', 'baseconnect.in', 'salesnow.jp', 'musubu.in',
+            'wikipedia.org', 'nikkei.com', 'prtimes.jp', 'amazon.co.jp', 'rakuten.co.jp', 'jalan.net', 'minkou.jp',
+            'caloo.jp', 'byoinnavi.jp', 'beauty.hotpepper.jp', 'homes.co.jp', 'suumo.jp', 'kaigo', 'minnanokaigo.com',
+            'youtube.com', 'note.com', 'ameblo.jp', 'linkedin.com', 'tiktok.com', 'line.me', 'lin.ee', 'job-medley.com',
+        ];
+        foreach ($portals as $p) {
+            if (str_contains($host, $p)) return true;
+        }
+        return false;
+    }
+
+    /* =========================================================
+       住所 → 緯度経度（国土地理院 住所検索API・キー不要）
+       ========================================================= */
+    private function geocode(array $leads): void
+    {
+        $ok = 0;
+        foreach ($leads as $lead) {
+            try {
+                $res = Http::withHeaders(['User-Agent' => self::USER_AGENT])->timeout(10)
+                    ->get('https://msearch.gsi.go.jp/address-search/AddressSearch', ['q' => $lead->address]);
+                $c = $res->json('0.geometry.coordinates');
+                if (is_array($c) && count($c) === 2) {
+                    $lead->lng = (float) $c[0];
+                    $lead->lat = (float) $c[1];
+                    if (!$lead->google_maps_url) {
+                        $lead->google_maps_url = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lead->name . ' ' . $lead->address);
+                    }
+                    $lead->save();
+                    $ok++;
+                }
+            } catch (\Throwable $e) {
+                Log::info('lead geocode failed', ['lead' => $lead->id, 'error' => $e->getMessage()]);
+            }
+            usleep(200_000);
+        }
+        if ($leads) $this->log[] = "住所→地図位置: {$ok}/" . count($leads) . '件';
     }
 
     /* =========================================================
@@ -498,15 +752,26 @@ class LeadCollectorService
         return null;
     }
 
-    public function extractEmail(string $html): ?string
+    public function extractEmail(string $html, ?string $siteHost = null): ?string
     {
-        if (preg_match_all('/mailto:([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})/i', $html, $m)) {
-            foreach ($m[1] as $email) {
-                $email = strtolower($email);
-                if (!preg_match('/(example\.|sentry|wixpress|\.png|\.jpg)/', $email)) return $email;
+        $text = html_entity_decode($html, ENT_QUOTES | ENT_HTML5);
+        $text = str_replace(['＠', '[at]', '(at)', '［at］'], '@', $text);
+        preg_match_all('/(?:mailto:)?([A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,})/i', $text, $m);
+        $cands = [];
+        foreach (array_unique(array_map('strtolower', $m[1] ?? [])) as $email) {
+            if (preg_match('/(example\.|sentry|wixpress|\.(png|jpe?g|gif|webp|svg|css|js)$|@[0-9]+x\.|domain\.com|yourdomain|xxx)/', $email)) continue;
+            $cands[] = $email;
+        }
+        if (!$cands) return null;
+        // サイトと同じドメインのアドレスを優先
+        $site = preg_replace('/^www\./', '', strtolower((string) $siteHost));
+        if ($site) {
+            foreach ($cands as $e) {
+                $d = substr(strrchr($e, '@'), 1);
+                if ($d === $site || str_ends_with($site, '.' . $d) || str_ends_with($d, '.' . $site)) return $e;
             }
         }
-        return null;
+        return $cands[0];
     }
 
     /* =========================================================
@@ -543,6 +808,17 @@ class LeadCollectorService
             if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return false;
         }
         return true;
+    }
+
+    /** "www.example.co.jp" 等を https:// 付きに。URLとして不正なら null */
+    public function normalizeWebsite(?string $url): ?string
+    {
+        $url = trim((string) $url);
+        $url = preg_replace('/^[\s　]+|[\s　]+$/u', '', $url);
+        if ($url === '' || in_array($url, ['なし', '無し', '-', '－'], true)) return null;
+        if (!preg_match('#^https?://#i', $url)) $url = 'http://' . ltrim($url, '/');
+        $url = mb_convert_kana($url, 'as');
+        return filter_var($url, FILTER_VALIDATE_URL) && str_contains((string) parse_url($url, PHP_URL_HOST), '.') ? $url : null;
     }
 
     private function overpassRegex(string $s): string

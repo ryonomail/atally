@@ -9,6 +9,7 @@ use App\Models\LeadCompany;
 use App\Services\LeadCollectorService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,7 @@ class LeadController extends Controller
 {
     public function index(Request $request)
     {
-        $sort = in_array($request->input('sort'), ['name', 'rating', 'review_count', 'created_at', 'updated_at'], true)
+        $sort = in_array($request->input('sort'), ['name', 'rating', 'review_count', 'job_count', 'created_at', 'updated_at'], true)
             ? $request->input('sort') : 'created_at';
         $dir = $request->input('dir') === 'asc' ? 'asc' : 'desc';
 
@@ -37,7 +38,7 @@ class LeadController extends Controller
             ->whereNotNull('lat')->whereNotNull('lng')
             ->orderByDesc('id')
             ->limit(3000)
-            ->get(['id', 'name', 'category', 'address', 'lat', 'lng', 'status', 'has_website',
+            ->get(['id', 'name', 'category', 'address', 'lat', 'lng', 'status', 'has_website', 'email', 'job_count',
                 'instagram', 'twitter', 'facebook', 'tiktok', 'youtube', 'line']);
 
         return response()->json($points);
@@ -53,10 +54,17 @@ class LeadController extends Controller
 
         return response()->json([
             'total'      => LeadCompany::count(),
-            'no_website' => LeadCompany::where('has_website', false)->count(),
+            // HPなしは「調査済みで見つからなかった」企業のみ（未調査は含めない）
+            'no_website' => LeadCompany::where('has_website', false)->whereNotNull('enriched_at')->count(),
             'with_sns'   => LeadCompany::where($snsAny)->count(),
-            'no_website_with_sns' => LeadCompany::where('has_website', false)->where($snsAny)->count(),
+            'no_website_with_sns' => LeadCompany::where('has_website', false)->whereNotNull('enriched_at')->where($snsAny)->count(),
+            'with_email' => LeadCompany::whereNotNull('email')->count(),
+            'unenriched' => LeadCompany::whereNull('enriched_at')->count(),
             'by_status'  => LeadCompany::select('status', DB::raw('count(*) as c'))->groupBy('status')->pluck('c', 'status'),
+            'by_source'  => LeadCompany::select('source', DB::raw('count(*) as c'))->groupBy('source')->pluck('c', 'source'),
+            // 取り込み可能なハローワーク求人の事業所数（重いので10分キャッシュ）
+            'hellowork_employers' => Cache::remember('leads:hw_employers', 600, fn () => (int) DB::table('jobs')
+                ->where('source', 'hellowork')->whereNotNull('employer_name')->distinct()->count('employer_name')),
             'sources'    => LeadCollectorService::availableSources(),
         ]);
     }
@@ -70,35 +78,66 @@ class LeadController extends Controller
     public function collect(Request $request)
     {
         $validated = $request->validate([
-            'keyword'   => ['required', 'string', 'max:100'],
-            'area'      => ['required', 'string', 'max:100'],
-            'sources'   => ['nullable', 'array'],
-            'sources.*' => ['in:google,osm'],
+            'keyword'   => ['nullable', 'string', 'max:100'],
+            'area'      => ['nullable', 'string', 'max:100'],
+            'sources'   => ['required', 'array', 'min:1'],
+            'sources.*' => ['in:hellowork,google,osm'],
         ]);
+        $keyword = trim((string) ($validated['keyword'] ?? ''));
+        $area = trim((string) ($validated['area'] ?? ''));
+        $external = array_intersect($validated['sources'], ['google', 'osm']);
+        if ($external && ($keyword === '' || $area === '')) {
+            return response()->json(['message' => 'Googleマップ / OpenStreetMap から収集するには業種とエリアの両方を入力してください。'], 422);
+        }
 
-        $running = LeadCollectionRun::whereIn('status', ['queued', 'running'])
-            ->where('created_at', '>', now()->subMinutes(20))
-            ->exists();
-        if ($running) {
+        if ($this->isRunning()) {
             return response()->json(['message' => '別の収集が実行中です。完了までお待ちください。'], 409);
         }
 
         $run = LeadCollectionRun::create([
-            'keyword'  => trim($validated['keyword']),
-            'area'     => trim($validated['area']),
-            'sources'  => $validated['sources'] ?? ['google', 'osm'],
+            'keyword'  => $keyword,
+            'area'     => $area,
+            'sources'  => array_values($validated['sources']),
             'status'   => 'queued',
             'admin_id' => auth()->id(),
         ]);
 
         CollectLeadsJob::dispatch($run->id);
 
-        AdminAuditLog::log(auth()->id(), 'lead.collect', 'lead_collection_run', $run->id, "{$run->keyword} / {$run->area}");
+        AdminAuditLog::log(auth()->id(), 'lead.collect', 'lead_collection_run', $run->id, implode(',', $run->sources) . " {$keyword} / {$area}");
 
         return response()->json([
-            'message' => '収集を開始しました。完了まで1〜3分ほどかかります。',
+            'message' => '収集を開始しました。HP・メールの調査も含め数分かかります。',
             'run'     => $run,
         ], 202);
+    }
+
+    /** 「HP・メールを探す」: 未調査の企業を求人数の多い順に ENRICH_BATCH 件調査 */
+    public function enrichBatch()
+    {
+        if ($this->isRunning()) {
+            return response()->json(['message' => '別の収集が実行中です。完了までお待ちください。'], 409);
+        }
+        if (!LeadCompany::whereNull('enriched_at')->exists()) {
+            return response()->json(['message' => '未調査の企業はありません。'], 422);
+        }
+
+        $run = LeadCollectionRun::create([
+            'keyword' => '', 'area' => '', 'sources' => ['enrich'], 'status' => 'queued', 'admin_id' => auth()->id(),
+        ]);
+        CollectLeadsJob::dispatch($run->id);
+
+        return response()->json([
+            'message' => sprintf('未調査の企業を最大%d件調査します。', LeadCollectorService::ENRICH_BATCH),
+            'run'     => $run,
+        ], 202);
+    }
+
+    private function isRunning(): bool
+    {
+        return LeadCollectionRun::whereIn('status', ['queued', 'running'])
+            ->where('created_at', '>', now()->subMinutes(30))
+            ->exists();
     }
 
     public function update(Request $request, LeadCompany $lead)
@@ -156,7 +195,7 @@ class LeadController extends Controller
             'name' => '会社名', 'category' => '業種', 'address' => '住所', 'phone' => '電話番号', 'email' => 'メール',
             'website' => 'ホームページ', 'instagram' => 'Instagram', 'twitter' => 'X(Twitter)', 'facebook' => 'Facebook',
             'tiktok' => 'TikTok', 'youtube' => 'YouTube', 'line' => 'LINE', 'google_maps_url' => 'Googleマップ',
-            'rating' => '評価', 'review_count' => '口コミ数', 'lat' => '緯度', 'lng' => '経度', 'status' => 'ステータス',
+            'rating' => '評価', 'review_count' => '口コミ数', 'job_count' => 'ハローワーク求人数', 'lat' => '緯度', 'lng' => '経度', 'status' => 'ステータス',
             'memo' => 'メモ', 'source' => '取得元', 'search_keyword' => '検索キーワード', 'search_area' => '検索エリア',
             'created_at' => '登録日時',
         ];
@@ -192,7 +231,7 @@ class LeadController extends Controller
             $q->where('status', $status);
         }
         if ($request->input('website') === 'yes') $q->where('has_website', true);
-        if ($request->input('website') === 'no') $q->where('has_website', false);
+        if ($request->input('website') === 'no') $q->where('has_website', false)->whereNotNull('enriched_at');
 
         $sns = $request->input('sns');
         if ($sns === 'any') {
@@ -204,6 +243,9 @@ class LeadController extends Controller
         } elseif (in_array($sns, LeadCompany::SNS_FIELDS, true)) {
             $q->whereNotNull($sns);
         }
+
+        if ($request->input('email') === 'yes') $q->whereNotNull('email');
+        if ($request->input('email') === 'no') $q->whereNull('email');
 
         if ($runId = $request->input('run_id')) $q->where('last_run_id', (int) $runId);
         if ($source = $request->input('source')) $q->where('source', $source);

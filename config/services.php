@@ -32,6 +32,8 @@ return [
         'google_places_key' => env('GOOGLE_PLACES_API_KEY'),
         // Brave Search API のキー（任意）。ホームページの無い企業の SNS アカウント検索に使用
         'brave_search_key'  => env('BRAVE_SEARCH_API_KEY'),
+        // 1回の調査で Web 検索する最大件数（Brave 無料枠は月2,000クエリ）
+        'search_limit'      => (int) env('LEAD_SEARCH_LIMIT', 50),
     ],
 
     'hellowork' => [

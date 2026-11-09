@@ -330,6 +330,7 @@ Route::middleware(['auth:sanctum', 'check.suspended'])->group(function () {
             Route::get('/leads/runs', [LeadController::class, 'runs']);
             Route::get('/leads/export', [LeadController::class, 'export']);
             Route::post('/leads/collect', [LeadController::class, 'collect'])->middleware('throttle:10,1');
+            Route::post('/leads/enrich-batch', [LeadController::class, 'enrichBatch'])->middleware('throttle:10,1');
             Route::post('/leads/bulk-delete', [LeadController::class, 'bulkDestroy']);
             Route::put('/leads/{lead}', [LeadController::class, 'update']);
             Route::post('/leads/{lead}/enrich', [LeadController::class, 'enrich'])->middleware('throttle:30,1');

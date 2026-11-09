@@ -12,7 +12,7 @@ class LeadCompany extends Model
 
     protected $fillable = [
         'source', 'external_id', 'name', 'category', 'address', 'phone', 'email',
-        'website', 'has_website', 'lat', 'lng', 'google_maps_url', 'rating', 'review_count',
+        'website', 'has_website', 'website_found_by', 'lat', 'lng', 'google_maps_url', 'rating', 'review_count', 'job_count',
         'instagram', 'twitter', 'facebook', 'tiktok', 'youtube', 'line',
         'status', 'memo', 'search_keyword', 'search_area', 'last_run_id', 'enriched_at',
     ];
@@ -25,6 +25,7 @@ class LeadCompany extends Model
             'lng'          => 'float',
             'rating'       => 'float',
             'review_count' => 'integer',
+            'job_count'    => 'integer',
             'enriched_at'  => 'datetime',
         ];
     }
