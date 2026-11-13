@@ -26,9 +26,20 @@ def code_mtime() -> float:
     return max(os.path.getmtime(os.path.join(BASE_DIR, f)) for f in os.listdir(BASE_DIR) if f.endswith(".py"))
 
 
+def maybe_auto_prtimes(last: float) -> float:
+    """PRTIMES_AUTO_MINUTES ごとに PR TIMES の新着フィードを取り込む（0 で無効）"""
+    minutes = int(os.environ.get("PRTIMES_AUTO_MINUTES", "0") or 0)
+    if minutes <= 0 or time.time() - last < minutes * 60 or collector.active_run_id():
+        return last
+    run_id = collector.create_run(os.environ.get("PRTIMES_AUTO_KEYWORD", ""), "", ["prtimes"])
+    print(f"auto prtimes run {run_id}", flush=True)
+    return time.time()
+
+
 def main() -> None:
     init_db()
     started = code_mtime()
+    last_prtimes = 0.0
     print("worker started", flush=True)
     while True:
         if code_mtime() != started:
@@ -40,6 +51,7 @@ def main() -> None:
                 print(f"mail {r['status']}: {r.get('to')} ({r.get('campaign')}) {r.get('error') or ''}", flush=True)
         except Exception as e:  # noqa: BLE001
             print(f"mail error: {e}", flush=True)
+        last_prtimes = maybe_auto_prtimes(last_prtimes)
         run_id = collector.active_run_id()
         if run_id:
             run = collector.step(run_id)

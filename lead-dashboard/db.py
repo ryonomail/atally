@@ -105,6 +105,10 @@ LEAD_COLUMNS = {
     "tech_evidence": "TEXT",        # 判定根拠
     "tech_checked_at": "TEXT",
     "no_sales_email": "INTEGER NOT NULL DEFAULT 0",  # サイトに「営業メールお断り」表記あり
+    "release_title": "TEXT",        # PR TIMES 最新プレスリリースのタイトル
+    "release_url": "TEXT",
+    "release_date": "TEXT",
+    "prtimes_url": "TEXT",          # PR TIMES の企業ページ
 }
 
 

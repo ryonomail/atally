@@ -46,7 +46,7 @@ def test_decode_shift_jis():
 @responses.activate
 def test_csv_import_enrich_flow(monkeypatch):
     monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "b")
-    rows = [collector.hellowork_row(x) for x in [
+    rows = [collector.csv_row(x) for x in [
         {"会社名": "社会福祉法人 みどり会", "住所": "東京都世田谷区1-1", "業種": "介護", "求人数": "5"},
         {"会社名": "株式会社山田工務店", "住所": "東京都練馬区2-2", "ホームページ": "www.yamada.co.jp", "業種": "建設", "求人数": "2"},
     ]]

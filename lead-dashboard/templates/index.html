@@ -24,26 +24,27 @@
     <div class="row">
       <label class="grow">
         <span class="label">業種・キーワード</span>
-        <input class="input" id="keyword" maxlength="100" required placeholder="例: 介護、建設、美容室">
+        <input class="input" id="keyword" maxlength="100" placeholder="例: 新店舗、資金調達、介護、建設">
       </label>
       <label class="grow">
         <span class="label">エリア</span>
-        <input class="input" id="area" maxlength="100" required placeholder="例: 東京都、世田谷区、大阪市北区">
+        <input class="input" id="area" maxlength="100" placeholder="例: 渋谷区（Googleマップ・OSMのみ使用）">
       </label>
       <button class="btn btn-primary" id="collect-btn" type="submit">▶ 収集</button>
     </div>
     <div class="row small">
-      <label class="{{ '' if sources.google else 'disabled' }}"><input type="checkbox" name="src" value="google" {{ 'checked' if sources.google else 'disabled' }}> Googleマップ
+      <label><input type="checkbox" name="src" value="prtimes" checked> PR TIMES <span class="muted">（業種・エリア不要。キーワードでリリースを絞り込み）</span></label>
+      <label class="{{ '' if sources.google else 'disabled' }}"><input type="checkbox" name="src" value="google" {{ '' if sources.google else 'disabled' }}> Googleマップ
         {% if not sources.google %}<span class="muted">（GOOGLE_PLACES_API_KEY 未設定）</span>{% endif %}</label>
-      <label><input type="checkbox" name="src" value="osm" {{ '' if sources.google else 'checked' }}> OpenStreetMap</label>
+      <label><input type="checkbox" name="src" value="osm"> OpenStreetMap</label>
     </div>
     <div class="small muted">HPあり→サイト・問い合わせページからメール/SNS抽出＋PHP・CMS判定 ／ HPなし→{{ 'Web検索で公式サイト・SNSを特定' if sources.web_search else 'Web検索は BRAVE_SEARCH_API_KEY 設定で有効' }}</div>
 
     <div class="row small" style="margin-top:10px">
       <button type="button" class="btn btn-secondary btn-sm" id="enrich-btn">🔍 HP・メールを探す</button>
       <span id="unenriched" class="muted"></span>
-      <label class="btn btn-secondary btn-sm file-btn">CSV取り込み（ハローワーク等）<input type="file" id="csv-file" accept=".csv,text/csv" hidden></label>
-      <span class="muted">列: 会社名(事業所名), 住所, ホームページ, 業種, 求人数</span>
+      <label class="btn btn-secondary btn-sm file-btn">CSV取り込み<input type="file" id="csv-file" accept=".csv,text/csv" hidden></label>
+      <span class="muted">列: 会社名, 住所, ホームページ, 業種</span>
     </div>
 
     <div id="progress" class="progress" hidden>
@@ -80,7 +81,7 @@
     </select>
     <select class="input input-sm auto" data-filter="sns"></select>
     <select class="input input-sm auto" data-filter="source">
-      <option value="">取得元: すべて</option><option value="hellowork">ハローワーク求人</option>
+      <option value="">取得元: すべて</option><option value="prtimes">PR TIMES</option><option value="csv">CSV取り込み</option>
       <option value="google">Googleマップ</option><option value="osm">OpenStreetMap</option>
     </select>
     <select class="input input-sm auto" data-filter="run_id"><option value="">全収集結果</option></select>

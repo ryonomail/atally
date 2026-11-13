@@ -2,7 +2,8 @@
 営業リスト（見込み企業）の自動収集エンジン。
 
 収集元:
-  - CSV 取り込み    … ハローワーク等で集めた企業一覧（会社名・住所・HP・業種・求人数）
+  - PR TIMES       … 公開 RSS からプレスリリースを出した企業（企業名・最新リリース）
+  - CSV 取り込み    … 手元の企業一覧（会社名・住所・HP・業種）
   - Googleマップ   … Google Places API (Text Search)。ホームページを持たない企業も取得できる
   - OpenStreetMap  … Nominatim + Overpass（APIキー不要）
 補完（1社ずつ）:
@@ -31,6 +32,7 @@ from urllib.parse import parse_qs, quote, urljoin, urlparse
 
 import requests
 
+import prtimes
 import techdetect
 from db import SNS_FIELDS, get_db, now, row_to_dict, update_lead, update_run
 
@@ -89,6 +91,7 @@ def env(key: str, default: str = "") -> str:
 
 def available_sources() -> dict:
     return {
+        "prtimes": True,
         "google": bool(env("GOOGLE_PLACES_API_KEY")),
         "osm": True,
         "web_search": bool(env("BRAVE_SEARCH_API_KEY")),
@@ -209,11 +212,15 @@ def _fetch_stage(run: dict) -> None:
 
     places: list[dict] = []
     hw_rows: list[dict] = []
-    if "google" in sources and keyword:
+    if "prtimes" in sources:
+        hw_rows += _safely(logs, "PR TIMES", lambda: prtimes.fetch(keyword, logs))
+    if "google" in sources and keyword and area:
         if available_sources()["google"]:
             places += _safely(logs, "Googleマップ", lambda: fetch_google(keyword, area, logs))
         else:
             logs.append("Googleマップ: APIキー(GOOGLE_PLACES_API_KEY)未設定のためスキップ")
+    if {"google", "osm"} & set(sources) and not (keyword and area):
+        logs.append("Googleマップ / OpenStreetMap: 業種とエリアの両方が必要なためスキップ")
     if "osm" in sources and keyword and area:
         places += _safely(logs, "OpenStreetMap", lambda: fetch_osm(keyword, area, logs))
 
@@ -229,7 +236,7 @@ def _fetch_stage(run: dict) -> None:
 
 
 def import_csv_rows(rows: list[dict]) -> int:
-    """CSV アップロード（ハローワーク事業所など）からの取り込み。run を作り調査待ちにする"""
+    """CSV アップロードからの取り込み。run を作り調査待ちにする"""
     with get_db() as db:
         cur = db.execute(
             "INSERT INTO runs (keyword, area, sources, status, created_at) VALUES ('', '', 'csv', 'enriching', ?)",
@@ -246,7 +253,7 @@ def import_csv_rows(rows: list[dict]) -> int:
 
 def save_rows(db, run_id: int, rows: list[dict], keyword: str, area: str) -> tuple[int, int]:
     """(source, external_id) で upsert。既存企業のステータス・メモ・調査済みの値は保持する"""
-    always = {"rating", "review_count", "job_count", "category"}
+    always = {"rating", "review_count", "job_count", "category", "release_title", "release_url", "release_date"}
     new = upd = 0
     ts = now()
     for r in rows:
@@ -327,8 +334,8 @@ def _safely(logs: list, label: str, fn):
 # =====================================================================
 # 収集元
 # =====================================================================
-def hellowork_row(x: dict) -> dict | None:
-    """ハローワーク事業所 1 件（API / CSV 共通）→ leads 行"""
+def csv_row(x: dict) -> dict | None:
+    """CSV 1 行 → leads 行（列名は日本語/英語どちらでも可）"""
     name = (x.get("employer_name") or x.get("name") or x.get("会社名") or x.get("事業所名") or "").strip()
     if not name:
         return None
@@ -338,15 +345,15 @@ def hellowork_row(x: dict) -> dict | None:
     website = normalize_website(x.get("homepage_url") or x.get("website") or x.get("ホームページ"))
     jc = x.get("job_count") or x.get("求人数")
     return {
-        "source": "hellowork",
-        "external_id": "hw:" + _md5(f"{normalize_name(name)}|{pref}|{city}"),
+        "source": "csv",
+        "external_id": "csv:" + _md5(f"{normalize_name(name)}|{pref}|{city}"),
         "name": name[:250],
         "category": (x.get("industry") or x.get("category") or x.get("業種") or None),
         "address": address,
         "phone": x.get("phone") or x.get("電話番号") or None,
         "website": website,
         "has_website": 1 if website else 0,
-        "website_found_by": "hellowork" if website else None,
+        "website_found_by": "csv" if website else None,
         "job_count": int(jc) if str(jc or "").isdigit() else None,
     }
 
@@ -511,8 +518,9 @@ def enrich_leads(leads: list[dict], search_budget: int, stats: dict) -> dict[int
         out = {}
         if l.get("website"):
             out["site"] = crawl_site(l["website"])
-        if l.get("lat") is None and l.get("address"):
-            out["geo"] = geocode(l["address"])
+        addr = l.get("address") or ((out.get("site") or {}).get("address"))
+        if l.get("lat") is None and addr:
+            out["geo"] = geocode(addr)
         return l, out
 
     with ThreadPoolExecutor(max_workers=6) as ex:
@@ -528,6 +536,8 @@ def enrich_leads(leads: list[dict], search_budget: int, stats: dict) -> dict[int
                     if site["email"] and not l.get("email"):
                         setf(l, "email", site["email"])
                         stats["emails"] = stats.get("emails", 0) + 1
+                    if site.get("address") and not l.get("address"):
+                        setf(l, "address", site["address"])
                     t = site["tech"]
                     setf(l, "uses_php", 1 if t["php"] else 0)
                     setf(l, "php_version", t["php_version"])
@@ -561,8 +571,9 @@ def crawl_site(url: str) -> dict | None:
     no_sales = techdetect.no_sales_notice(html)
     sns = extract_sns_links(html)
     email = extract_email(html, host)
+    address = extract_address(html)
     for u in contact_links(html, final_url):
-        if email and no_sales:
+        if email and no_sales and address:
             break
         sub = fetch_page_full(u)
         if sub is None:
@@ -570,14 +581,15 @@ def crawl_site(url: str) -> dict | None:
         for f, v in extract_sns_links(sub[0]).items():
             sns.setdefault(f, v)
         email = email or extract_email(sub[0], host)
+        address = address or extract_address(sub[0])
         no_sales = no_sales or techdetect.no_sales_notice(sub[0])
         if not tech["php"]:
             t2 = techdetect.detect(sub[1], sub[0], sub[2])
             if t2["php"]:
                 tech = t2
-        if email:
+        if email and address:
             break
-    return {"sns": sns, "email": email, "tech": tech, "no_sales": no_sales}
+    return {"sns": sns, "email": email, "tech": tech, "no_sales": no_sales, "address": address}
 
 
 def fetch_page(url: str) -> str | None:
@@ -755,6 +767,17 @@ def extract_email(html: str, site_host: str | None = None) -> str | None:
             if d == site or site.endswith("." + d) or d.endswith("." + site):
                 return e
     return cands[0]
+
+
+PREF = r"(?:北海道|東京都|(?:京都|大阪)府|(?:青森|岩手|宮城|秋田|山形|福島|茨城|栃木|群馬|埼玉|千葉|神奈川|新潟|富山|石川|福井|山梨|長野|岐阜|静岡|愛知|三重|滋賀|兵庫|奈良|和歌山|鳥取|島根|岡山|広島|山口|徳島|香川|愛媛|高知|福岡|佐賀|長崎|熊本|大分|宮崎|鹿児島|沖縄)県)"
+ADDRESS_RE = re.compile(r"(?:〒\s*\d{3}[-ー－]\d{4}\s*)?(" + PREF + r"[^\s　<>「」()（）|｜/、。,]{2,40}?\d[\d\-ー－丁目番地号の条東西南北]*)")
+
+
+def extract_address(html: str) -> str | None:
+    """会社概要などに書かれた所在地（都道府県から番地まで）"""
+    text = unicodedata.normalize("NFKC", re.sub(r"<[^>]+>", " ", htmllib.unescape(html or "")))
+    m = ADDRESS_RE.search(text)
+    return m.group(1).strip()[:120] if m else None
 
 
 def contact_links(html: str, base: str) -> list[str]:

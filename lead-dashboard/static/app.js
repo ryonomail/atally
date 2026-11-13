@@ -15,8 +15,8 @@
     { key: 'youtube', label: 'YT', name: 'YouTube', color: '#ff0000' },
     { key: 'line', label: 'LINE', name: 'LINE', color: '#06c755' },
   ];
-  const SOURCE_LABEL = { hellowork: 'ハローワーク求人', google: 'Googleマップ', osm: 'OpenStreetMap', csv: 'CSV取り込み', enrich: 'HP・メール調査（続き）' };
-  const FOUND_BY = { hellowork: 'ハローワーク掲載', google: 'Googleマップ掲載', osm: 'OpenStreetMap', search: 'Web検索で発見' };
+  const SOURCE_LABEL = { prtimes: 'PR TIMES', hellowork: 'ハローワーク求人', google: 'Googleマップ', osm: 'OpenStreetMap', csv: 'CSV取り込み', enrich: 'HP・メール調査（続き）' };
+  const FOUND_BY = { csv: 'CSV記載', hellowork: 'ハローワーク掲載', google: 'Googleマップ掲載', osm: 'OpenStreetMap', search: 'Web検索で発見' };
   const RUN_STATUS = {
     queued: ['待機中', 'badge-warn'], fetching: ['収集中', 'badge-warn'], enriching: ['調査中', 'badge-warn'],
     done: ['完了', 'badge-ok'], failed: ['失敗/中止', 'badge-ng'],
@@ -116,7 +116,8 @@
     } else {
       tb.innerHTML = l.data.map((x) => `<tr data-id="${x.id}" class="${state.selected?.id === x.id ? 'sel' : ''}">
         <td style="min-width:160px"><div class="name">${esc(x.name)}</div>
-          <div class="sub">${esc(x.category || '')}${x.rating ? ` ・ ★${x.rating}` : ''}${x.job_count ? ` ・ 求人${x.job_count}件` : ''}</div></td>
+          <div class="sub">${esc(x.category || '')}${x.rating ? ` ・ ★${x.rating}` : ''}${x.job_count ? ` ・ 求人${x.job_count}件` : ''}</div>
+          ${x.release_title ? `<div class="sub" title="${esc(x.release_title)}">📰 ${esc(x.release_title.length > 40 ? x.release_title.slice(0, 40) + '…' : x.release_title)}</div>` : ''}</td>
         <td style="min-width:180px"><div style="font-size:12px">${esc(x.address || '—')}</div>${x.phone ? `<div class="sub">${esc(x.phone)}</div>` : ''}</td>
         <td>${x.website ? `<a href="${esc(x.website)}" target="_blank" rel="noopener noreferrer" title="${esc(x.website)}">開く↗</a><div>${phpBadge(x)}</div>`
           : (x.enriched_at ? '<span class="badge badge-ng">なし</span>' : '<span class="sub">未調査</span>')}</td>
@@ -142,12 +143,14 @@
         <div>
           <div style="font-size:17px;font-weight:700">${esc(l.name)}</div>
           <div class="sub" style="font-size:12px">${esc(l.category || '')}${l.rating ? ` ・ ★${l.rating}（${l.review_count ?? 0}件）` : ''}${l.job_count ? ` ・ ハローワーク求人 ${l.job_count}件` : ''}
-            ・ 取得元: ${esc(SOURCE_LABEL[l.source] || l.source)}${l.website && l.website_found_by ? ` ・ HP: ${esc(FOUND_BY[l.website_found_by] || l.website_found_by)}` : ''}${l.enriched_at ? '' : ' ・ HP/メール未調査'}</div>
+            ${l.category || l.rating || l.job_count ? ' ・ ' : ''}取得元: ${esc(SOURCE_LABEL[l.source] || l.source)}${l.website && l.website_found_by ? ` ・ HP: ${esc(FOUND_BY[l.website_found_by] || l.website_found_by)}` : ''}${l.enriched_at ? '' : ' ・ HP/メール未調査'}</div>
           <div style="margin-top:4px">${esc(l.address || '')}</div>
+          ${l.release_title ? `<div class="small" style="margin-top:4px">📰 最新リリース: <a href="${esc(l.release_url || '#')}" target="_blank" rel="noopener noreferrer">${esc(l.release_title)}</a> <span class="muted">${esc(l.release_date || '')}</span></div>` : ''}
           ${l.tech_checked_at ? `<div class="small" style="margin-top:4px">使用技術: ${l.uses_php ? `${phpBadge(l)} ${esc(l.cms || '')} <span class="muted">（根拠: ${esc(l.tech_evidence || '')}）</span>` : '<span class="muted">PHPは検出されませんでした</span>'}</div>` : ''}
           ${l.no_sales_email ? '<div class="small ng-box">⚠ サイトに「営業メールお断り」等の表記があるため、自動送信の対象外です</div>' : ''}
           <div class="links">
             ${l.google_maps_url ? `<a href="${esc(l.google_maps_url)}" target="_blank" rel="noopener noreferrer">📍 Googleマップ</a>` : ''}
+            ${l.prtimes_url ? `<a href="${esc(l.prtimes_url)}" target="_blank" rel="noopener noreferrer">📰 PR TIMES企業ページ</a>` : ''}
             ${l.website ? `<a href="${esc(l.website)}" target="_blank" rel="noopener noreferrer">🌐 ホームページ</a>` : ''}
             ${l.phone ? `<a href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a>` : ''}
             ${l.email ? `<a href="mailto:${esc(l.email)}">✉ ${esc(l.email)}</a>` : ''}
@@ -350,7 +353,7 @@
 
   // =================== メール配信 ===================
   const mail = { data: null, editing: null, ticking: false };
-  const VARS = ['会社名', '住所', '業種', 'ホームページ', 'PHP状況', 'PHPバージョン', 'CMS', 'CMS補足'];
+  const VARS = ['会社名', '住所', '業種', 'ホームページ', 'プレスリリース', 'プレスリリースURL', 'PHP状況', 'PHPバージョン', 'CMS', 'CMS補足'];
 
   $$('.tab').forEach((t) => t.addEventListener('click', () => {
     $$('.tab').forEach((x) => x.classList.toggle('active', x === t));

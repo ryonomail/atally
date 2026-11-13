@@ -122,7 +122,7 @@ def _filters(args) -> tuple[str, list]:
         where.append("php_status IN ('eol','near_eol')")
     elif args.get("php") == "no":
         where.append("uses_php = 0")
-    if args.get("source") in ("hellowork", "google", "osm"):
+    if args.get("source") in ("prtimes", "google", "osm", "csv", "hellowork"):
         where.append("source = ?"); params.append(args["source"])
     if (args.get("run_id") or "").isdigit():
         where.append("last_run_id = ?"); params.append(int(args["run_id"]))
@@ -151,7 +151,7 @@ def api_leads():
 @login_required
 def api_map():
     where, params = _filters(request.args)
-    cols = "id, name, category, address, lat, lng, status, has_website, email, job_count, uses_php, php_version, php_status, cms, " + ", ".join(SNS_FIELDS)
+    cols = "id, name, category, address, lat, lng, status, has_website, email, job_count, release_title, uses_php, php_version, php_status, cms, " + ", ".join(SNS_FIELDS)
     with get_db() as db:
         rows = db.execute(f"SELECT {cols} FROM leads WHERE {where} AND lat IS NOT NULL AND lng IS NOT NULL "
                           "ORDER BY id DESC LIMIT 3000", params).fetchall()
@@ -195,10 +195,10 @@ def api_collect():
     body = request.get_json(silent=True) or {}
     keyword = str(body.get("keyword") or "").strip()[:100]
     area = str(body.get("area") or "").strip()[:100]
-    sources = [s for s in body.get("sources") or [] if s in ("google", "osm")]
+    sources = [s for s in body.get("sources") or [] if s in ("prtimes", "google", "osm")]
     if not sources:
         return jsonify(message="収集元を1つ以上選択してください"), 422
-    if not keyword or not area:
+    if "prtimes" not in sources and (not keyword or not area):
         return jsonify(message="Googleマップ / OpenStreetMap から収集するには業種とエリアの両方を入力してください"), 422
     if collector.active_run_id():
         return jsonify(message="別の収集が実行中です。完了までお待ちください"), 409
@@ -250,7 +250,7 @@ def api_import_csv():
             continue
     else:
         return jsonify(message="文字コードを判別できませんでした（UTF-8 か Shift_JIS で保存してください）"), 422
-    rows = [r for r in (collector.hellowork_row(x) for x in csv.DictReader(io.StringIO(text))) if r]
+    rows = [r for r in (collector.csv_row(x) for x in csv.DictReader(io.StringIO(text))) if r]
     if not rows:
         return jsonify(message="会社名（または 事業所名 / employer_name）列が見つかりませんでした"), 422
     if collector.active_run_id():
@@ -315,6 +315,8 @@ def api_export():
         "website": "ホームページ", "instagram": "Instagram", "twitter": "X(Twitter)", "facebook": "Facebook",
         "tiktok": "TikTok", "youtube": "YouTube", "line": "LINE", "google_maps_url": "Googleマップ",
         "rating": "評価", "review_count": "口コミ数", "job_count": "ハローワーク求人数",
+        "release_title": "最新プレスリリース", "release_url": "プレスリリースURL", "release_date": "リリース日時",
+        "prtimes_url": "PR TIMES企業ページ",
         "uses_php": "PHP使用", "php_version": "PHPバージョン", "php_status": "PHPサポート状況", "cms": "CMS",
         "no_sales_email": "営業メールお断り表記", "lat": "緯度", "lng": "経度",
         "status": "ステータス", "memo": "メモ", "source": "取得元", "search_keyword": "検索キーワード",

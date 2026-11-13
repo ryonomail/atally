@@ -28,6 +28,7 @@ TARGETS = {
     "all": "メールアドレスのある全企業",
     "php": "PHP製サイトの企業",
     "php_old": "PHPがサポート終了・終了間近の企業",
+    "prtimes": "PR TIMESでリリースを出した企業",
 }
 SKIP_STATUSES = ("negotiating", "won", "lost", "excluded")
 RESEND_GAP_DAYS = 14
@@ -55,6 +56,18 @@ DEFAULT_TEMPLATES = {
             "PHPやCMSは定期的なバージョンアップを行わないと、公開済みの脆弱性を突かれる恐れがあります。\n\n"
             "弊社では、サーバー・PHP・CMSの更新や保守運用をお手伝いしております。\n"
             "現状の簡易診断は無料で承りますので、ご興味がございましたら本メールにご返信ください。\n\n"
+            "何卒よろしくお願いいたします。"
+        ),
+    },
+    "prtimes": {
+        "subject": "【{会社名} ご担当者様】プレスリリースを拝見してのご連絡",
+        "body": (
+            "{会社名}\nご担当者様\n\n"
+            "突然のご連絡失礼いたします。\n\n"
+            "PR TIMESで貴社のプレスリリース「{プレスリリース}」を拝見し、ご連絡いたしました。\n"
+            "（{プレスリリースURL}）\n\n"
+            "（ここにご提案内容を書いてください）\n\n"
+            "ご興味がございましたら本メールにご返信ください。\n"
             "何卒よろしくお願いいたします。"
         ),
     },
@@ -132,6 +145,7 @@ def render(campaign: dict, lead: dict) -> tuple[str, str]:
         "会社名": lead.get("name") or "", "住所": lead.get("address") or "", "業種": lead.get("category") or "",
         "ホームページ": lead.get("website") or "", "PHPバージョン": lead.get("php_version") or "不明",
         "PHP状況": php_label(lead), "CMS": cms, "CMS補足": f"（{cms}）" if cms else "",
+        "プレスリリース": lead.get("release_title") or "", "プレスリリースURL": lead.get("release_url") or "",
     }
 
     def fill(t: str) -> str:
@@ -200,6 +214,8 @@ def _target_sql(target: str) -> str:
         cond.append("l.uses_php = 1")
     elif target == "php_old":
         cond.append("l.php_status IN ('eol','near_eol')")
+    elif target == "prtimes":
+        cond.append("l.source = 'prtimes'")
     return " AND ".join(cond)
 
 
@@ -229,7 +245,8 @@ def campaign_stats(db, c: dict) -> dict:
                           (c["id"], _today_start())),
         "blocked_no_sales": one(f"SELECT COUNT(*) FROM leads l WHERE l.email IS NOT NULL AND l.no_sales_email = 1"
                                 + (" AND l.uses_php = 1" if c["target"] == "php" else "")
-                                + (" AND l.php_status IN ('eol','near_eol')" if c["target"] == "php_old" else "")),
+                                + (" AND l.php_status IN ('eol','near_eol')" if c["target"] == "php_old" else "")
+                                + (" AND l.source = 'prtimes'" if c["target"] == "prtimes" else "")),
     }
 
 
