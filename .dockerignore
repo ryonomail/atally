@@ -13,5 +13,3 @@ docker-compose*.yml
 Dockerfile
 *.md
 tests/
-
-lead-dashboard

@@ -26,16 +26,6 @@ return [
         'site_verification'   => env('GOOGLE_SITE_VERIFICATION'),
     ],
 
-    // 営業リスト自動収集（管理画面 > 営業リスト）
-    'lead_collector' => [
-        // Google Places API (New) のAPIキー。Googleマップ掲載企業（HP無し含む）の取得に使用
-        'google_places_key' => env('GOOGLE_PLACES_API_KEY'),
-        // Brave Search API のキー（任意）。ホームページの無い企業の SNS アカウント検索に使用
-        'brave_search_key'  => env('BRAVE_SEARCH_API_KEY'),
-        // 1回の調査で Web 検索する最大件数（Brave 無料枠は月2,000クエリ）
-        'search_limit'      => (int) env('LEAD_SEARCH_LIMIT', 50),
-    ],
-
     'hellowork' => [
         'base_url' => env('HELLOWORK_BASE_URL', ''),
         'id'       => env('HELLOWORK_ID', ''),

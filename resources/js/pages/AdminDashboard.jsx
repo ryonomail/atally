@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw, Store, MapPinned } from 'lucide-react';
+import { BarChart3, Wallet, User, Building2, ClipboardList, CheckCircle, FileText, ScrollText, AlertTriangle, History, Settings, FileText as FileIcon, RefreshCw, Store } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../hooks/useToast';
-
-// 地図ライブラリを含むため営業リストタブは遅延読み込み
-const LeadCollectorTab = lazy(() => import('./LeadCollectorTab'));
 
 const TABS = [
     { key: 'overview', label: '概要', Icon: BarChart3 },
@@ -13,7 +10,6 @@ const TABS = [
     { key: 'jobseekers', label: '求職者', Icon: User },
     { key: 'all-companies', label: '企業一覧', Icon: Building2 },
     { key: 'all-jobs', label: '求人一覧', Icon: ClipboardList },
-    { key: 'leads', label: '営業リスト', Icon: MapPinned },
     { key: 'companies', label: '企業審査', Icon: CheckCircle },
     { key: 'jobs', label: '求人審査', Icon: FileText },
     { key: 'licenses', label: 'ライセンス', Icon: ScrollText },
@@ -2309,11 +2305,6 @@ export default function AdminDashboard() {
             {tab === 'reports' && <ReportsTab initialData={prefetched.reports} />}
             {tab === 'audit' && <AuditLogTab initialData={prefetched.auditLogs} />}
             {tab === 'settings' && <SettingsTab initialData={prefetched.settings} />}
-            {tab === 'leads' && (
-                <Suspense fallback={<div className="card" style={{ textAlign: 'center', padding: 'var(--space-3xl)', color: 'var(--color-text-muted)' }}>読み込み中…</div>}>
-                    <LeadCollectorTab />
-                </Suspense>
-            )}
 
             {/* ユーザー詳細モーダル */}
             {userDetailId && (
